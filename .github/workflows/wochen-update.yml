@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true   # Die Website wird auch dann veröffentlicht, wenn das Holen einmal scheitert
         env:
           SCOUT_PASSWORD: ${{ secrets.SCOUT_PASSWORD }}
-        run: node tools/update.mjs
+        run: node update.mjs
 
       - name: Daten im Repository speichern
         run: |
