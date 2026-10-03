@@ -1,0 +1,77 @@
+# Jede Woche (und auf Knopfdruck) neue Spiele von handball.ch holen, die verschlüsselte
+# Datei daten.enc aktualisieren und die Website neu veröffentlichen.
+name: Wochen-Update
+
+on:
+  schedule:
+    - cron: '30 4 * * 1'   # jeden Montag um 04:30 UTC, in der Schweiz 05:30 (Winter) bzw. 06:30 Uhr (Sommer)
+  workflow_dispatch:       # Knopf «Run workflow» im Reiter Actions
+  push:
+    branches: [main]
+    paths: ['index.html', 'config.json', 'daten.enc', 'tools/**', '.github/workflows/**']
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: wochen-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Neue Spiele von handball.ch holen
+        id: upd
+        continue-on-error: true   # Die Website wird auch dann veröffentlicht, wenn das Holen einmal scheitert
+        env:
+          SCOUT_PASSWORD: ${{ secrets.SCOUT_PASSWORD }}
+        run: node tools/update.mjs
+
+      - name: Daten im Repository speichern
+        run: |
+          git config user.name "wochen-update"
+          git config user.email "actions@users.noreply.github.com"
+          git add daten.enc || true
+          if git diff --cached --quiet; then
+            echo "Keine Änderung zu speichern."
+          else
+            git commit -m "Daten aktualisiert"
+            git push
+          fi
+
+      - name: Website zusammenstellen
+        run: |
+          mkdir _site
+          cp index.html _site/
+          if [ -f daten.enc ]; then cp daten.enc _site/; fi
+          touch _site/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Website veröffentlichen
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+      - name: Fehler melden
+        if: steps.upd.outcome == 'failure'
+        run: |
+          echo "Das Holen der neuen Spiele ist fehlgeschlagen. Die Website läuft mit den letzten Daten weiter."
+          echo "Gründe und Lösungen stehen im Abschnitt «Wenn etwas schiefgeht» der Anleitung."
+          exit 1
