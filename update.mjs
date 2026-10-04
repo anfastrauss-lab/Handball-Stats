@@ -14,6 +14,10 @@ const fail = (msg) => { console.error('FEHLER: ' + msg); process.exit(1); };
 if (PW.length < 8) fail('Das Passwort (Secret SCOUT_PASSWORD) fehlt oder ist kürzer als 8 Zeichen.');
 const cfg = JSON.parse(fs.readFileSync(process.env.CONFIG || 'config.json', 'utf8'));
 const LIGEN = Array.isArray(cfg.ligen) ? cfg.ligen : [];
+// Muster (Teilwörter): alle Ligen, deren Name das Muster enthält, und alle Gruppen, in denen ein Team mit diesem Namen spielt
+const normT = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+const LIGEN_TEIL = (Array.isArray(cfg.ligenEnthalten) ? cfg.ligenEnthalten : []).map(normT).filter(Boolean);
+const VEREINE = (Array.isArray(cfg.vereineEnthalten) ? cfg.vereineEnthalten : []).map(normT).filter(Boolean);
 const PAUSE_MS = Number(process.env.PAUSE_MS ?? cfg.pausenMs ?? 250);
 // Ehrlich benannt: ein privates Projekt, das einmal pro Woche wenige Abfragen stellt.
 const HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': 'HandballScoutingPrivat/1.0 (woechentlicher Abruf, privates Projekt)' };
@@ -80,6 +84,18 @@ try {
 for (const l of LIGEN) if (!proLiga.has(l)) console.warn('Liga «' + l + '» wurde im Menü nicht gefunden (Schreibweise in config.json prüfen).');
 const alle = new Set(data.groups.map((g) => g.groupId));
 for (const l of LIGEN) for (const id of proLiga.get(l) || []) alle.add(id);
+for (const [liga, ids] of proLiga) if (LIGEN_TEIL.some((m) => normT(liga).includes(m))) for (const id of ids) alle.add(id);
+// Gruppen suchen, in denen ein Team des gewünschten Vereins spielt (auch Juniorinnen, Cup und so weiter)
+const vorab = new Map();
+if (VEREINE.length) {
+  let gefunden = 0;
+  for (const groupId of gruppenInfo.keys()) {
+    if (alle.has(groupId)) continue;
+    const sp = liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games); vorab.set(groupId, sp);
+    if (sp.some((g) => VEREINE.some((m) => normT(g.homeTeamName).includes(m) || normT(g.awayTeamName).includes(m)))) { alle.add(groupId); gefunden++; }
+  }
+  console.log('Zusätzliche Gruppen mit Teams des Vereins (' + (cfg.vereineEnthalten || []).join(', ') + '): ' + gefunden);
+}
 if (!alle.size) fail('Es wurde keine einzige Gruppe gefunden. Entweder blockiert handball.ch den Abruf, oder die Ligen in config.json stimmen nicht.');
 console.log(alle.size + ' Gruppen werden geprüft.');
 
@@ -94,7 +110,7 @@ let nr = 0;
 for (const groupId of alle) {
   nr++;
   const nav = erstes(((await abfrage('getGroupNavigationDetail', Q_NAV, { groupId })) || {}).groupNavigationDetail) || {};
-  const spiele = liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games);
+  const spiele = vorab.has(groupId) ? vorab.get(groupId) : liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games);
   if (!spiele.length) { console.warn('Gruppe ' + groupId + ': keine Spiele gefunden.'); continue; }
   for (const g of spiele) {
     if (g.homeTeamId != null && g.homeTeamClubId != null) teams.set(g.homeTeamId, { teamId: g.homeTeamId, clubId: g.homeTeamClubId, name: g.homeTeamName });

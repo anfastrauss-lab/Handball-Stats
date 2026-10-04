@@ -12,5 +12,12 @@
     "Junioren U15 Promotion S1",
     "Junioren U15 Promotion S2"
   ],
-  "pausenMs": 250
+  "pausenMs": 250,
+  "ligenEnthalten": [
+    "U13"
+  ],
+  "vereineEnthalten": [
+    "Stäfa",
+    "Staefa"
+  ]
 }
