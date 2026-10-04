@@ -31,7 +31,7 @@ jobs:
 
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Neue Spiele von handball.ch holen
         id: upd
@@ -41,17 +41,24 @@ jobs:
         run: node "$( [ -f tools/update.mjs ] && echo tools/update.mjs || echo update.mjs )"
 
       - name: Daten im Repository speichern
+        if: steps.upd.outcome == 'success'   # nur speichern, wenn das Holen geklappt hat (sonst würde ein alter Stand zurückgeschrieben)
         run: |
           git config user.name "wochen-update"
           git config user.email "actions@users.noreply.github.com"
-          git add daten.enc || true
-          if git diff --cached --quiet; then
-            echo "Keine Änderung zu speichern."
-          else
+          if [ ! -f daten.enc ]; then echo "Keine Datei zu speichern."; exit 0; fi
+          cp daten.enc "$RUNNER_TEMP/daten.enc.neu"
+          # Zusammenstösse mit anderen Läufen vermeiden: auf den neuesten Stand wechseln, die neue Datei einsetzen, speichern.
+          for versuch in 1 2 3 4 5; do
+            git fetch origin main
+            git reset --hard origin/main
+            cp "$RUNNER_TEMP/daten.enc.neu" daten.enc
+            git add daten.enc
+            if git diff --cached --quiet; then echo "Keine Änderung zu speichern."; exit 0; fi
             git commit -m "Daten aktualisiert"
-            git pull --rebase origin main || true
-            git push
-          fi
+            if git push origin HEAD:main; then exit 0; fi
+            echo "Speichern ging nicht (Versuch $versuch), neuer Anlauf …"; sleep $((versuch * 3))
+          done
+          echo "Das Speichern ist fünfmal gescheitert."; exit 1
 
       - name: Website zusammenstellen
         run: |
