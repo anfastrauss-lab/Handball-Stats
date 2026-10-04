@@ -333,6 +333,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <div class="field"><label for="talMG">Mindestspiele</label><input type="number" id="talMG" min="1" value="3" inputmode="numeric"></div>
       <div class="field"><label for="talMS" id="lblTalMS">Mindestwürfe</label><input type="number" id="talMS" min="0" value="15" inputmode="numeric"></div>
       <div class="field"><label for="talW">Gewicht Alter: <b id="talWVal"></b></label><input type="range" id="talW" min="0" max="1" step="0.1" value="0.5"></div>
+      <div class="field" id="talTField"><label for="talT" title="Wie stark technische Fehler die Leistung senken. 0 ignoriert sie.">Gewicht Fehler: <b id="talTVal"></b></label><input type="range" id="talT" min="0" max="1" step="0.1" value="0.3"></div>
       <div class="field wide2"><span class="lbl">Gebiet</span><div class="small" id="talArea"></div><button class="btn secondary" id="talAreaBtn" style="margin-top:4px">Gebiet ändern</button></div>
     </div>
     <p class="small muted" id="talCount" style="margin:10px 0" aria-live="polite"></p>
@@ -342,7 +343,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <summary>So rechnet das Radar</summary>
       <ul class="small muted">
         <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Verglichen werden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe).</li>
-        <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), bei Torhütern die Paradenquote. Gemessen wird, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht.</li>
+        <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
         <li><b>Alter:</b> Der Median des Jahrgangs der Liga ist der Massstab. Ein Spieler, der 2 Jahre jünger ist, bekommt «+2» (höchstens ±3 Jahre zählen).</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht. Mit dem Regler stellst du ein, wie wichtig dir das Alter ist: 0 ignoriert es, 1 gibt pro Jahr einen ganzen Punkt.</li>
         <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, steht je Liga in einer eigenen Zeile. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
@@ -1386,12 +1387,12 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
-state.t = { role: 'F', q: '', liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, sort: { key: 'score', dir: -1 }, limit: 100 };
+state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, sort: { key: 'score', dir: -1 }, limit: 100 };
 state.team = null; state.team2 = null;
 
 // Pro Spieler und Liga zusammenfassen und mit dem Schnitt der Liga vergleichen (einmal pro Datenstand)
 function buildTalent(d, opt) {
-  if (!opt && d._talent && d._talent.ver === (d._ver || 0)) return d._talent;
+  if (!opt && d._talent && d._talent.ver === (d._ver || 0)) { if (d._talent.wTF !== state.t.wTF) applyPerf(d._talent); return d._talent; }
   const idx = index(d), map = new Map();
   for (const r of rows(d)) {
     const g = d.games[r.gameId]; if (!g) continue;
@@ -1399,9 +1400,9 @@ function buildTalent(d, opt) {
     const liga = ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId });
     const k = r.role + '|' + liga + '|' + r.playerId;
     let a = map.get(k);
-    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, saves: 0, shotsGK: 0 }; map.set(k, a); }
+    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, saves: 0, shotsGK: 0, tf: 0 }; map.set(k, a); }
     if (r.role === 'F' || r.shotsGK > 0) a.games++;
-    a.goals += r.goals || 0; a.shots += r.shots || 0; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0;
+    a.goals += r.goals || 0; a.shots += r.shots || 0; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0; a.tf += r.tf || 0;
     const date = String(g.date); if (date >= a.last) { a.last = date; a.teamId = r.teamId; a.name = r.name; }
   }
   const T = { ver: d._ver || 0, F: [], G: [], leagues: { F: {}, G: {} } };
@@ -1411,11 +1412,12 @@ function buildTalent(d, opt) {
     for (const [liga, list] of Object.entries(byLiga)) {
       const peers = list.filter((a) => a.games >= 3 && (role === 'F' ? a.shots >= 15 : a.shotsGK >= 30));
       const med = median(list.map((a) => a.year).filter(Boolean));
-      const L = { n: peers.length, medYear: med, thin: peers.length < 6 };
+      const L = { n: peers.length, medYear: med, thin: peers.length < 6, peers };
       if (role === 'F') {
         const sg = peers.reduce((s, a) => s + a.goals, 0), ss = peers.reduce((s, a) => s + a.shots, 0);
         L.muP = ss ? sg / ss : 0; L.muG = mean(peers.map((a) => a.goals / a.games));
         L.sdG = sdev(peers.map((a) => a.goals / a.games)) || 1; L.sdP = sdev(peers.map((a) => a.goals / a.shots)) || 0.05;
+        L.muT = mean(peers.map((a) => a.tf / a.games)); L.sdT = sdev(peers.map((a) => a.tf / a.games)) || 1;
       } else {
         const sv = peers.reduce((s, a) => s + a.saves, 0), ss = peers.reduce((s, a) => s + a.shotsGK, 0);
         L.muS = ss ? sv / ss : 0; L.sdS = sdev(peers.map((a) => a.saves / a.shotsGK)) || 0.03;
@@ -1423,27 +1425,40 @@ function buildTalent(d, opt) {
       T.leagues[role][liga] = L;
       for (const a of list) {
         a.ageAdv = a.year && med ? clamp(med - a.year, -3, 3) : null;
-        a.perf = null;
-        if (role === 'F') { a.gpg = a.games ? a.goals / a.games : null; a.pct = a.shots ? a.goals / a.shots : null; }
+        if (role === 'F') { a.gpg = a.games ? a.goals / a.games : null; a.pct = a.shots ? a.goals / a.shots : null; a.tfpg = a.games ? a.tf / a.games : null; }
         else a.spct = a.shotsGK ? a.saves / a.shotsGK : null;
         if (L.thin) continue;
         if (role === 'F') {
-          a.muG = L.muG; a.muP = L.muP;
+          a.muG = L.muG; a.muP = L.muP; a.muT = L.muT;
           // kleine Stichproben zum Ligaschnitt hin dämpfen
-          const gS = (a.goals + 2 * L.muG) / (a.games + 2), pS = (a.goals + 10 * L.muP) / (a.shots + 10);
-          a.perf = clamp(0.6 * ((gS - L.muG) / L.sdG) + 0.4 * ((pS - L.muP) / L.sdP), -4, 4);
+          const gS = (a.goals + 2 * L.muG) / (a.games + 2), pS = (a.goals + 10 * L.muP) / (a.shots + 10), tS = (a.tf + 2 * L.muT) / (a.games + 2);
+          a.zG = (gS - L.muG) / L.sdG; a.zP = (pS - L.muP) / L.sdP; a.zT = (tS - L.muT) / L.sdT;
         } else {
           a.muS = L.muS;
           const sS = (a.saves + 30 * L.muS) / (a.shotsGK + 30);
-          a.perf = clamp((sS - L.muS) / L.sdS, -4, 4);
+          a.zS = (sS - L.muS) / L.sdS;
         }
       }
-      const ranked = peers.filter((a) => a.perf != null).sort((x, y) => y.perf - x.perf);
+    }
+  }
+  applyPerf(T);
+  if (!opt) d._talent = T;
+  return T;
+}
+// Leistung = 0.6 × Tore/Spiel + 0.4 × Wurfquote − Gewicht × technische Fehler (alles gegen den Ligaschnitt); Torhüter: Paradenquote.
+function applyPerf(T) {
+  const w = state.t.wTF; T.wTF = w;
+  for (const role of ['F', 'G']) {
+    for (const a of T[role]) {
+      delete a.rank; delete a.of;
+      if (role === 'F') a.perf = a.zG == null ? null : clamp(0.6 * a.zG + 0.4 * a.zP - w * a.zT, -4, 4);
+      else a.perf = a.zS == null ? null : clamp(a.zS, -4, 4);
+    }
+    for (const L of Object.values(T.leagues[role])) {
+      const ranked = L.peers.filter((a) => a.perf != null).sort((x, y) => y.perf - x.perf);
       ranked.forEach((a, i) => { a.rank = i + 1; a.of = ranked.length; });
     }
   }
-  if (!opt) d._talent = T;
-  return T;
 }
 const signed = (v, dec) => (v > 0 ? '+' : '') + (dec ? nf(v, dec) : nf1(v));
 function talCols(role) {
@@ -1461,6 +1476,7 @@ function talCols(role) {
     ? [
       { k: 'gpg', label: 'Tore/Sp', v: (a) => a.gpg, t: (a) => (a.gpg == null ? '–' : nf(a.gpg, 1)), sub: (a) => (a.muG == null ? '' : 'Ø ' + nf(a.muG, 1)) },
       { k: 'pct', label: 'Quote', v: (a) => a.pct, t: (a) => (a.pct == null ? '–' : Math.round(a.pct * 100) + '%'), sub: (a) => (a.muP == null ? '' : 'Ø ' + Math.round(a.muP * 100) + '%') },
+      { k: 'tfpg', label: 'TF/Sp', title: 'Technische Fehler pro Spiel (weniger ist besser)', v: (a) => a.tfpg, t: (a) => (a.tfpg == null ? '–' : nf(a.tfpg, 1)), sub: (a) => (a.muT == null ? '' : 'Ø ' + nf(a.muT, 1)) },
     ]
     : [
       { k: 'shotsGK', label: 'Gegenwürfe', v: (a) => a.shotsGK, t: (a) => String(a.shotsGK) },
@@ -1502,7 +1518,7 @@ function renderTalent() {
   $('#talLiga').innerHTML = '<option value="">Alle Ligen</option>' + ligas.map((l) => '<option value="' + esc(l) + '">' + esc(l) + '</option>').join(''); $('#talLiga').value = t.liga;
   $('#talRoleF').setAttribute('aria-pressed', t.role === 'F'); $('#talRoleG').setAttribute('aria-pressed', t.role === 'G');
   $('#lblTalMS').textContent = t.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
-  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr';
+  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = t.role === 'G';
   const parts = []; if (f.center) parts.push('Umkreis ' + f.radius + ' km um ' + f.center.label); if (f.cantons.size) parts.push('Kantone ' + [...f.cantons].sort().join(', '));
   $('#talArea').textContent = parts.length ? parts.join(', ') : 'Kein Gebietsfilter aktiv';
   const list = talentList(), cols = talCols(t.role), shown = list.slice(0, t.limit), sk = t.sort;
@@ -1527,14 +1543,14 @@ function renderTalent() {
   $('#talCount').textContent = list.length + ' Spieler' + (list.length > shown.length ? ', die ersten ' + shown.length + ' angezeigt' : '') + (state.talTotal > list.length ? ' (' + (state.talTotal - list.length) + ' ausserhalb des Gebiets)' : '') + (nopf ? '. Bei ' + nopf + ' gibt es keinen Score, weil die Liga zu wenige Vergleichsspieler hat.' : '');
   $('#talMore').hidden = list.length <= shown.length;
 }
-function syncTalInputs() { const t = state.t; $('#talMS').value = t.role === 'F' ? t.minShots : t.minGK; $('#talW').value = t.wAge; $('#talMG').value = t.minGames; }
+function syncTalInputs() { const t = state.t; $('#talMS').value = t.role === 'F' ? t.minShots : t.minGK; $('#talW').value = t.wAge; $('#talT').value = t.wTF; $('#talMG').value = t.minGames; }
 // Einordnung im Spielerprofil
 function ligaInsight(d, id, role) {
   const T = buildTalent(d), out = [];
   for (const a of T[role].filter((x) => x.id === id).sort((x, y) => y.games - x.games)) {
     const L = T.leagues[role][a.liga]; if (!L || L.thin || !a.games) continue;
     let s = '<b>' + esc(a.liga) + ':</b> ';
-    if (role === 'F') s += (a.gpg == null ? '–' : nf(a.gpg, 1)) + ' Tore pro Spiel (Liga Ø ' + nf(L.muG, 1) + '), Wurfquote ' + (a.pct == null ? '–' : Math.round(a.pct * 100) + '%') + ' (Ø ' + Math.round(L.muP * 100) + '%)';
+    if (role === 'F') s += (a.gpg == null ? '–' : nf(a.gpg, 1)) + ' Tore pro Spiel (Liga Ø ' + nf(L.muG, 1) + '), Wurfquote ' + (a.pct == null ? '–' : Math.round(a.pct * 100) + '%') + ' (Ø ' + Math.round(L.muP * 100) + '%), technische Fehler ' + (a.tfpg == null ? '–' : nf(a.tfpg, 1)) + ' pro Spiel (Ø ' + nf(L.muT, 1) + ')';
     else s += (a.spct == null ? '–' : Math.round(a.spct * 100) + '%') + ' Paradenquote (Liga Ø ' + Math.round(L.muS * 100) + '%)';
     if (a.rank) s += ', Platz ' + a.rank + ' von ' + a.of;
     if (a.ageAdv != null && a.year) { const n = Math.abs(a.ageAdv); s += '. Jahrgang ' + a.year + ' ist ' + (n === 0 ? 'so alt wie der Median' : nf1(n) + (n === 1 ? ' Jahr' : ' Jahre') + (a.ageAdv > 0 ? ' jünger' : ' älter') + ' als der Median') + ' der Liga (' + yr(L.medYear) + ')'; }
@@ -1869,7 +1885,7 @@ function renderReport() {
   h += '<div class="card repsec"><h3>Torhüter in Form</h3><p class="small muted">Paradenquote im Zeitraum gegenüber davor. Voraussetzung: 20 Gegenwürfe im Zeitraum und 3 Spiele davor.</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Sp') + th('Quote') + th('Plus/Minus') + th('Paraden'), R.gk.slice(0, 6).map(gkRow).join(''), 'Keine Torhüter mit genug Daten.', 6) + '</div>';
   h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), R.bestF.map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) +
     '<h3 style="margin-top:16px">Beste Torhüter-Leistungen</h3><p class="small muted">Höchste Paradenquote in einem Spiel (mindestens 15 Gegenwürfe).</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Spiel', true) + th('Paraden') + th('Quote'), R.bestG.map(bestGRow).join(''), 'Keine Torhüter mit genug Gegenwürfen.', 5) + '</div>';
-  h += '<div class="card repsec"><h3>Neu im Talent-Radar</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score aus dem Reiter «Talent-Radar» (Gewicht Alter ' + nf(state.t.wAge, 1) + ').</p>' +
+  h += '<div class="card repsec"><h3>Neu im Talent-Radar</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score aus dem Reiter «Talent-Radar» (Gewicht Alter ' + nf(state.t.wAge, 1) + ', Gewicht Fehler ' + nf(state.t.wTF, 1) + ').</p>' +
     wrap(th('Spieler', true) + th('Liga', true) + th('Rang jetzt') + th('Rang davor') + th('Score'), R.newcomers.map(newRow).join(''), 'Niemand ist neu in die Spitze gerückt.', 5) + '</div>';
   h += '<div class="card repsec"><h3>Deine Merkliste im Zeitraum</h3>' + (R.merk.length ? '<p class="small muted">Wie deine gemerkten Spieler zuletzt gespielt haben, mit dem Vergleich zu ihrem Schnitt davor.</p>' + wrap(th('Spieler', true) + th('Sp') + th('Zahlen', true) + th('Trend', true), R.merk.map(merkRow).join(''), '', 4) : '<p class="small muted" style="margin:0">Noch niemand auf der Merkliste. Merke Spieler mit dem Stern, dann siehst du hier, wie sie gespielt haben.</p>') + '</div>';
   h += '<div class="card repsec"><h3>Spiele mit den höchsten Resultaten</h3><p class="small muted">Die deutlichsten Resultate des Zeitraums.</p><div class="tablewrap"><table><thead><tr>' + th('Datum', true).replace('left name', 'left') + th('Liga', true).replace('left name', 'left') + th('Heim', true).replace('left name', 'left') + th('Resultat') + th('Gast', true).replace('left name', 'left') + '</tr></thead><tbody>' + (R.top.map(topRow).join('') || '<tr><td class="left" colspan="5" style="padding:18px">Keine Spiele im Zeitraum.</td></tr>') + '</tbody></table></div></div>';
@@ -2027,11 +2043,12 @@ $('#talYT').oninput = (e) => { state.t.yearTo = parseInt(e.target.value, 10) || 
 $('#talMG').oninput = (e) => { state.t.minGames = Math.max(1, parseInt(e.target.value, 10) || 1); state.t.limit = 100; renderTalent(); };
 $('#talMS').oninput = (e) => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (state.t.role === 'F') state.t.minShots = v; else state.t.minGK = v; state.t.limit = 100; renderTalent(); };
 $('#talW').oninput = (e) => { state.t.wAge = parseFloat(e.target.value) || 0; renderTalent(); };
+$('#talT').oninput = (e) => { state.t.wTF = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talAreaBtn').onclick = () => setView('spieler');
 $('#talMore').onclick = () => { state.t.limit += 100; renderTalent(); };
 $('#talTbl').addEventListener('click', (e) => {
   const sb = e.target.closest('[data-tsort]');
-  if (sb) { const k = sb.dataset.tsort, s = state.t.sort; state.t.sort = s.key === k ? { key: k, dir: -s.dir } : { key: k, dir: k === 'name' || k === 'liga' || k === 'dist' ? 1 : -1 }; return renderTalent(); }
+  if (sb) { const k = sb.dataset.tsort, s = state.t.sort; state.t.sort = s.key === k ? { key: k, dir: -s.dir } : { key: k, dir: k === 'name' || k === 'liga' || k === 'dist' || k === 'tfpg' ? 1 : -1 }; return renderTalent(); }
   const st = e.target.closest('[data-tstar]'); if (st) return toggleMerk(Number(st.dataset.tstar), st.dataset.role);
   const tr = e.target.closest('tr[data-id]'); if (tr) openDetail(Number(tr.dataset.id), tr.dataset.role);
 });
