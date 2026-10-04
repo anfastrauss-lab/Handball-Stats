@@ -8,7 +8,7 @@ on:
   workflow_dispatch:       # Knopf «Run workflow» im Reiter Actions
   push:
     branches: [main]
-    paths: ['index.html', 'config.json', 'daten.enc', 'tools/**', '.github/workflows/**']
+    paths: ['index.html', 'config.json', 'app-config.json', 'daten.enc', 'tools/**', 'update.mjs', 'crypto.mjs', '.github/workflows/**']
 
 permissions:
   contents: write
@@ -38,7 +38,7 @@ jobs:
         continue-on-error: true   # Die Website wird auch dann veröffentlicht, wenn das Holen einmal scheitert
         env:
           SCOUT_PASSWORD: ${{ secrets.SCOUT_PASSWORD }}
-        run: node update.mjs
+        run: node "$( [ -f tools/update.mjs ] && echo tools/update.mjs || echo update.mjs )"
 
       - name: Daten im Repository speichern
         run: |
@@ -49,6 +49,7 @@ jobs:
             echo "Keine Änderung zu speichern."
           else
             git commit -m "Daten aktualisiert"
+            git pull --rebase origin main || true
             git push
           fi
 
@@ -57,6 +58,7 @@ jobs:
           mkdir _site
           cp index.html _site/
           if [ -f daten.enc ]; then cp daten.enc _site/; fi
+          if [ -f app-config.json ]; then cp app-config.json _site/; fi
           touch _site/.nojekyll
 
       - uses: actions/configure-pages@v5
