@@ -1,0 +1,48 @@
+# Jede Woche eine verschlüsselte Sicherung der Spielerübersicht (Akten, Techniktests, Änderungsverlauf)
+# aus dem Zentralspeicher in den Ordner «sicherung» legen. Ohne eingerichteten Zentralspeicher passiert nichts.
+name: Sicherung
+
+on:
+  schedule:
+    - cron: '15 3 * * 0'   # jeden Sonntag um 03:15 UTC
+  workflow_dispatch:       # Knopf «Run workflow» im Reiter Actions
+
+permissions:
+  contents: write
+
+concurrency:
+  group: sicherung
+  cancel-in-progress: false
+
+jobs:
+  sicherung:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Sicherung erstellen
+        env:
+          SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+          SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+          SICHERUNG_EMAIL: ${{ secrets.SICHERUNG_EMAIL }}
+          SICHERUNG_PASSWORD: ${{ secrets.SICHERUNG_PASSWORD }}
+          SCOUT_PASSWORD: ${{ secrets.SCOUT_PASSWORD }}
+        run: node "$( [ -f tools/sicherung.mjs ] && echo tools/sicherung.mjs || echo sicherung.mjs )"
+
+      - name: Sicherung im Projekt speichern
+        run: |
+          git config user.name "sicherung"
+          git config user.email "actions@users.noreply.github.com"
+          git add sicherung || true
+          if git diff --cached --quiet; then
+            echo "Keine Änderung zu speichern."
+          else
+            git commit -m "Sicherung"
+            git pull --rebase origin main || true
+            git push
+          fi
