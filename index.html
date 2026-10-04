@@ -409,6 +409,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
   <div class="card" id="zsSetup" hidden>
     <h2>Der Zentralspeicher ist noch nicht eingerichtet</h2>
     <p>Damit mehrere Personen (RLV, Mannschaftstrainer) von verschiedenen Geräten aus dieselben Daten sehen und ergänzen können, braucht es einmalig eine kleine Datenbank. Die Schritte dazu stehen in der Datei <b>ANLEITUNG-ZENTRALSPEICHER.md</b>. Am Ende trägst du zwei Werte in die Datei <b>app-config.json</b> ein.</p>
+    <p class="msg err" id="zsCfgErr" hidden></p>
     <p class="small muted">Dieser Reiter funktioniert erst, wenn das Tool auf deiner Website läuft, also nicht als Datei auf dem Computer und nicht in der Claude-Vorschau. Zum Ausprobieren gibt es die Demo (Knopf «Demo ansehen» im Reiter «Spieler»).</p>
   </div>
   <div class="card" id="zsLogin" hidden style="max-width:460px">
@@ -2127,12 +2128,24 @@ const zsStore = () => (state.demo ? MEM : SB);
 // Betriebsart: demo, einrichten (keine Konfiguration), anmelden oder verbunden
 function zsMode() { if (state.demo) return 'demo'; if (!state.zs.cfg) return 'einrichten'; if (!state.zs.session) return 'anmelden'; return 'verbunden'; }
 async function loadAppConfig() {
+  const z = state.zs; z.cfg = null; z.cfgError = '';
   try {
     if (!/^https?:$/.test(location.protocol)) throw new Error('keine Website');
     const res = await fetch('app-config.json?t=' + Date.now(), { cache: 'no-store' }); if (!res.ok) throw new Error('nicht gefunden');
-    const c = await res.json(), url = String(c.supabaseUrl || '').trim().replace(/\/$/, ''), key = String(c.supabaseAnonKey || '').trim();
-    if ((/^https:\/\/\S+$/.test(url) || /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?(\/\S*)?$/.test(url)) && key.length > 20) state.zs.cfg = { url, key };
-  } catch (e) { state.zs.cfg = null; }
+    const c = await res.json(), raw = String(c.supabaseUrl || '').trim(), key = String(c.supabaseAnonKey || '').trim();
+    if (!raw && !key) return;
+    let url = '';
+    try {
+      const u = new URL(raw);
+      if (/(^|\.)supabase\.com$/i.test(u.hostname)) z.cfgError = 'Die Adresse in app-config.json gehört zum Supabase-Dashboard. Gebraucht wird die «Project URL», sie sieht aus wie https://abcdefgh.supabase.co.';
+      else if (u.protocol === 'https:' || (u.protocol === 'http:' && /^(localhost|127\.0\.0\.1)$/.test(u.hostname))) url = u.origin; // alles nach dem Servernamen (zum Beispiel /rest/v1/) wird ignoriert
+      else z.cfgError = 'Die Adresse in app-config.json muss mit https:// beginnen.';
+    } catch (e) { z.cfgError = 'Die Adresse in app-config.json ist keine gültige Adresse. Gebraucht wird die «Project URL», zum Beispiel https://abcdefgh.supabase.co.'; }
+    let rolle = ''; try { rolle = JSON.parse(atob(key.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'))).role || ''; } catch (e) { /* kein JWT */ }
+    if (/^sb_secret_/.test(key) || rolle === 'service_role') { z.cfgError = 'ACHTUNG: In app-config.json steht der GEHEIME Schlüssel (service_role oder secret). Er darf nie in einer öffentlichen Datei stehen. Trage stattdessen den öffentlichen Schlüssel «anon» oder «Publishable key» ein und ersetze den geheimen Schlüssel in Supabase (Project Settings, API Keys).'; return; }
+    if (!z.cfgError && key.length <= 20) z.cfgError = 'Der Schlüssel in app-config.json fehlt oder ist zu kurz. Gebraucht wird der öffentliche Schlüssel «anon» oder «Publishable key».';
+    if (url && key.length > 20 && !z.cfgError) z.cfg = { url, key };
+  } catch (e) { z.cfg = null; }
 }
 function zsLogout(abgelaufen) {
   state.zs.session = null; lsSet('scouting.sb', null); state.zs.me = null; state.zs.akten = {}; state.zs.tests = []; state.zs.loaded = false; state.zs.open = null; zsStopPoll();
@@ -2215,7 +2228,7 @@ function zsTiles(d, list) {
 function renderStaefa() {
   const d = data(), z = state.zs, mode = (z.mode = zsMode()), hasData = rows(d).length > 0;
   $('#zsNoData').hidden = hasData; $('#zsSetup').hidden = !hasData || mode !== 'einrichten'; $('#zsLogin').hidden = !hasData || mode !== 'anmelden'; $('#zsMain').hidden = !hasData || !(mode === 'demo' || mode === 'verbunden');
-  $('#zsDemoNote').hidden = mode !== 'demo'; $('#zsTools').hidden = !(mode === 'demo' || mode === 'verbunden');
+  $('#zsDemoNote').hidden = mode !== 'demo'; $('#zsTools').hidden = !(mode === 'demo' || mode === 'verbunden'); $('#zsCfgErr').hidden = !z.cfgError; $('#zsCfgErr').textContent = z.cfgError || '';
   if (!hasData) return;
   if (mode === 'anmelden') { if (!$('#zsEmail').value) $('#zsEmail').value = z.email || ''; return; }
   if (mode === 'einrichten') return;
