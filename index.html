@@ -160,6 +160,8 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .chip button + button { border-left: 1px solid var(--line); padding: 5px 10px; color: var(--ink-2); }
 .chip button:hover { background: var(--surface-2); }
 .filtertoggle, .filterdone, .msort, .cardlist { display: none; }
+.litebadge { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--ink-2); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: help; }
+.litenote { margin: 8px 0 0; }
 .welcome { max-width: 560px; margin: 24px auto; padding: 32px 28px; }
 .welcome h2 { font-size: 32px; }
 .welcomepw { display: flex; gap: 8px; margin: 18px auto 6px; max-width: 380px; }
@@ -402,12 +404,13 @@ table.plain td { text-align: left; padding: 8px 10px; }
       </div>
       <p class="small muted" id="sortHint" style="margin:0 0 10px"></p>
       <div class="tablewrap" id="tablewrap"><table id="tbl"></table></div>
+      <p class="small muted litenote" id="liteNote" hidden><b>*</b> Diese Quote stammt nur aus einem Teil der Spiele. Einige Vereine nutzen den <b>Liveticker lite</b>, der nur Tore erfasst, keine Würfe und Paraden. Solche Spiele zählen für Tore und Spiele, aber nicht für Quoten. Im Spielerprofil sind sie mit «Lite» markiert.</p>
       <div class="more"><button class="btn secondary" id="more" hidden>Mehr anzeigen</button></div>
       <details class="hint">
         <summary>So werden die Zahlen berechnet</summary>
         <ul class="small muted">
           <li>Spiele zählen alle Spiele, in denen der Spieler im Spielbericht steht. Bei Torhütern zählen nur Spiele mit mindestens einem Gegenwurf.</li>
-          <li>Tore und Würfe enthalten die 7-Meter. Quote heisst Tore geteilt durch Würfe, bei Torhütern Paraden geteilt durch Gegenwürfe. Viele Spielberichte, vor allem in tieferen Ligen, enthalten die Tore, aber keine Würfe. Solche Spiele zählen für Tore und Tore pro Spiel, aber nicht für die Quote.</li>
+          <li>Tore und Würfe enthalten die 7-Meter. Quote heisst Tore geteilt durch Würfe, bei Torhütern Paraden geteilt durch Gegenwürfe. Für Quoten zählen nur Spiele mit voller Statistik. Nicht dazu gehören Spiele, deren Spielbericht nur Tore enthält, und Spiele mit dem <b>Liveticker lite</b>. Der Lite-Ticker erfasst nur Tore: Jedes Tor zählt dann auch als Wurf (100 %), und Torhüter haben 0 Paraden. Das Tool erkennt solche Spiele daran, dass ein Team genau so viele Würfe wie Tore hat oder seine Torhüter keine einzige Parade. Diese Spiele zählen für Tore und Spiele, aber nicht für Quoten. Ein Sternchen (*) an der Quote heisst, dass sie nur aus einem Teil der Spiele stammt.</li>
           <li>Fehler sind technische Fehler, Strafen sind 2-Minuten-Zeitstrafen. Die Zahlen stammen aus dem digitalen Spielbericht, nicht jedes Spiel hat eine Statistik.</li>
           <li>Jahrgang, Position und Spielhand stammen aus den Kaderlisten von handball.ch. Die Position ist meist nur bei NLA- und NLB-Teams eingetragen. Wer keinen Jahrgang hat, fällt aus der Liste, sobald du einen Jahrgang eingibst.</li>
         </ul>
@@ -438,12 +441,14 @@ table.plain td { text-align: left; padding: 8px 10px; }
     </div>
     <p class="small muted" id="talCount" style="margin:10px 0" aria-live="polite"></p>
     <div class="tablewrap"><table id="talTbl"></table></div>
+    <p class="small muted litenote" id="talLite" hidden><b>*</b> Diese Quote stammt nur aus einem Teil der Spiele. Einige Vereine nutzen den <b>Liveticker lite</b>, der nur Tore erfasst, keine Würfe und Paraden. Solche Spiele zählen hier für Tore pro Spiel, aber nicht für Quoten.</p>
     <div class="more"><button class="btn secondary" id="talMore" hidden>Mehr anzeigen</button></div>
     <details class="hint">
       <summary>So rechnet das Radar</summary>
       <ul class="small muted">
         <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Verglichen werden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe).</li>
         <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
+        <li><b>Liveticker lite:</b> Einige Vereine erfassen ihre Spiele mit dem Liveticker lite. Er zählt nur Tore, keine Würfe und Paraden, und würde sonst 100 % Wurfquote und 0 % Paraden ergeben. Solche Spiele zählen für Tore pro Spiel, aber nicht für die Quoten. Ein Sternchen (*) an der Quote heisst, dass sie nur aus einem Teil der Spiele stammt. Torhüter brauchen 30 Gegenwürfe aus Spielen mit voller Statistik.</li>
         <li><b>Alter:</b> Der Median des Jahrgangs der Liga ist der Massstab. Ein Spieler, der 2 Jahre jünger ist, bekommt «+2» (höchstens ±3 Jahre zählen).</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht. Mit dem Regler stellst du ein, wie wichtig dir das Alter ist: 0 ignoriert es, 1 gibt pro Jahr einen ganzen Punkt.</li>
         <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, steht je Liga in einer eigenen Zeile. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
@@ -467,7 +472,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
 <section id="viewReport" role="tabpanel" aria-labelledby="tabReport" hidden>
   <div class="toolbar">
     <div><h2 style="margin:0">Wochenreport</h2>
-      <p class="small muted" style="margin:4px 0 0;max-width:760px">Was ist neu? Nach jedem Update siehst du hier, wer in Form ist, die besten Einzelleistungen, wer neu im Talent-Radar steht und wie deine Merkliste gespielt hat.</p></div>
+      <p class="small muted" style="margin:4px 0 0;max-width:760px">Was ist neu? Nach jedem Update siehst du hier, wer in Form ist, die besten Einzelleistungen, wer neu im Talent-Radar steht und wie deine Merkliste gespielt hat. Quoten zählen nur Spiele mit voller Statistik, also nicht solche mit dem Liveticker lite, der nur Tore erfasst.</p></div>
     <div class="row"><span class="msg" id="repMsg" aria-live="polite"></span><button class="btn secondary" id="repCopy">Als Text kopieren</button></div>
   </div>
   <div class="card empty" id="repEmpty" hidden><h2>Noch keine Daten</h2><p class="muted">Lade zuerst Daten im Reiter «Daten» oder schau dir die Demo an.</p></div>
@@ -943,10 +948,35 @@ const state = {
   merk: new Set(lsGet('scouting.merkliste', [])), notes: lsGet('scouting.notizen', {}),
 };
 const data = () => state.demo || state.real;
-// qg/qs: Tore und Würfe nur aus Spielen, in denen die Würfe erfasst sind. Viele Spielberichte (v. a. tiefere Ligen)
-// enthalten Tore, aber keine oder zu wenige Würfe; sonst entstehen Quoten über 100 %. Nicht aufzählbar, damit sie nicht mitgespeichert werden.
-const qDef = (r) => { const ok = r.shots > 0 && (r.goals || 0) <= r.shots; Object.defineProperty(r, 'qg', { value: ok ? r.goals || 0 : 0, configurable: true, writable: true }); Object.defineProperty(r, 'qs', { value: ok ? r.shots : 0, configurable: true, writable: true }); return r; };
-const rows = (d) => d._rows || (d._rows = Object.values(d.stats).map(qDef));
+// Liveticker lite: erfasst nur Tore. Jedes Tor zählt dann auch als Wurf (Quote 100 %), Torhüter haben 0 Paraden.
+// Ein Spiel gilt als «lite», wenn bei einem Team die Feldspieler zusammen genau so viele Würfe wie Tore haben
+// (ab 5 Toren) oder die Torhüter bei mindestens 5 Gegenwürfen zusammen keine einzige Parade haben.
+function liteGames(all) {
+  const t = new Map();
+  for (const r of all) {
+    const k = r.gameId + '|' + r.teamId; let s = t.get(k); if (!s) t.set(k, (s = { g: 0, s: 0, sv: 0, sg: 0 }));
+    if (r.role === 'F') { s.g += r.goals || 0; s.s += r.shots || 0; } else { s.sv += r.saves || 0; s.sg += r.shotsGK || 0; }
+  }
+  const lite = new Set();
+  for (const [k, s] of t) if ((s.g >= 5 && s.s === s.g) || (s.sg >= 5 && s.sv === 0)) lite.add(Number(k.split('|')[0]));
+  return lite;
+}
+// Hilfswerte für Quoten, nur aus Spielen mit voller Statistik. Nicht aufzählbar, damit sie nicht mitgespeichert werden.
+// qg/qs/qn: Tore, Würfe, Spiele für die Wurfquote (Würfe erfasst, nicht weniger als Tore, kein Lite-Spiel).
+// sv/sg/sn: Paraden, Gegenwürfe, Spiele für die Paradenquote. lite: Spiel mit Liveticker lite.
+function qDef(r, lite) {
+  const okF = !lite && r.shots > 0 && (r.goals || 0) <= r.shots, okG = !lite && r.shotsGK > 0;
+  const v = { lite, qg: okF ? r.goals || 0 : 0, qs: okF ? r.shots : 0, qn: !lite && (r.goals || 0) <= (r.shots || 0) ? 1 : 0, sv: okG ? r.saves || 0 : 0, sg: okG ? r.shotsGK : 0, sn: okG ? 1 : 0 };
+  for (const [k, x] of Object.entries(v)) Object.defineProperty(r, k, { value: x, configurable: true, writable: true });
+  return r;
+}
+function rows(d) {
+  if (d._rows) return d._rows;
+  const all = Object.values(d.stats), lite = liteGames(all);
+  d._lite = lite;
+  return (d._rows = all.map((r) => qDef(r, lite.has(Number(r.gameId)))));
+}
+const isLite = (d, gameId) => { rows(d); return d._lite.has(Number(gameId)); };
 function index(d) {
   if (d._idx) return d._idx;
   const teams = {}, teamGroups = {};
@@ -1058,6 +1088,9 @@ function makeDemo() {
 }
 
 /* ---------- Spalten ---------- */
+// Quote nur aus einem Teil der Spiele (Rest ohne volle Statistik, z. B. Liveticker lite): Sternchen und Erklärung
+const partMark = (n, of) => (n < of ? '*' : '');
+const partTip = (n, of) => (n < of ? 'Quote aus ' + n + ' von ' + of + (of === 1 ? ' Spiel' : ' Spielen') + '. Die übrigen Spiele haben keine volle Statistik (z. B. Liveticker lite, der nur Tore erfasst).' : '');
 const COLS = {
   F: [
     { k: 'year', label: 'Jahrgang', title: 'Jahrgang', v: (p) => p.year || null, t: (p) => (p.year ? String(p.year) : '–') },
@@ -1065,7 +1098,7 @@ const COLS = {
     { k: 'goals', label: 'Tore', title: 'Tore inklusive 7-Meter', v: (p) => p.goals },
     { k: 'gpg', r: 1, label: 'Tore/Spiel', title: 'Tore pro Spiel', v: (p) => (p.games ? p.goals / p.games : null), t: (p) => (p.games ? nf(p.goals / p.games, 1) : '–'), bar: true },
     { k: 'shots', label: 'Würfe', title: 'Würfe inklusive 7-Meter', v: (p) => p.shots },
-    { k: 'pct', r: 0, label: 'Quote', title: 'Tore geteilt durch Würfe, nur aus Spielen mit erfassten Würfen', v: (p) => rate(p.qg, p.qs), t: (p) => pctTxt(rate(p.qg, p.qs)) },
+    { k: 'pct', r: 0, label: 'Quote', title: 'Tore geteilt durch Würfe, nur aus Spielen mit voller Statistik', v: (p) => rate(p.qg, p.qs), t: (p) => pctTxt(rate(p.qg, p.qs)) + partMark(p.qn, p.games), tip: (p) => partTip(p.qn, p.games) },
     { k: 's7', label: '7-Meter', title: '7-Meter: Tore/Würfe', v: (p) => p.shots7, t: (p) => (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') },
     { k: 'tfpg', r: 1, label: 'Fehler/Spiel', title: 'Technische Fehler pro Spiel', v: (p) => (p.games ? p.tf / p.games : null), t: (p) => (p.games ? nf(p.tf / p.games, 1) : '–') },
     { k: 'min2', label: 'Strafen', title: 'Zeitstrafen (2 Minuten)', v: (p) => p.min2 },
@@ -1075,8 +1108,8 @@ const COLS = {
     { k: 'games', label: 'Spiele', title: 'Spiele mit Gegenwürfen', v: (p) => p.games },
     { k: 'saves', label: 'Paraden', title: 'Paraden', v: (p) => p.saves },
     { k: 'shotsGK', label: 'Gegenwürfe', title: 'Würfe aufs Tor', v: (p) => p.shotsGK },
-    { k: 'spct', r: 0, label: 'Quote', title: 'Paraden geteilt durch Gegenwürfe', v: (p) => rate(p.saves, p.shotsGK), t: (p) => pctTxt(rate(p.saves, p.shotsGK)), bar: true },
-    { k: 'spg', r: 1, label: 'Paraden/Spiel', title: 'Paraden pro Spiel', v: (p) => (p.games ? p.saves / p.games : null), t: (p) => (p.games ? nf(p.saves / p.games, 1) : '–') },
+    { k: 'spct', r: 0, label: 'Quote', title: 'Paraden geteilt durch Gegenwürfe, nur aus Spielen mit voller Statistik', v: (p) => rate(p.sv, p.sg), t: (p) => pctTxt(rate(p.sv, p.sg)) + partMark(p.sn, p.games), tip: (p) => partTip(p.sn, p.games), bar: true },
+    { k: 'spg', r: 1, label: 'Paraden/Spiel', title: 'Paraden pro Spiel, nur aus Spielen mit voller Statistik', v: (p) => (p.sn ? p.sv / p.sn : null), t: (p) => (p.sn ? nf(p.sv / p.sn, 1) : '–') },
     { k: 's7', label: '7-Meter', title: '7-Meter: Paraden/Würfe', v: (p) => p.shots7GK, t: (p) => (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') },
   ],
 };
@@ -1109,9 +1142,9 @@ function aggregate(d, f) {
     if (f.group && (!g || String(g.groupId) !== f.group)) continue;
     if (f.team && String(r.teamId) !== f.team) continue;
     let p = m.get(r.playerId);
-    if (!p) { p = { id: r.playerId, role: r.role, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, warn: 0, dq: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 }; m.set(r.playerId, p); }
+    if (!p) { p = { id: r.playerId, role: r.role, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, warn: 0, dq: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 }; m.set(r.playerId, p); }
     if (r.role === 'F' || r.shotsGK > 0) p.games++;
-    for (const k of ['goals', 'shots', 'qg', 'qs', 'goals7', 'shots7', 'tf', 'min2', 'warn', 'dq', 'saves', 'shotsGK', 'saves7', 'shots7GK']) p[k] += r[k] || 0;
+    for (const k of ['goals', 'shots', 'qg', 'qs', 'qn', 'sv', 'sg', 'sn', 'goals7', 'shots7', 'tf', 'min2', 'warn', 'dq', 'saves', 'shotsGK', 'saves7', 'shots7GK']) p[k] += r[k] || 0;
     const date = g ? String(g.date) : '';
     if (date >= p.last) { p.last = date; p.teamId = r.teamId; p.name = r.name; }
   }
@@ -1181,13 +1214,16 @@ function renderTable() {
     for (const c of cols) {
       let style = '';
       if (c.bar) { const v = c.v(p); const w = v == null ? 0 : Math.round((v / maxes[c.k]) * 100); style = ' style="background:linear-gradient(90deg,var(--bar) ' + w + '%,transparent ' + w + '%)"'; }
-      h += '<td' + style + '>' + esc(colText(c, p)) + '</td>';
+      const tip = c.tip ? c.tip(p) : '';
+      h += '<td' + style + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + esc(colText(c, p)) + '</td>';
     }
     h += '</tr>';
   }
   if (!shown.length) h += '<tr><td class="left" colspan="' + (cols.length + 1) + '" style="padding:24px;white-space:normal">Keine Spieler gefunden. Senke die Mindestwerte oder wähle eine andere Gruppe.</td></tr>';
   $('#tbl').innerHTML = h + '</tbody>';
   renderCards(shown, cols);
+  const qk = f.role === 'F' ? ['qn', 'games'] : ['sn', 'games'];
+  $('#liteNote').hidden = !shown.some((p) => p[qk[0]] < p[qk[1]]);
   $('#count').textContent = list.length + ' Spieler' + (list.length > shown.length ? ', die ersten ' + shown.length + ' angezeigt' : '') + (state.noGeo ? ', ' + state.noGeo + ' ohne Standort ausgeblendet' : '');
   $('#more').hidden = list.length <= shown.length;
   $('#lblShots').textContent = f.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
@@ -1209,7 +1245,7 @@ function renderCards(shown, cols) {
     h += '<article class="pcard" data-id="' + p.id + '"><div class="pc-head"><button class="star" data-star="' + p.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Von der Merkliste entfernen' : 'Auf die Merkliste setzen') + '">' + (on ? '★' : '☆') + '</button>' +
       '<button class="namebtn" data-open="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button><span class="pc-year">' + (p.year || '') + '</span></div>' +
       '<div class="pc-team">' + esc(p.team) + (p.club && p.club.canton ? ' (' + esc(p.club.canton) + ')' : '') + (p.position ? ', ' + esc(p.position) : '') + '</div><dl class="pc-stats">';
-    for (const c of kc) h += '<div' + (c.k === sk ? ' class="sorted"' : '') + '><dt>' + esc(CARD_LABEL[c.k] || c.label) + '</dt><dd>' + esc(colText(c, p)) + '</dd></div>';
+    for (const c of kc) h += '<div' + (c.k === sk ? ' class="sorted"' : '') + (c.tip && c.tip(p) ? ' title="' + esc(c.tip(p)) + '"' : '') + '><dt>' + esc(CARD_LABEL[c.k] || c.label) + '</dt><dd>' + esc(colText(c, p)) + '</dd></div>';
     h += '</dl></article>';
   }
   if (!shown.length) h = '<div class="card empty">Keine Spieler gefunden. Entferne einen Filter oder senke die Mindestwerte.</div>';
@@ -1422,9 +1458,9 @@ function renderGame() {
     let h = '<h3 style="margin-top:20px">' + esc(name) + ' <span class="muted">' + score + ' Tore</span> <button class="linkbtn small" data-team="' + teamId + '" style="font-family:var(--font-body);font-weight:600;font-size:13px">Team ansehen</button></h3>';
     if (!t.length) return h + '<p class="small muted">Für dieses Team gibt es keine Statistik.</p>';
     h += '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Spieler</th><th>Tore/Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
-      field.map((r) => '<tr' + cls(r, r.goals || r.shots || r.tf || r.min2 || r.warn) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.goals + '/' + (r.shots || !r.goals ? r.shots : '–') + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + (r.shots7 ? r.goals7 + '/' + r.shots7 : '–') + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td></tr>').join('') + '</tbody></table></div>';
+      field.map((r) => '<tr' + cls(r, r.goals || r.shots || r.tf || r.min2 || r.warn) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.goals + '/' + (r.shots && !r.lite ? r.shots : r.goals ? '–' : 0) + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + (r.shots7 ? r.goals7 + '/' + r.shots7 : '–') + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td></tr>').join('') + '</tbody></table></div>';
     if (gks.length) h += '<div style="overflow-x:auto;margin-top:10px"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Torhüter</th><th>Paraden</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th></tr></thead><tbody>' +
-      gks.map((r) => '<tr' + cls(r, r.shotsGK) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.saves + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.saves, r.shotsGK)) + '</td><td>' + r.saves7 + '/' + r.shots7GK + '</td></tr>').join('') + '</tbody></table></div>';
+      gks.map((r) => '<tr' + cls(r, r.shotsGK) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + (r.lite ? '–' : r.saves) + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.sv, r.sg)) + '</td><td>' + (r.lite ? '–' : r.saves7 + '/' + r.shots7GK) + '</td></tr>').join('') + '</tbody></table></div>';
     return h;
   };
   $('#drawer').innerHTML =
@@ -1432,6 +1468,7 @@ function renderGame() {
     '<p class="muted" style="margin-top:6px">' + esc(when) + (lg.main ? '<br>' + esc(lg.main) : '') + (lg.sub ? ', <span class="small">' + esc(lg.sub) + '</span>' : '') + '</p></div>' +
     '<button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div>' +
     '<div class="row">' + back + '<a class="btn secondary" id="dWeb" href="' + gameUrl(gid) + '" target="_blank" rel="noopener noreferrer">Auf handball.ch öffnen</a></div>' +
+    (isLite(d, gid) ? '<div class="notice warn" style="margin:14px 0 0"><span class="litebadge">Lite</span> Dieses Spiel wurde mit dem <b>Liveticker lite</b> erfasst. Er zählt nur Tore, keine Würfe und Paraden. Deshalb fehlen hier Würfe und Quoten, und das Spiel zählt bei den Spielern nicht für Quoten.</div>' : '') +
     block(g.homeTeamId, g.homeName, g.homeScore) + block(g.awayTeamId, g.awayName, g.awayScore) +
     '<p class="small muted" style="margin-top:14px">Ausgegraut sind Spieler im Kader ohne eigene Aktion. Ein Klick auf einen Namen öffnet sein Profil.</p>';
 }
@@ -1444,6 +1481,14 @@ function closeDetail() {
   if (state.view === 'merk') renderMerk(); // Notizen aus dem Profil sofort zeigen
   if (state.lastFocus && document.contains(state.lastFocus)) state.lastFocus.focus();
 }
+const LITE_TIP = 'Liveticker lite: In diesem Spiel wurden nur Tore erfasst, keine Würfe und Paraden. Es zählt für Tore und Spiele, aber nicht für Quoten.';
+function profSummary(p, role) {
+  const F = role === 'F', base = F ? p.qn : p.sn;
+  let t = 'Alle geladenen Spiele: ' + p.games + ' Spiele, ' + (F ? p.goals + ' Tore.' : p.saves + ' Paraden bei ' + p.shotsGK + ' Gegenwürfen.');
+  if (F) t += p.qs ? ' Die Wurfquote stammt aus ' + p.qg + ' Toren bei ' + p.qs + ' Würfen' : ' Für eine Wurfquote fehlen Spiele mit erfassten Würfen';
+  else t += p.sg ? ' Die Paradenquote stammt aus ' + p.sv + ' Paraden bei ' + p.sg + ' Gegenwürfen' : ' Für eine Paradenquote fehlen Spiele mit voller Statistik';
+  return t + (base < p.games ? ' (' + base + ' von ' + p.games + ' Spielen). Die übrigen Spiele haben keine volle Statistik, meist wegen des Liveticker lite, der nur Tore erfasst. Sie sind unten mit «Lite» markiert.' : '.');
+}
 function renderDrawer() {
   if (!state.open) return;
   if (state.open.game != null) return renderGame();
@@ -1451,7 +1496,7 @@ function renderDrawer() {
   const mine = rows(d).filter((r) => r.playerId === id && r.role === role).map((r) => ({ r, g: d.games[r.gameId] })).filter((x) => x.g)
     .sort((a, b) => String(a.g.date).localeCompare(String(b.g.date)));
   if (!mine.length) { $('#drawer').innerHTML = '<p>Keine Spiele gefunden.</p><button class="btn" id="dClose">Schliessen</button>'; return; }
-  const p = { games: 0, goals: 0, shots: 0, qg: 0, qs: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 };
+  const p = { games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 };
   for (const { r } of mine) { if (role === 'F' || r.shotsGK > 0) p.games++; for (const k of Object.keys(p)) if (k !== 'games') p[k] += r[k] || 0; }
   const last = mine[mine.length - 1], s = splitName(last.r.name), team = idx.teams[last.r.teamId] || '';
   state.open.name = (s.sur + ' ' + s.first).trim();
@@ -1463,7 +1508,7 @@ function renderDrawer() {
   const kpi = (v, l) => '<div class="kpi"><b>' + esc(v) + '</b><span>' + esc(l) + '</span></div>';
   const kpis = role === 'F'
     ? kpi(p.games ? nf(p.goals / p.games, 1) : '–', 'Tore pro Spiel') + kpi(pctTxt(rate(p.qg, p.qs)), 'Wurfquote') + kpi(p.shots7 ? p.goals7 + '/' + p.shots7 : '–', '7-Meter') + kpi(p.games ? nf(p.tf / p.games, 1) : '–', 'Techn. Fehler pro Spiel')
-    : kpi(pctTxt(rate(p.saves, p.shotsGK)), 'Paradenquote') + kpi(p.games ? nf(p.saves / p.games, 1) : '–', 'Paraden pro Spiel') + kpi(p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–', '7-Meter') + kpi(String(p.games), 'Spiele');
+    : kpi(pctTxt(rate(p.sv, p.sg)), 'Paradenquote') + kpi(p.sn ? nf(p.sv / p.sn, 1) : '–', 'Paraden pro Spiel') + kpi(p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–', '7-Meter') + kpi(String(p.games), 'Spiele');
   const val = (r) => (role === 'F' ? r.goals : r.saves);
   const maxV = Math.max(1, ...mine.map((x) => val(x.r)));
   const bars = mine.map((x) => '<div class="bar" title="' + esc(fmtDate(x.g.date)) + '"><em>' + val(x.r) + '</em><i style="height:' + Math.round((val(x.r) / maxV) * 96) + 'px"></i><small>' + esc(fmtDate(x.g.date, true)) + '</small></div>').join('');
@@ -1472,10 +1517,11 @@ function renderDrawer() {
     const cls = own > opp ? 's' : own < opp ? 'n' : 'u', lab = own > opp ? 'S' : own < opp ? 'N' : 'U';
     const gegner = home ? g.awayName : g.homeName;
     const cells = role === 'F'
-      ? '<td>' + r.goals + '/' + (r.shots || !r.goals ? r.shots : '–') + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td>'
-      : '<td>' + r.saves + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.saves, r.shotsGK)) + '</td><td>' + r.saves7 + '/' + r.shots7GK + '</td>';
+      ? '<td>' + r.goals + '/' + (r.shots && !r.lite ? r.shots : r.goals ? '–' : 0) + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td>'
+      : '<td>' + (r.lite ? '–' : r.saves) + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.sv, r.sg)) + '</td><td>' + (r.lite ? '–' : r.saves7 + '/' + r.shots7GK) + '</td>';
+    const liteTag = r.lite ? ' <span class="litebadge" title="' + esc(LITE_TIP) + '">Lite</span>' : '';
     const lg = leagueOf(d.groups[g.groupId]);
-    return '<tr class="gamerow" data-game="' + g.gameId + '" tabindex="0"><td>' + esc(fmtDate(g.date)) + '</td><td class="left">' + esc(lg.main) + (lg.sub ? '<br><span class="small muted">' + esc(lg.sub) + '</span>' : '') + '</td><td class="left">' + (home ? '' : '@ ') + esc(gegner) + '</td><td><span class="res-' + cls + '">' + lab + '</span> ' + own + ':' + opp + '</td>' + cells +
+    return '<tr class="gamerow" data-game="' + g.gameId + '" tabindex="0"><td>' + esc(fmtDate(g.date)) + '</td><td class="left">' + esc(lg.main) + (lg.sub ? '<br><span class="small muted">' + esc(lg.sub) + '</span>' : '') + '</td><td class="left">' + (home ? '' : '@ ') + esc(gegner) + '</td><td><span class="res-' + cls + '">' + lab + '</span> ' + own + ':' + opp + liteTag + '</td>' + cells +
       '<td><a class="ext" href="' + gameUrl(g.gameId) + '" target="_blank" rel="noopener noreferrer" aria-label="Spiel auf handball.ch öffnen" title="Auf handball.ch öffnen">↗</a></td></tr>';
   }).join('');
   const head = role === 'F' ? '<th>Tore/Würfe</th><th>Quote</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th>' : '<th>Paraden</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th>';
@@ -1485,7 +1531,7 @@ function renderDrawer() {
     '<button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div>' +
     '<div class="row"><button class="btn' + (on ? ' secondary' : '') + '" id="dStar" aria-pressed="' + on + '">' + (on ? '★ Auf der Merkliste' : '☆ Auf die Merkliste') + '</button></div>' +
     '<div class="kpis">' + kpis + '</div>' +
-    '<p class="small muted">Alle geladenen Spiele: ' + p.games + ' Spiele' + (role === 'F' ? ', ' + p.goals + ' Tore bei ' + p.shots + ' Würfen' : ', ' + p.saves + ' Paraden bei ' + p.shotsGK + ' Gegenwürfen') + '</p>' +
+    '<p class="small muted">' + esc(profSummary(p, role)) + '</p>' +
     ligaInsight(d, id, role) +
     '<h3 style="margin-top:18px">' + (role === 'F' ? 'Tore pro Spiel' : 'Paraden pro Spiel') + '</h3><div class="bars">' + bars + '</div>' +
     '<h3 style="margin-top:14px">Spiel für Spiel</h3><p class="small muted" style="margin:0 0 6px">Klicke auf ein Spiel für die Statistik beider Teams. Der Pfeil führt zur Seite auf handball.ch.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Datum</th><th class="left">Liga</th><th class="left">Gegner</th><th>Resultat</th>' + head + '<th></th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
@@ -1623,9 +1669,9 @@ function buildTalent(d, opt) {
     const liga = ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId });
     const k = r.role + '|' + liga + '|' + r.playerId;
     let a = map.get(k);
-    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, saves: 0, shotsGK: 0, tf: 0 }; map.set(k, a); }
+    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, saves: 0, shotsGK: 0, tf: 0 }; map.set(k, a); }
     if (r.role === 'F' || r.shotsGK > 0) a.games++;
-    a.goals += r.goals || 0; a.shots += r.shots || 0; a.qg += r.qg; a.qs += r.qs; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0; a.tf += r.tf || 0;
+    a.goals += r.goals || 0; a.shots += r.shots || 0; a.qg += r.qg; a.qs += r.qs; a.qn += r.qn; a.sv += r.sv; a.sg += r.sg; a.sn += r.sn; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0; a.tf += r.tf || 0;
     const date = String(g.date); if (date >= a.last) { a.last = date; a.teamId = r.teamId; a.name = r.name; }
   }
   const T = { ver: d._ver || 0, F: [], G: [], leagues: { F: {}, G: {} } };
@@ -1633,7 +1679,7 @@ function buildTalent(d, opt) {
   for (const role of ['F', 'G']) {
     const byLiga = {}; for (const a of T[role]) (byLiga[a.liga] || (byLiga[a.liga] = [])).push(a);
     for (const [liga, list] of Object.entries(byLiga)) {
-      const peers = list.filter((a) => a.games >= 3 && (role === 'F' ? a.shots >= 15 : a.shotsGK >= 30));
+      const peers = list.filter((a) => a.games >= 3 && (role === 'F' ? a.shots >= 15 : a.sg >= 30));
       const med = median(list.map((a) => a.year).filter(Boolean));
       const L = { n: peers.length, medYear: med, thin: peers.length < 6, peers };
       if (role === 'F') {
@@ -1642,14 +1688,14 @@ function buildTalent(d, opt) {
         L.sdG = sdev(peers.map((a) => a.goals / a.games)) || 1; L.sdP = sdev(qp.map((a) => a.qg / a.qs)) || 0.05;
         L.muT = mean(peers.map((a) => a.tf / a.games)); L.sdT = sdev(peers.map((a) => a.tf / a.games)) || 1;
       } else {
-        const sv = peers.reduce((s, a) => s + a.saves, 0), ss = peers.reduce((s, a) => s + a.shotsGK, 0);
-        L.muS = ss ? sv / ss : 0; L.sdS = sdev(peers.map((a) => a.saves / a.shotsGK)) || 0.03;
+        const sv = peers.reduce((s, a) => s + a.sv, 0), ss = peers.reduce((s, a) => s + a.sg, 0);
+        L.muS = ss ? sv / ss : 0; L.sdS = sdev(peers.map((a) => a.sv / a.sg)) || 0.03;
       }
       T.leagues[role][liga] = L;
       for (const a of list) {
         a.ageAdv = a.year && med ? clamp(med - a.year, -3, 3) : null;
         if (role === 'F') { a.gpg = a.games ? a.goals / a.games : null; a.pct = a.qs ? a.qg / a.qs : null; a.tfpg = a.games ? a.tf / a.games : null; }
-        else a.spct = a.shotsGK ? a.saves / a.shotsGK : null;
+        else a.spct = a.sg ? a.sv / a.sg : null;
         if (L.thin) continue;
         if (role === 'F') {
           a.muG = L.muG; a.muP = L.muP; a.muT = L.muT;
@@ -1658,7 +1704,7 @@ function buildTalent(d, opt) {
           a.zG = (gS - L.muG) / L.sdG; a.zP = (pS - L.muP) / L.sdP; a.zT = (tS - L.muT) / L.sdT;
         } else {
           a.muS = L.muS;
-          const sS = (a.saves + 30 * L.muS) / (a.shotsGK + 30);
+          const sS = (a.sv + 30 * L.muS) / (a.sg + 30);
           a.zS = (sS - L.muS) / L.sdS;
         }
       }
@@ -1698,19 +1744,19 @@ function talCols(role) {
   const mid = role === 'F'
     ? [
       { k: 'gpg', label: 'Tore/Spiel', v: (a) => a.gpg, t: (a) => (a.gpg == null ? '–' : nf(a.gpg, 1)), sub: (a) => (a.muG == null ? '' : 'Ø ' + nf(a.muG, 1)) },
-      { k: 'pct', label: 'Quote', v: (a) => a.pct, t: (a) => (a.pct == null ? '–' : Math.round(a.pct * 100) + '%'), sub: (a) => (a.muP == null ? '' : 'Ø ' + Math.round(a.muP * 100) + '%') },
+      { k: 'pct', label: 'Quote', title: 'Wurfquote, nur aus Spielen mit voller Statistik (* = nur ein Teil der Spiele)', v: (a) => a.pct, t: (a) => (a.pct == null ? '–' : Math.round(a.pct * 100) + '%' + partMark(a.qn, a.games)), sub: (a) => (a.muP == null ? '' : 'Ø ' + Math.round(a.muP * 100) + '%') },
       { k: 'tfpg', label: 'Fehler/Spiel', title: 'Technische Fehler pro Spiel (weniger ist besser)', v: (a) => a.tfpg, t: (a) => (a.tfpg == null ? '–' : nf(a.tfpg, 1)), sub: (a) => (a.muT == null ? '' : 'Ø ' + nf(a.muT, 1)) },
     ]
     : [
-      { k: 'shotsGK', label: 'Gegenwürfe', v: (a) => a.shotsGK, t: (a) => String(a.shotsGK) },
-      { k: 'spct', label: 'Quote', v: (a) => a.spct, t: (a) => (a.spct == null ? '–' : Math.round(a.spct * 100) + '%'), sub: (a) => (a.muS == null ? '' : 'Ø ' + Math.round(a.muS * 100) + '%') },
+      { k: 'shotsGK', label: 'Gegenwürfe', title: 'Gegenwürfe aus Spielen mit voller Statistik', v: (a) => a.sg, t: (a) => String(a.sg) },
+      { k: 'spct', label: 'Quote', title: 'Paradenquote, nur aus Spielen mit voller Statistik (* = nur ein Teil der Spiele)', v: (a) => a.spct, t: (a) => (a.spct == null ? '–' : Math.round(a.spct * 100) + '%' + partMark(a.sn, a.games)), sub: (a) => (a.muS == null ? '' : 'Ø ' + Math.round(a.muS * 100) + '%') },
     ];
   const dist = state.f.center ? [{ k: 'dist', label: 'km', title: 'Luftlinie zum gewählten Mittelpunkt', v: (a) => (a.dist == null ? null : a.dist), t: (a) => (a.dist == null ? '–' : nf(a.dist, 0)) }] : [];
   return [...common.slice(0, 2), ...dist, ...common.slice(2), ...mid, ...tail];
 }
 function talentList() {
   const d = data(), T = buildTalent(d), t = state.t, role = t.role;
-  let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.shotsGK >= t.minGK));
+  let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
   if (t.liga) list = list.filter((a) => a.liga === t.liga);
   const toks = norm(t.q).split(/\s+/).filter(Boolean);
   if (toks.length) list = list.filter((a) => { const hay = norm(a.name) + ' ' + norm(fullName(a.name)); return toks.every((x) => hay.includes(x)); });
@@ -1762,6 +1808,7 @@ function renderTalent() {
   }
   if (!shown.length) h += '<tr><td class="left" colspan="' + (cols.length + 1) + '" style="padding:24px;white-space:normal">' + (t.q.trim() ? 'Kein Treffer für «' + esc(t.q.trim()) + '». Der Spieler kann durch die Mindestwerte, die Liga, den Jahrgang oder das Gebiet ausgeblendet sein.' : 'Keine Spieler gefunden. Senke die Mindestwerte oder wähle ein anderes Gebiet.') + '</td></tr>';
   $('#talTbl').innerHTML = h + '</tbody>';
+  $('#talLite').hidden = !shown.some((a) => (t.role === 'F' ? a.qn : a.sn) < a.games);
   const nopf = list.filter((a) => a.perf == null).length;
   $('#talCount').textContent = list.length + ' Spieler' + (list.length > shown.length ? ', die ersten ' + shown.length + ' angezeigt' : '') + (state.talTotal > list.length ? ' (' + (state.talTotal - list.length) + ' ausserhalb des Gebiets)' : '') + (nopf ? '. Bei ' + nopf + ' gibt es keinen Score, weil die Liga zu wenige Vergleichsspieler hat.' : '');
   $('#talMore').hidden = list.length <= shown.length;
@@ -1846,8 +1893,8 @@ function teamInsights(d, td) {
   const min2 = F.reduce((s, p) => s + p.min2, 0), pen = F.slice().sort((a, b) => b.min2 - a.min2)[0];
   if (sg && min2 >= 3) out.push('<b>Strafen:</b> ' + nf(min2 / sg, 1) + ' Zeitstrafen pro Spiel, die meisten für ' + pn(pen) + ' (' + pen.min2 + ').');
   const tf = F.reduce((s, p) => s + p.tf, 0); if (sg && tf >= 5) out.push('<b>Technische Fehler:</b> ' + nf(tf / sg, 1) + ' pro Spiel.');
-  const gk = td.G.slice().sort((a, b) => b.shotsGK - a.shotsGK)[0], L = T.leagues.G[td.liga];
-  if (gk && gk.shotsGK >= 20) { const q = Math.round((gk.saves / gk.shotsGK) * 100); out.push('<b>Torhüter:</b> ' + pn(gk) + ' hält ' + q + ' % (' + gk.saves + ' von ' + gk.shotsGK + ')' + (L && !L.thin ? ', Liga Ø ' + Math.round(L.muS * 100) + ' %' + (q >= L.muS * 100 + 4 ? ', überdurchschnittlich' : q <= L.muS * 100 - 4 ? ', unterdurchschnittlich' : '') : '') + '.'); }
+  const gk = td.G.slice().sort((a, b) => b.sg - a.sg)[0], L = T.leagues.G[td.liga];
+  if (gk && gk.sg >= 20) { const q = Math.round((gk.sv / gk.sg) * 100); out.push('<b>Torhüter:</b> ' + pn(gk) + ' hält ' + q + ' % (' + gk.sv + ' von ' + gk.sg + ')' + (L && !L.thin ? ', Liga Ø ' + Math.round(L.muS * 100) + ' %' + (q >= L.muS * 100 + 4 ? ', überdurchschnittlich' : q <= L.muS * 100 - 4 ? ', unterdurchschnittlich' : '') : '') + '.'); }
   return out;
 }
 function renderTeam() {
@@ -1876,9 +1923,9 @@ function renderTeam() {
   const fl = td.F.slice().sort((a, b) => b.goals - a.goals || b.shots - a.shots), gl = td.G.slice().sort((a, b) => b.shotsGK - a.shotsGK);
   const pbtn = (p) => { const s = splitName(p.name); return '<button class="namebtn" data-player="' + p.id + '" data-role="' + p.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
   h += '<div class="card teamsec"><h3>Kader: Feldspieler</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Spieler</span></th><th>Jahrgang</th><th>Spiele</th><th>Tore</th><th>Tore/Spiel</th><th>Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
-    fl.map((p) => '<tr><td class="name">' + pbtn(p) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + '</span></td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + p.shots + '</td><td>' + pctTxt(rate(p.qg, p.qs)) + '</td><td>' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + '</td><td>' + p.tf + '</td><td>' + p.min2 + '</td></tr>').join('') +
+    fl.map((p) => '<tr><td class="name">' + pbtn(p) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + '</span></td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + p.shots + '</td><td title="' + esc(partTip(p.qn, p.games)) + '">' + pctTxt(rate(p.qg, p.qs)) + partMark(p.qn, p.games) + '</td><td>' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + '</td><td>' + p.tf + '</td><td>' + p.min2 + '</td></tr>').join('') +
     '</tbody></table></div>' + (gl.length ? '<h3 style="margin-top:18px">Torhüter</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Torhüter</span></th><th>Jahrgang</th><th>Spiele</th><th>Paraden</th><th>Gegenwürfe</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th></tr></thead><tbody>' +
-      gl.map((p) => '<tr><td class="name">' + pbtn(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.saves + '</td><td>' + p.shotsGK + '</td><td>' + pctTxt(rate(p.saves, p.shotsGK)) + '</td><td>' + (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') + '</td></tr>').join('') + '</tbody></table></div>' : '') + '</div>';
+      gl.map((p) => '<tr><td class="name">' + pbtn(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.sv + '</td><td>' + p.sg + '</td><td title="' + esc(partTip(p.sn, p.games)) + '">' + pctTxt(rate(p.sv, p.sg)) + partMark(p.sn, p.games) + '</td><td>' + (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') + '</td></tr>').join('') + '</tbody></table></div>' : '') + '</div>';
   if (td.mainGroup != null) {
     const st = teamStanding(d, td.mainGroup), gr = d.groups[td.mainGroup];
     h += '<div class="card teamsec"><h3>Tabelle: ' + esc(gr ? groupLabel(gr) : 'Gruppe') + '</h3><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Rang</th><th class="left">Team</th><th>Sp</th><th>S</th><th>U</th><th>N</th><th>Tore</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>' +
@@ -1895,7 +1942,7 @@ function teamMetrics(d, td) {
   const rowsT = rows(d).filter((r) => String(r.teamId) === td.id), sg = new Set(rowsT.map((r) => r.gameId)).size;
   const sum = (k) => F.reduce((s, p) => s + p[k], 0), qg = sum('qg'), shots = sum('qs'), goals = sum('goals'), g7 = sum('goals7'), s7 = sum('shots7');
   const top = F.slice().sort((a, b) => b.goals - a.goals).slice(0, 3).reduce((s, p) => s + p.goals, 0);
-  const A = td.res.filter((r) => !r.home), gk = G.slice().sort((a, b) => b.shotsGK - a.shotsGK)[0];
+  const A = td.res.filter((r) => !r.home), gk = G.slice().sort((a, b) => b.sg - a.sg)[0];
   const years = F.concat(G).filter((p) => p.games > 0).map((p) => p.year).filter(Boolean);
   return {
     n, liga: td.liga, ppg: n ? (2 * td.w + td.u) / n : null, gf: n ? td.gf / n : null, ga: n ? td.ga / n : null, diff: n ? (td.gf - td.ga) / n : null,
@@ -1903,7 +1950,7 @@ function teamMetrics(d, td) {
     vsGf: n && avg ? td.gf / n - avg : null, vsGa: n && avg ? td.ga / n - avg : null,
     shotPct: shots >= 20 ? qg / shots : null, sevenPct: s7 >= 5 ? g7 / s7 : null,
     min2: sg && sum('min2') >= 1 ? sum('min2') / sg : null, tf: sg && sum('tf') >= 1 ? sum('tf') / sg : null,
-    top3: goals >= 20 ? top / goals : null, gkPct: gk && gk.shotsGK >= 20 ? gk.saves / gk.shotsGK : null, gkName: gk ? fullName(gk.name) : '',
+    top3: goals >= 20 ? top / goals : null, gkPct: gk && gk.sg >= 20 ? gk.sv / gk.sg : null, gkName: gk ? fullName(gk.name) : '',
     avgYear: years.length >= 5 ? mean(years) : null, sg,
   };
 }
@@ -1967,11 +2014,11 @@ function renderCompare(d, body, idx) {
   h += '<div class="teamgrid"><div class="card"><h3>Direkte Duelle</h3>' + (duels.length ? '<p class="small muted" style="margin:0 0 6px">Ein Klick öffnet die Statistik des Spiels.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Datum</th><th class="left">Heim</th><th>Resultat</th><th class="left">Gast</th></tr></thead><tbody>' + duelRows + '</tbody></table></div>' : '<p class="small muted" style="margin:0">Die beiden Teams haben in den geladenen Spielen noch nicht gegeneinander gespielt.</p>') + '</div>' +
     '<div class="card"><h3>Gemeinsame Gegner</h3>' + (common.length ? '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Gegner</th><th class="left">' + esc(nA) + '</th><th class="left">' + esc(nB) + '</th></tr></thead><tbody>' + commonRows + '</tbody></table></div><p class="small muted" style="margin-bottom:0">S, U, N aus Sicht des Teams, «(a)» heisst auswärts. So lässt sich die Stärke über denselben Gegner vergleichen.</p>' : '<p class="small muted" style="margin:0">Die beiden Teams haben keine gemeinsamen Gegner in den geladenen Spielen.</p>') + '</div></div>';
   // Beste Spieler
-  const tops = (td, nm) => { const f = td.F.slice().sort((a, b) => b.goals - a.goals).slice(0, 5), g = td.G.slice().sort((a, b) => b.shotsGK - a.shotsGK)[0];
+  const tops = (td, nm) => { const f = td.F.slice().sort((a, b) => b.goals - a.goals).slice(0, 5), g = td.G.slice().sort((a, b) => b.sg - a.sg || b.games - a.games)[0];
     const pb = (p) => { const s = splitName(p.name); return '<button class="namebtn" data-player="' + p.id + '" data-role="' + p.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
     return '<div class="card"><h3>Beste Werfer: ' + esc(nm) + '</h3><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Spieler</th><th>Jahrgang</th><th>Spiele</th><th>Tore</th><th>Tore/Spiel</th><th>Quote</th></tr></thead><tbody>' +
-      (f.map((p) => '<tr><td class="left">' + pb(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + pctTxt(rate(p.qg, p.qs)) + '</td></tr>').join('') || '<tr><td colspan="6">Keine Statistik</td></tr>') + '</tbody></table></div>' +
-      (g ? '<p class="small" style="margin:10px 0 0"><b>Torhüter:</b> ' + pb(g) + ', ' + pctTxt(rate(g.saves, g.shotsGK)) + ' (' + g.saves + ' von ' + g.shotsGK + ')</p>' : '') + '</div>'; };
+      (f.map((p) => '<tr><td class="left">' + pb(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td title="' + esc(partTip(p.qn, p.games)) + '">' + pctTxt(rate(p.qg, p.qs)) + partMark(p.qn, p.games) + '</td></tr>').join('') || '<tr><td colspan="6">Keine Statistik</td></tr>') + '</tbody></table></div>' +
+      (g ? '<p class="small" style="margin:10px 0 0"><b>Torhüter:</b> ' + pb(g) + ', ' + (g.sg ? pctTxt(rate(g.sv, g.sg)) + partMark(g.sn, g.games) + ' (' + g.sv + ' von ' + g.sg + ')' : 'Paraden nicht erfasst (Liveticker lite)') + '</p>' : '') + '</div>'; };
   h += '<div class="teamgrid">' + tops(ta, nA) + tops(tb, nB) + '</div>';
   body.innerHTML = h;
 }
@@ -1997,7 +2044,7 @@ function scoreRanks(T, w) {
   const out = new Map();
   for (const role of ['F', 'G']) {
     const byLiga = {};
-    for (const a of T[role]) { if (a.perf == null || !(a.games >= 3 && (role === 'F' ? a.shots >= 15 : a.shotsGK >= 30))) continue; (byLiga[a.liga] || (byLiga[a.liga] = [])).push(a); }
+    for (const a of T[role]) { if (a.perf == null || !(a.games >= 3 && (role === 'F' ? a.shots >= 15 : a.sg >= 30))) continue; (byLiga[a.liga] || (byLiga[a.liga] = [])).push(a); }
     for (const [liga, list] of Object.entries(byLiga)) {
       list.map((a) => ({ a, s: a.perf + w * (a.ageAdv || 0) })).sort((x, y) => y.s - x.s).forEach((x, i) => out.set(role + '|' + liga + '|' + x.a.id, { rank: i + 1, of: list.length, score: x.s, a: x.a }));
     }
@@ -2012,7 +2059,7 @@ function repCompute(d) {
   const inPeriod = Object.values(d.games).filter((g) => day(g) >= start && day(g) <= end);
   const ligas = [...new Set(inPeriod.map(ligaOf))].sort((a, b) => a.localeCompare(b, 'de'));
   const games = inPeriod.filter((g) => !r.liga || ligaOf(g) === r.liga);
-  const z0 = () => ({ games: 0, goals: 0, shots: 0, qg: 0, qs: 0, saves: 0, shotsGK: 0 });
+  const z0 = () => ({ games: 0, goals: 0, shots: 0, qg: 0, qs: 0, sv: 0, sg: 0, saves: 0, shotsGK: 0 });
   const A = new Map(), perf = [];
   for (const row of rows(d)) {
     const g = d.games[row.gameId]; if (!g) continue;
@@ -2022,7 +2069,7 @@ function repCompute(d) {
     if (!a) { a = { id: row.playerId, role: row.role, liga, name: row.name, teamId: row.teamId, p: z0(), b: z0(), last: '' }; A.set(k, a); }
     const t = inP ? a.p : a.b;
     if (row.role === 'F' || row.shotsGK > 0) t.games++;
-    t.goals += row.goals || 0; t.shots += row.shots || 0; t.qg += row.qg; t.qs += row.qs; t.saves += row.saves || 0; t.shotsGK += row.shotsGK || 0;
+    t.goals += row.goals || 0; t.shots += row.shots || 0; t.qg += row.qg; t.qs += row.qs; t.sv += row.sv; t.sg += row.sg; t.saves += row.saves || 0; t.shotsGK += row.shotsGK || 0;
     if (inP) { if (String(g.date) >= a.last) { a.last = String(g.date); a.teamId = row.teamId; a.name = row.name; } perf.push({ row, g, liga, id: row.playerId, role: row.role, name: row.name, teamId: row.teamId }); }
   }
   const hot = [], gkf = [];
@@ -2030,7 +2077,7 @@ function repCompute(d) {
     a.team = idx.teams[a.teamId] || ''; const pi = d.players[a.id] || {}; a.year = pi.year || 0; a.position = pi.position || '';
     const L = T.leagues[a.role][a.liga]; if (!L || L.thin) continue;
     if (a.role === 'F') { if (a.p.games >= 1 && a.p.shots >= 8 && a.b.games >= 3 && a.b.shots >= 10) { a.gP = a.p.goals / a.p.games; a.gB = a.b.goals / a.b.games; a.pP = a.p.qs ? a.p.qg / a.p.qs : null; a.z = (a.gP - a.gB) / L.sdG; hot.push(a); } }
-    else if (a.p.shotsGK >= 20 && a.b.games >= 3 && a.b.shotsGK >= 30) { a.qP = a.p.saves / a.p.shotsGK; a.qB = a.b.saves / a.b.shotsGK; a.z = (a.qP - a.qB) / L.sdS; gkf.push(a); }
+    else if (a.p.sg >= 20 && a.b.games >= 3 && a.b.sg >= 30) { a.qP = a.p.sv / a.p.sg; a.qB = a.b.sv / a.b.sg; a.z = (a.qP - a.qB) / L.sdS; gkf.push(a); }
   }
   attachGeo(hot); attachGeo(gkf);
   const hotIn = hot.filter(inArea).sort((x, y) => y.z - x.z), gkIn = gkf.filter(inArea).sort((x, y) => y.z - x.z);
@@ -2038,8 +2085,9 @@ function repCompute(d) {
   for (const x of perf) { x.team = idx.teams[x.teamId] || ''; const home = String(x.teamId) === String(x.g.homeTeamId); x.opp = home ? x.g.awayName : x.g.homeName; x.own = home ? x.g.homeScore : x.g.awayScore; x.oth = home ? x.g.awayScore : x.g.homeScore; x.home = home; }
   attachGeo(perf);
   const perfIn = perf.filter(inArea);
-  const bestF = perfIn.filter((x) => x.role === 'F' && x.row.qs >= 5).sort((x, y) => y.row.goals - x.row.goals || y.row.goals / y.row.shots - x.row.goals / x.row.shots);
-  const bestG = perfIn.filter((x) => x.role === 'G' && x.row.shotsGK >= 15).sort((x, y) => y.row.saves / y.row.shotsGK - x.row.saves / x.row.shotsGK || y.row.saves - x.row.saves);
+  const qOf = (x) => (x.row.qs ? x.row.qg / x.row.qs : 0);
+  const bestF = perfIn.filter((x) => x.role === 'F' && (x.row.lite ? x.row.goals : x.row.qs) >= 5).sort((x, y) => y.row.goals - x.row.goals || qOf(y) - qOf(x));
+  const bestG = perfIn.filter((x) => x.role === 'G' && x.row.sg >= 15).sort((x, y) => y.row.saves / y.row.shotsGK - x.row.saves / x.row.shotsGK || y.row.saves - x.row.saves);
   // Neu im Talent-Radar
   const wA = state.t.wAge, after = scoreRanks(end >= rg.last ? T : buildTalent(d, { until: end }), wA), before = scoreRanks(buildTalent(d, { before: start }), wA), newcomers = [];
   for (const [key, v] of after) {
@@ -2057,7 +2105,7 @@ function repCompute(d) {
     const id = Number(m[1]), role = m[2], mine = [...A.values()].filter((a) => a.id === id && a.role === role);
     const base = (perf.find((x) => x.id === id && x.role === role) || {}).name || (mine[0] && mine[0].name) || '';
     const name = base || ((rows(d).find((x) => x.playerId === id && x.role === role) || {}).name || ''); if (!name) continue;
-    const p = z0(), b = z0(); for (const a of mine) for (const k of ['games', 'goals', 'shots', 'qg', 'qs', 'saves', 'shotsGK']) { p[k] += a.p[k]; b[k] += a.b[k]; }
+    const p = z0(), b = z0(); for (const a of mine) for (const k of ['games', 'goals', 'shots', 'qg', 'qs', 'sv', 'sg', 'saves', 'shotsGK']) { p[k] += a.p[k]; b[k] += a.b[k]; }
     const last = perf.filter((x) => x.id === id && x.role === role).sort((x, y) => String(y.g.date).localeCompare(String(x.g.date)))[0];
     merk.push({ id, role, name, p, b, teamId: last ? last.teamId : ((rows(d).find((x) => x.playerId === id && x.role === role) || {}).teamId) });
   }
@@ -2092,7 +2140,7 @@ function renderReport() {
   const hotTop = R.hot.filter((a) => a.z > 0), hotLow = R.hot.slice().sort((x, y) => x.z - y.z).filter((a) => a.z < 0);
   const gkRow = (a) => '<tr data-id="' + a.id + '" data-role="G">' + pcell(a) + '<td class="left">' + esc(a.liga) + '</td><td>' + a.p.games + '</td><td>' + Math.round(a.qP * 100) + '%<small>davor ' + Math.round(a.qB * 100) + '%</small></td><td class="' + (a.z >= 0 ? 'up' : 'down') + '">' + dlt((a.qP - a.qB) * 100, 0) + ' Pkt</td><td>' + a.p.saves + '/' + a.p.shotsGK + '</td></tr>';
   const gameCell = (x) => '<td class="left">' + esc(fmtDate(x.g.date)) + ', ' + (x.home ? '' : '@ ') + esc(x.opp) + ' <span class="res-' + (x.own > x.oth ? 's' : x.own < x.oth ? 'n' : 'u') + '">' + (x.own > x.oth ? 'S' : x.own < x.oth ? 'N' : 'U') + '</span> ' + x.own + ':' + x.oth + '</td>';
-  const bestRow = (x) => '<tr class="gamerow" data-tgame="' + x.g.gameId + '" tabindex="0">' + pcell(x) + '<td class="left">' + esc(x.liga) + '</td>' + gameCell(x) + '<td>' + x.row.goals + '/' + x.row.shots + '</td><td>' + pctTxt(rate(x.row.goals, x.row.shots)) + '</td></tr>';
+  const bestRow = (x) => '<tr class="gamerow" data-tgame="' + x.g.gameId + '" tabindex="0">' + pcell(x) + '<td class="left">' + esc(x.liga) + '</td>' + gameCell(x) + '<td>' + x.row.goals + '/' + (x.row.lite ? '–' : x.row.shots) + '</td><td>' + (x.row.lite ? '<span class="litebadge" title="' + esc(LITE_TIP) + '">Lite</span>' : pctTxt(rate(x.row.qg, x.row.qs))) + '</td></tr>';
   const bestGRow = (x) => '<tr class="gamerow" data-tgame="' + x.g.gameId + '" tabindex="0">' + pcell(x) + '<td class="left">' + esc(x.liga) + '</td>' + gameCell(x) + '<td>' + x.row.saves + '/' + x.row.shotsGK + '</td><td>' + pctTxt(rate(x.row.saves, x.row.shotsGK)) + '</td></tr>';
   const newRow = (a) => '<tr data-id="' + a.id + '" data-role="' + a.role + '">' + pcell(a) + '<td class="left">' + esc(a.liga) + (a.role === 'G' ? ' <small>Torhüter</small>' : '') + '</td><td>' + a.rank + '<small>von ' + a.of + '</small></td><td>' + (a.rankBefore ? a.rankBefore : '–') + '</td><td>' + nf(a.score, 1) + '</td></tr>';
   const merkRow = (x) => {
@@ -2100,7 +2148,7 @@ function renderReport() {
     let zahlen = '–', trend = '';
     if (p.games) {
       if (f) { zahlen = p.goals + ' Tore' + (p.qs ? ', ' + pctTxt(rate(p.qg, p.qs)) + ' Quote' : ''); const gP = p.goals / p.games; if (b.games >= 2) { const gB = b.goals / b.games; trend = '<span class="' + (gP >= gB ? 'up' : 'down') + '">' + (gP >= gB ? '▲' : '▼') + '</span> ' + nf(gP, 1) + ' Tore/Sp <small>davor ' + nf(gB, 1) + '</small>'; } else trend = nf(gP, 1) + ' Tore/Sp'; }
-      else { zahlen = p.saves + '/' + p.shotsGK + ' Paraden, ' + pctTxt(rate(p.saves, p.shotsGK)); if (b.shotsGK >= 20 && p.shotsGK) { const qP = p.saves / p.shotsGK, qB = b.saves / b.shotsGK; trend = '<span class="' + (qP >= qB ? 'up' : 'down') + '">' + (qP >= qB ? '▲' : '▼') + '</span> ' + Math.round(qP * 100) + '%<small>davor ' + Math.round(qB * 100) + '%</small>'; } }
+      else { zahlen = p.sg ? p.sv + '/' + p.sg + ' Paraden, ' + pctTxt(rate(p.sv, p.sg)) : 'Paraden nicht erfasst (Liveticker lite)'; if (b.sg >= 20 && p.sg) { const qP = p.sv / p.sg, qB = b.sv / b.sg; trend = '<span class="' + (qP >= qB ? 'up' : 'down') + '">' + (qP >= qB ? '▲' : '▼') + '</span> ' + Math.round(qP * 100) + '%<small>davor ' + Math.round(qB * 100) + '%</small>'; } }
     }
     return '<tr data-id="' + x.id + '" data-role="' + x.role + '" class="' + (p.games ? '' : 'dim') + '"><td class="name">' + star(x) + '<button class="namebtn" data-player="' + x.id + '" data-role="' + x.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button><span class="team">' + esc(x.team || '') + (f ? '' : ', Torhüter') + '</span></td><td>' + (p.games || '–') + '</td><td class="left">' + esc(p.games ? zahlen : 'kein Einsatz im Zeitraum') + '</td><td class="left">' + trend + '</td></tr>';
   };
@@ -2109,7 +2157,7 @@ function renderReport() {
   h += '<div class="card repsec"><h3>Spieler in Hochform</h3><p class="small muted">Tore pro Spiel im Zeitraum gegenüber dem Schnitt davor, sortiert nach dem Abstand in Standardabweichungen der Liga. Voraussetzung: mindestens 8 Würfe im Zeitraum und 3 Spiele davor.</p>' + wrap(hotHead, lim(hotTop).map(hotRow).join(''), 'Niemand erfüllt die Voraussetzungen. Wähle einen längeren Zeitraum.', 6) + more(hotTop) + '</div>';
   h += '<div class="card repsec"><h3>Formtief</h3><p class="small muted">Wer im Zeitraum klar unter seinem Schnitt lag. Ein schlechtes Wochenende sagt wenig, schau auf mehrere.</p>' + wrap(hotHead, lim(hotLow).map(hotRow).join(''), 'Niemand mit auffälligem Formtief.', 6) + more(hotLow) + '</div>';
   h += '<div class="card repsec"><h3>Torhüter in Form</h3><p class="small muted">Paradenquote im Zeitraum gegenüber davor. Voraussetzung: 20 Gegenwürfe im Zeitraum und 3 Spiele davor.</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Sp') + th('Quote') + th('Plus/Minus') + th('Paraden'), lim(R.gk).map(gkRow).join(''), 'Keine Torhüter mit genug Daten.', 6) + more(R.gk) + '</div>';
-  h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), lim(R.bestF).map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) + more(R.bestF) +
+  h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe, bei Liveticker lite 5 Tore). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), lim(R.bestF).map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) + more(R.bestF) +
     '<h3 style="margin-top:16px">Beste Torhüter-Leistungen</h3><p class="small muted">Höchste Paradenquote in einem Spiel (mindestens 15 Gegenwürfe).</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Spiel', true) + th('Paraden') + th('Quote'), lim(R.bestG).map(bestGRow).join(''), 'Keine Torhüter mit genug Gegenwürfen.', 5) + more(R.bestG) + '</div>';
   h += '<div class="card repsec"><h3>Neu im Talent-Radar</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score aus dem Reiter «Talent-Radar» (Gewicht Alter ' + nf(state.t.wAge, 1) + ', Gewicht Fehler ' + nf(state.t.wTF, 1) + ').</p>' +
     wrap(th('Spieler', true) + th('Liga', true) + th('Rang jetzt') + th('Rang davor') + th('Score'), lim(R.newcomers).map(newRow).join(''), 'Niemand ist neu in die Spitze gerückt.', 5) + more(R.newcomers) + '</div>';
@@ -2356,7 +2404,7 @@ function staefaPlayers(d) {
     let p = m.get(r.playerId);
     if (!p) { p = { id: r.playerId, name: r.name, ligas: new Set(), F: { games: 0, goals: 0, shots: 0 }, G: { games: 0, saves: 0, shots: 0 }, last: '' }; m.set(r.playerId, p); }
     p.ligas.add(liga);
-    if (r.role === 'F') { p.F.games++; p.F.goals += r.goals || 0; p.F.shots += r.shots || 0; } else if (r.shotsGK > 0) { p.G.games++; p.G.saves += r.saves || 0; p.G.shots += r.shotsGK || 0; }
+    if (r.role === 'F') { p.F.games++; p.F.goals += r.goals || 0; p.F.shots += r.shots || 0; } else if (r.shotsGK > 0) { p.G.games++; p.G.saves += r.sv; p.G.shots += r.sg; }
     if (String(g.date) >= p.last) { p.last = String(g.date); p.name = r.name; }
   }
   const out = [...m.values()]; for (const p of out) { const pi = d.players[p.id] || {}; p.year = pi.year || 0; p.pos = pi.position || ''; p.games = p.F.games + p.G.games; }
@@ -2412,7 +2460,7 @@ function renderStaefa() {
   for (const p of list) {
     const s = splitName(p.name), a = p.akte, zahlen = [];
     if (p.F.games) zahlen.push(p.F.goals + ' Tore (' + nf(p.F.goals / p.F.games, 1) + '/Sp)');
-    if (p.G.games) zahlen.push('Torhüter: ' + Math.round((p.G.saves / Math.max(1, p.G.shots)) * 100) + '% Paraden');
+    if (p.G.games) zahlen.push('Torhüter: ' + (p.G.shots ? Math.round((p.G.saves / p.G.shots) * 100) + '% Paraden' : 'Paraden nicht erfasst (Liveticker lite)'));
     const lg = [...p.ligas].sort(ligaSort).join(', ');
     h += '<tr data-zid="' + p.id + '" tabindex="0"' + (p.aktiv ? '' : ' class="dim"') + '><td class="name"><button class="namebtn" data-zopen="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + (p.aktiv ? '' : '<span class="team">ohne aktuellen Einsatz</span>') + '</td><td>' + (p.year || '–') + '</td><td class="left">' + esc(lg || '–') + '</td><td>' + (p.games || '–') + '</td><td class="left">' + esc(zahlen.join(', ') || '–') + '</td>' +
       '<td class="left">' + esc((a && a.position) || '') + (!(a && a.position) && p.pos ? '<span class="muted small">' + esc(p.pos) + ' (handball.ch)</span>' : '') + '</td><td class="left">' + (a && a.talent_card ? '<span class="tc tc-' + esc(a.talent_card) + '">' + esc(TC_LABEL[a.talent_card] || a.talent_card) + '</span>' : '') + '</td><td class="left">' + esc((a && a.schule_lehre) || '') + '</td><td class="left">' + esc((a && a.trainingstage) || '') + '</td>' +
@@ -2809,7 +2857,7 @@ $('#merkCopy').onclick = async () => {
   const lines = [['Name', 'Team', 'Kanton', 'Jahrgang', 'Position', 'Rolle', 'Spiele', 'Tore bzw. Paraden', 'Würfe bzw. Gegenwürfe', 'Quote', 'Notiz'].join('\t')];
   for (const role of ['F', 'G']) for (const p of merkSorted(role, (state.merkLists && state.merkLists[role]) || [])) {
     const f = role === 'F';
-    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.saves, p.shotsGK)), String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
+    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.sv, p.sg)), String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
   }
   const ok = await kopieren(lines.join('\n')); flash($('#merkMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
