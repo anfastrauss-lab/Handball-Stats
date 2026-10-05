@@ -81,7 +81,10 @@ Das kann passieren, wenn handball.ch Anfragen von Servern blockiert. Im Browser 
 Das Passwort bei `SCOUT_PASSWORD` stimmt nicht mehr mit dem überein, mit dem `daten.enc` gemacht wurde. Stell das alte Passwort wieder ein, oder lösche `daten.enc` im Projekt und starte den Lauf neu (er baut alles neu auf, die Freunde brauchen dann das neue Passwort).
 
 **Eine Liga fehlt, oder du willst weitere Ligen.**
-Klicke im Projekt auf `config.json`, dann auf das Stift-Symbol. Die Namen müssen genau so geschrieben sein wie auf handball.ch, zum Beispiel «Junioren U13 Promotion S1». Speichern, danach läuft der nächste Lauf mit den neuen Ligen.
+Klicke im Projekt auf `config.json`, dann auf das Stift-Symbol. Die Namen müssen genau so geschrieben sein wie auf handball.ch, zum Beispiel «Junioren U13 Promotion S1». Speichern. Die neuen Ligen werden beim nächsten Montagslauf geholt. Wenn du nicht warten willst: unter «Actions», «Wochen-Update», «Run workflow» den Lauf von Hand starten.
+
+**Wann handball.ch abgefragt wird.**
+Nur montags früh und wenn du unter «Actions» von Hand auf «Run workflow» klickst. Wenn du Dateien hochlädst (zum Beispiel eine neue `index.html`), wird nur die Website neu veröffentlicht, ohne handball.ch abzufragen.
 
 **GitHub schaltet den Wochenplan ab.**
 GitHub stellt geplante Jobs in öffentlichen Projekten ab, wenn 60 Tage lang nichts im Projekt passiert. Weil der Job jede Woche eine neue Datei speichert, sollte das nicht vorkommen. Falls doch, bekommst du eine E-Mail. Unter «Actions» kannst du den Plan mit einem Klick wieder einschalten.

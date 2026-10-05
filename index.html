@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Handball Scouting</title>
+<script>try { var th = JSON.parse(localStorage.getItem('scouting.theme')); if (th === 'light' || th === 'dark') document.documentElement.setAttribute('data-theme', th); } catch (e) {}</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Source+Sans+3:wght@400;600;700&display=swap" rel="stylesheet">
@@ -145,7 +146,7 @@ ul.insights { margin: 6px 0 0; padding-left: 20px; } ul.insights li { margin: 5p
 .teamsec { margin-top: 16px; }
 tr.mine td { background: var(--bar); font-weight: 700; }
 td small.sub, .tablewrap td small { color: var(--ink-2); font-weight: 400; margin-left: 4px; }
-@media (max-width: 860px) { .teamgrid, .teampick { grid-template-columns: 1fr; } .kpis.five { grid-template-columns: repeat(3, 1fr); } .tabs { margin-left: 0; width: 100%; overflow-x: auto; } .tabs { gap: 0; justify-content: space-between; flex-wrap: wrap; row-gap: 2px; } .tab { padding: 8px 4px; white-space: nowrap; font-size: 12.5px; } .cmptable td.cmpcell { min-width: 92px; } .cmptable td.left { white-space: normal; min-width: 104px; } .cmptable .v { font-size: 15px; } .cbar { max-width: 100%; } .badge { margin-left: 2px; padding: 0 5px; } }
+@media (max-width: 860px) { .teamgrid, .teampick { grid-template-columns: 1fr; } .kpis.five { grid-template-columns: repeat(3, 1fr); } .tabs { margin: 0 -14px; width: calc(100% + 28px); padding: 0 14px 2px; overflow-x: auto; flex-wrap: nowrap; gap: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; } .tabs::-webkit-scrollbar { display: none; } .tab { flex: 0 0 auto; padding: 8px 12px; white-space: nowrap; font-size: 14px; } .cmptable td.cmpcell { min-width: 92px; } .cmptable td.left { white-space: normal; min-width: 104px; } .cmptable .v { font-size: 15px; } .cbar { max-width: 100%; } .badge { margin-left: 2px; padding: 0 5px; } }
 .pwback { position: fixed; inset: 0; background: rgba(8, 16, 22, .6); z-index: 60; display: grid; place-items: center; padding: 20px; }
 .pwbox { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 22px; max-width: 420px; width: 100%; box-shadow: 0 12px 40px rgba(0, 0, 0, .35); }
 .badge { display: inline-block; min-width: 18px; padding: 0 6px; margin-left: 4px; border-radius: 999px; background: var(--signal); color: #1a1405; font-size: 12px; font-weight: 700; line-height: 18px; text-align: center; }
@@ -158,6 +159,39 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .chip button { border: 0; background: none; padding: 5px 11px; cursor: pointer; font-size: 14px; font-weight: 600; }
 .chip button + button { border-left: 1px solid var(--line); padding: 5px 10px; color: var(--ink-2); }
 .chip button:hover { background: var(--surface-2); }
+.filtertoggle, .filterdone, .msort, .cardlist { display: none; }
+.welcome { max-width: 560px; margin: 24px auto; padding: 32px 28px; }
+.welcome h2 { font-size: 32px; }
+.welcomepw { display: flex; gap: 8px; margin: 18px auto 6px; max-width: 380px; }
+.welcomepw input { flex: 1 1 auto; min-width: 0; min-height: 44px; }
+.welcomepw .btn { min-height: 44px; padding: 0 20px; }
+.welcomedemo { margin: 18px 0 0; padding-top: 14px; border-top: 1px solid var(--line); font-size: 15px; }
+.themebtn { border: 1px solid var(--line); background: transparent; color: var(--ink-2); border-radius: 6px; padding: 6px 10px; font-size: 14px; font-weight: 600; cursor: pointer; order: 3; white-space: nowrap; }
+.themebtn:hover { color: var(--ink); border-color: var(--ink-2); }
+details.morefilt { border-top: 1px solid var(--line); padding-top: 12px; min-width: 0; }
+.morefiltbody > * { min-width: 0; }
+.morefiltbody .field { grid-template-columns: minmax(0, 1fr); }
+details.morefilt summary { cursor: pointer; font-weight: 700; font-size: 15px; }
+.morefiltbody { box-sizing: border-box; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 14px 10px; margin-top: 12px; }
+.morefiltbody .wide { grid-column: 1 / -1; }
+.activef { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin: 0 0 12px; }
+.activef .lbl { font-size: 13px; font-weight: 600; color: var(--ink-2); margin-right: 2px; }
+.fchip { display: inline-flex; align-items: center; gap: 8px; border: 1px solid var(--court); background: var(--surface); border-radius: 999px; padding: 4px 5px 4px 12px; font-size: 14px; font-weight: 600; cursor: pointer; max-width: 100%; }
+.fchip span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fchip i { font-style: normal; flex: none; display: inline-grid; place-items: center; width: 22px; height: 22px; border-radius: 50%; background: var(--surface-2); font-size: 12px; }
+.fchip:hover i, .fchip:focus-visible i { background: var(--bad); color: #fff; }
+.fclear { border: 0; background: none; padding: 4px 6px; color: var(--court); text-decoration: underline; cursor: pointer; font-weight: 600; font-size: 14px; }
+.pcard { background: var(--surface); border: 1px solid var(--line); border-radius: 10px; padding: 10px 12px 12px; cursor: pointer; }
+.pcard:hover { border-color: var(--court); }
+.pc-head { display: flex; align-items: baseline; gap: 4px; }
+.pc-head .namebtn { font-size: 17px; flex: 1 1 auto; min-width: 0; }
+.pc-year { color: var(--ink-2); font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pc-team { font-size: 13px; color: var(--ink-2); margin: 1px 0 8px 25px; }
+.pc-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(64px, 1fr)); gap: 6px; margin: 0; }
+.pc-stats div { background: var(--surface-2); border-radius: 6px; padding: 5px 8px; }
+.pc-stats div.sorted { background: var(--bar); box-shadow: inset 0 0 0 1px var(--court); }
+.pc-stats dt { font-size: 11.5px; color: var(--ink-2); line-height: 1.2; }
+.pc-stats dd { margin: 0; font: 700 21px/1.1 var(--font-head); font-variant-numeric: tabular-nums; }
 th sup { font-size: 10px; margin-left: 1px; }
 .tablewrap { background: var(--surface); border: 1px solid var(--line); border-radius: 8px; overflow: auto; max-height: min(74vh, 900px); }
 table { border-collapse: separate; border-spacing: 0; width: 100%; font-variant-numeric: tabular-nums; font-size: 15px; }
@@ -231,6 +265,27 @@ table.plain td { text-align: left; padding: 8px 10px; }
   .topbar { padding: 8px 14px; }
   .kpi b { font-size: 32px; }
 }
+@media (min-width: 861px) {
+  .filters { max-height: calc(100vh - 86px); overflow: auto; }
+}
+@media (max-width: 860px) {
+  .filtertoggle { display: block; width: 100%; }
+  .themebtn { order: 0; margin-left: auto; padding: 5px 9px; font-size: 13px; }
+  .layout { gap: 12px; }
+  .layout:not(.fopen) .filters { display: none; }
+  .layout.fopen .filterdone { display: block; }
+  .results { display: flex; flex-direction: column; }
+  .results > .mapcard { order: 1; margin: 16px 0 0; }
+}
+@media (max-width: 640px) {
+  .results > .tablewrap, .results > .sortbar, #sortHint, #copyTable, #copyMsg { display: none; }
+  .cardlist { display: grid; gap: 8px; }
+  .msort { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
+  .msort label { font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
+  .msort select { flex: 1 1 auto; min-width: 0; }
+  .msort .btn { flex: none; padding: 8px 10px; }
+  .toolbar { margin-bottom: 6px; }
+}
 @media (prefers-reduced-motion: no-preference) {
   .drawer { animation: slidein .18s ease-out; }
   @keyframes slidein { from { transform: translateX(24px); opacity: 0; } to { transform: none; opacity: 1; } }
@@ -241,6 +296,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
 <header class="topbar">
   <span class="brand">Handball Scouting</span>
   <span class="status" id="status"></span>
+  <button class="themebtn" id="themeBtn"></button>
   <nav class="tabs" role="tablist" aria-label="Ansicht">
     <button class="tab" role="tab" id="tabSpieler" aria-selected="true" aria-controls="viewSpieler">Spieler</button>
     <button class="tab" role="tab" id="tabTalent" aria-selected="false" aria-controls="viewTalent">Talent-Radar</button>
@@ -258,17 +314,33 @@ table.plain td { text-align: left; padding: 8px 10px; }
 
 <main>
 <section id="viewSpieler" role="tabpanel" aria-labelledby="tabSpieler">
-  <div class="card empty" id="emptyState" hidden>
-    <h2>Noch keine Daten</h2>
-    <p class="muted">Lade zuerst Spielerstatistiken von handball.ch. Die Anleitung steht im Reiter «Daten». Wenn du nur schauen willst, wie das Tool aussieht, nimm die Demo.</p>
-    <div class="row" style="justify-content:center">
-      <button class="btn" id="goDaten">Daten laden</button>
-      <button class="btn secondary" id="demoStart1">Demo ansehen</button>
+  <div class="card empty welcome" id="emptyState" hidden>
+    <div id="esLoading" hidden><p class="muted">Daten werden geladen …</p></div>
+    <div id="esWelcome" hidden>
+      <h2>Willkommen beim Handball Scouting</h2>
+      <p class="muted">Hier findest du Statistiken zu Spielern und Teams aus den Ligen von handball.ch. Die Daten sind mit einem Passwort geschützt. Du bekommst es von der Person, die dir den Link geschickt hat.</p>
+      <form class="welcomepw" id="esPwForm">
+        <label for="esPw" class="vh">Passwort</label>
+        <input type="password" id="esPw" placeholder="Passwort" autocomplete="current-password">
+        <button class="btn" id="esPwOk" type="submit">Öffnen</button>
+      </form>
+      <p class="msg err" id="esPwErr" aria-live="polite"></p>
+      <p class="small muted">Der Browser merkt sich das Passwort, du musst es nur einmal eingeben.</p>
+      <p class="welcomedemo">Nur mal schauen? <button class="linkbtn" id="demoStart3">Demo mit erfundenen Daten ansehen</button></p>
+    </div>
+    <div id="esNoData">
+      <h2>Noch keine Daten</h2>
+      <p class="muted">Lade zuerst Spielerstatistiken von handball.ch. Die Anleitung steht im Reiter «Daten». Wenn du nur schauen willst, wie das Tool aussieht, nimm die Demo.</p>
+      <div class="row" style="justify-content:center">
+        <button class="btn" id="goDaten">Daten laden</button>
+        <button class="btn secondary" id="demoStart1">Demo ansehen</button>
+      </div>
     </div>
   </div>
 
   <div class="layout" id="players">
-    <aside class="filters" aria-label="Filter">
+    <button class="btn secondary filtertoggle" id="filterToggle" aria-expanded="false" aria-controls="filterPanel">Filter</button>
+    <aside class="filters" id="filterPanel" aria-label="Filter">
       <div class="field wide">
         <span class="lbl" id="lblRole">Rolle</span>
         <div class="seg" role="group" aria-labelledby="lblRole">
@@ -276,21 +348,27 @@ table.plain td { text-align: left; padding: 8px 10px; }
           <button id="roleG" aria-pressed="false">Torhüter</button>
         </div>
       </div>
+      <div class="field wide"><label for="fName">Name</label><input type="search" id="fName" placeholder="Name suchen" autocomplete="off"></div>
       <div class="field wide"><label for="fGroup">Liga und Gruppe</label><select id="fGroup"></select></div>
       <div class="field wide"><label for="fTeam">Team</label><select id="fTeam"></select></div>
       <div class="field"><label for="fYearFrom">Jahrgang ab</label><input type="number" id="fYearFrom" min="1950" max="2030" placeholder="z. B. 2008" inputmode="numeric"></div>
       <div class="field"><label for="fYearTo">Jahrgang bis</label><input type="number" id="fYearTo" min="1950" max="2030" placeholder="z. B. 2010" inputmode="numeric"></div>
-      <div class="field wide"><label for="fPos">Position</label><select id="fPos"></select></div>
-      <div class="field wide"><label for="fCenter">Umkreis um</label><select id="fCenter"></select></div>
-      <div class="field wide" id="radiusField" hidden><label for="fRadius">Radius: <b id="radiusVal"></b></label><input type="range" id="fRadius" min="10" max="250" step="5" value="40"></div>
-      <div class="field wide"><label for="fRegion">Region</label><select id="fRegion"></select><div class="chips chipx" id="cantonChips" style="margin-top:6px"></div></div>
-      <div class="wide" id="areaResetRow" hidden><button class="btn secondary" id="areaReset" style="width:100%">Gebiet zurücksetzen</button></div>
-      <div class="field wide"><label for="fName">Name</label><input type="search" id="fName" placeholder="Name suchen" autocomplete="off"></div>
-      <div class="field"><label for="fGames">Mindestspiele</label><input type="number" id="fGames" min="0" value="1" inputmode="numeric"></div>
-      <div class="field"><label for="fShots" id="lblShots">Mindestwürfe</label><input type="number" id="fShots" min="0" value="0" inputmode="numeric"></div>
-      <p class="small muted wide" style="margin:0">Für aussagekräftige Quoten die Mindestwürfe erhöhen, sonst stehen Spieler mit einem einzigen Wurf oben.</p>
+      <details class="wide morefilt" id="moreFilters">
+        <summary>Weitere Filter <span class="badge" id="moreCount"></span></summary>
+        <div class="morefiltbody">
+          <div class="field wide"><label for="fPos">Position</label><select id="fPos"></select></div>
+          <div class="field wide"><label for="fCenter">Umkreis um</label><select id="fCenter"></select></div>
+          <div class="field wide" id="radiusField" hidden><label for="fRadius">Radius: <b id="radiusVal"></b></label><input type="range" id="fRadius" min="10" max="250" step="5" value="40"></div>
+          <div class="field wide"><label for="fRegion">Region</label><select id="fRegion"></select><div class="chips chipx" id="cantonChips" style="margin-top:6px"></div></div>
+          <div class="wide" id="areaResetRow" hidden><button class="btn secondary" id="areaReset" style="width:100%">Gebiet zurücksetzen</button></div>
+          <div class="field"><label for="fGames">Mindestspiele</label><input type="number" id="fGames" min="0" value="1" inputmode="numeric"></div>
+          <div class="field"><label for="fShots" id="lblShots">Mindestwürfe</label><input type="number" id="fShots" min="0" value="0" inputmode="numeric"></div>
+          <p class="small muted wide" style="margin:0">Für aussagekräftige Quoten die Mindestwürfe erhöhen, sonst stehen Spieler mit einem einzigen Wurf oben.</p>
+        </div>
+      </details>
+      <button class="btn wide filterdone" id="filterDone">Ergebnisse anzeigen</button>
     </aside>
-    <div>
+    <div class="results">
       <section class="card mapcard" id="mapCard" aria-label="Karte">
         <div class="maphead">
           <h2 style="margin:0;font-size:22px">Karte</h2>
@@ -303,6 +381,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
           <p class="small muted" id="mapHint" style="margin:8px 0 0"></p>
         </div>
       </section>
+      <div class="activef" id="activeFilters" aria-label="Aktive Filter" hidden></div>
       <div class="toolbar">
         <span id="count" class="muted" aria-live="polite"></span>
         <div class="row">
@@ -310,8 +389,14 @@ table.plain td { text-align: left; padding: 8px 10px; }
           <button class="btn secondary" id="copyTable">Tabelle kopieren</button>
         </div>
       </div>
+      <div class="msort" id="mSortRow">
+        <label for="mSort">Sortieren nach</label>
+        <select id="mSort"></select>
+        <button class="btn secondary" id="mSortDir"></button>
+      </div>
+      <div class="cardlist" id="cardList"></div>
       <div class="sortbar" id="sortbar">
-        <label class="check"><input type="checkbox" id="multi"> Mehrfach-Sortierung</label>
+        <span class="lbl small muted">Sortiert nach</span>
         <span class="chips" id="chips" aria-label="Aktuelle Sortierung"></span>
         <button class="btn secondary" id="sortReset">Zurücksetzen</button>
       </div>
@@ -323,7 +408,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <ul class="small muted">
           <li>Spiele zählen alle Spiele, in denen der Spieler im Spielbericht steht. Bei Torhütern zählen nur Spiele mit mindestens einem Gegenwurf.</li>
           <li>Tore und Würfe enthalten die 7-Meter. Quote heisst Tore geteilt durch Würfe, bei Torhütern Paraden geteilt durch Gegenwürfe.</li>
-          <li>TF sind technische Fehler. 2' sind Zeitstrafen. Die Zahlen stammen aus dem digitalen Spielbericht, nicht jedes Spiel hat eine Statistik.</li>
+          <li>Fehler sind technische Fehler, Strafen sind 2-Minuten-Zeitstrafen. Die Zahlen stammen aus dem digitalen Spielbericht, nicht jedes Spiel hat eine Statistik.</li>
           <li>Jahrgang, Position und Spielhand stammen aus den Kaderlisten von handball.ch. Die Position ist meist nur bei NLA- und NLB-Teams eingetragen. Wer keinen Jahrgang hat, fällt aus der Liste, sobald du einen Jahrgang eingibst.</li>
         </ul>
       </details>
@@ -391,6 +476,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <div class="field"><label for="repPer">Zeitraum</label><select id="repPer"><option value="7">Letzte 7 Tage</option><option value="14">Letzte 14 Tage</option><option value="30">Letzte 30 Tage</option><option value="custom">Eigener Zeitraum</option></select></div>
       <div class="field" id="repCustom" hidden><label for="repFrom">Von</label><input type="date" id="repFrom"><label for="repTo" style="margin-top:6px;font-size:13px;font-weight:600;color:var(--ink-2)">Bis</label><input type="date" id="repTo"></div>
       <div class="field"><label for="repLiga">Liga</label><select id="repLiga"></select></div>
+      <div class="field"><label for="repN">Spieler pro Liste</label><select id="repN"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="0">Alle</option></select></div>
       <div class="field wide2"><span class="lbl">Gebiet</span><div class="small" id="repArea"></div><button class="btn secondary" id="repAreaBtn" style="margin-top:4px">Gebiet ändern</button></div>
     </div>
     <p class="small muted" id="repInfo" style="margin:10px 0" aria-live="polite"></p>
@@ -853,7 +939,7 @@ const state = {
   view: 'spieler', real: emptyData(), demo: null, storeOk: null,
   f: { role: 'F', group: '', team: '', q: '', minGames: 1, minShots: 0, yearFrom: 0, yearTo: 0, pos: '', center: null, radius: 40, cantons: new Set() },
   mapOpen: lsGet('scouting.map', true) !== false, pick: false, listBase: [], noGeo: 0,
-  sort: [{ key: 'goals', dir: -1 }], sortDefault: true, multi: lsGet('scouting.multi', true) !== false, limit: 100, list: [], open: null, lastFocus: null,
+  sort: [{ key: 'goals', dir: -1 }], sortDefault: true, limit: 100, list: [], open: null, lastFocus: null,
   merk: new Set(lsGet('scouting.merkliste', [])), notes: lsGet('scouting.notizen', {}),
 };
 const data = () => state.demo || state.real;
@@ -971,24 +1057,24 @@ function makeDemo() {
 /* ---------- Spalten ---------- */
 const COLS = {
   F: [
-    { k: 'year', label: 'Jg', title: 'Jahrgang', v: (p) => p.year || null, t: (p) => (p.year ? String(p.year) : '–') },
-    { k: 'games', label: 'Sp', title: 'Spiele im Spielbericht', v: (p) => p.games },
+    { k: 'year', label: 'Jahrgang', title: 'Jahrgang', v: (p) => p.year || null, t: (p) => (p.year ? String(p.year) : '–') },
+    { k: 'games', label: 'Spiele', title: 'Spiele im Spielbericht', v: (p) => p.games },
     { k: 'goals', label: 'Tore', title: 'Tore inklusive 7-Meter', v: (p) => p.goals },
-    { k: 'gpg', r: 1, label: 'Tore/Sp', title: 'Tore pro Spiel', v: (p) => (p.games ? p.goals / p.games : null), t: (p) => (p.games ? nf(p.goals / p.games, 1) : '–'), bar: true },
+    { k: 'gpg', r: 1, label: 'Tore/Spiel', title: 'Tore pro Spiel', v: (p) => (p.games ? p.goals / p.games : null), t: (p) => (p.games ? nf(p.goals / p.games, 1) : '–'), bar: true },
     { k: 'shots', label: 'Würfe', title: 'Würfe inklusive 7-Meter', v: (p) => p.shots },
     { k: 'pct', r: 0, label: 'Quote', title: 'Tore geteilt durch Würfe', v: (p) => rate(p.goals, p.shots), t: (p) => pctTxt(rate(p.goals, p.shots)) },
-    { k: 's7', label: '7m', title: '7-Meter: Tore/Würfe', v: (p) => p.shots7, t: (p) => (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') },
-    { k: 'tfpg', r: 1, label: 'TF/Sp', title: 'Technische Fehler pro Spiel', v: (p) => (p.games ? p.tf / p.games : null), t: (p) => (p.games ? nf(p.tf / p.games, 1) : '–') },
-    { k: 'min2', label: "2'", title: 'Zeitstrafen', v: (p) => p.min2 },
+    { k: 's7', label: '7-Meter', title: '7-Meter: Tore/Würfe', v: (p) => p.shots7, t: (p) => (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') },
+    { k: 'tfpg', r: 1, label: 'Fehler/Spiel', title: 'Technische Fehler pro Spiel', v: (p) => (p.games ? p.tf / p.games : null), t: (p) => (p.games ? nf(p.tf / p.games, 1) : '–') },
+    { k: 'min2', label: 'Strafen', title: 'Zeitstrafen (2 Minuten)', v: (p) => p.min2 },
   ],
   G: [
-    { k: 'year', label: 'Jg', title: 'Jahrgang', v: (p) => p.year || null, t: (p) => (p.year ? String(p.year) : '–') },
-    { k: 'games', label: 'Sp', title: 'Spiele mit Gegenwürfen', v: (p) => p.games },
+    { k: 'year', label: 'Jahrgang', title: 'Jahrgang', v: (p) => p.year || null, t: (p) => (p.year ? String(p.year) : '–') },
+    { k: 'games', label: 'Spiele', title: 'Spiele mit Gegenwürfen', v: (p) => p.games },
     { k: 'saves', label: 'Paraden', title: 'Paraden', v: (p) => p.saves },
     { k: 'shotsGK', label: 'Gegenwürfe', title: 'Würfe aufs Tor', v: (p) => p.shotsGK },
     { k: 'spct', r: 0, label: 'Quote', title: 'Paraden geteilt durch Gegenwürfe', v: (p) => rate(p.saves, p.shotsGK), t: (p) => pctTxt(rate(p.saves, p.shotsGK)), bar: true },
-    { k: 'spg', r: 1, label: 'Par/Sp', title: 'Paraden pro Spiel', v: (p) => (p.games ? p.saves / p.games : null), t: (p) => (p.games ? nf(p.saves / p.games, 1) : '–') },
-    { k: 's7', label: '7m', title: '7-Meter: Paraden/Würfe', v: (p) => p.shots7GK, t: (p) => (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') },
+    { k: 'spg', r: 1, label: 'Paraden/Spiel', title: 'Paraden pro Spiel', v: (p) => (p.games ? p.saves / p.games : null), t: (p) => (p.games ? nf(p.saves / p.games, 1) : '–') },
+    { k: 's7', label: '7-Meter', title: '7-Meter: Paraden/Würfe', v: (p) => p.shots7GK, t: (p) => (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') },
   ],
 };
 const DIST_COL = { k: 'dist', r: 0, label: 'km', title: 'Luftlinie zum gewählten Mittelpunkt, gemessen am Vereinsstandort', v: (p) => (p.dist == null ? null : p.dist), t: (p) => (p.dist == null ? '–' : nf(p.dist, 0)) };
@@ -1098,11 +1184,78 @@ function renderTable() {
   }
   if (!shown.length) h += '<tr><td class="left" colspan="' + (cols.length + 1) + '" style="padding:24px;white-space:normal">Keine Spieler gefunden. Senke die Mindestwerte oder wähle eine andere Gruppe.</td></tr>';
   $('#tbl').innerHTML = h + '</tbody>';
+  renderCards(shown, cols);
   $('#count').textContent = list.length + ' Spieler' + (list.length > shown.length ? ', die ersten ' + shown.length + ' angezeigt' : '') + (state.noGeo ? ', ' + state.noGeo + ' ohne Standort ausgeblendet' : '');
   $('#more').hidden = list.length <= shown.length;
   $('#lblShots').textContent = f.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
   renderSortBar();
   renderMap();
+  renderActiveFilters();
+}
+/* Handy: Spielerkarten statt Tabelle, mit den wichtigsten Zahlen und der Spalte, nach der sortiert wird. */
+const CARD_KEYS = { F: ['games', 'goals', 'gpg', 'pct'], G: ['games', 'saves', 'spct', 'spg'] };
+const CARD_LABEL = { year: 'Jahrgang', games: 'Spiele', goals: 'Tore', gpg: 'Tore/Spiel', pct: 'Wurfquote', saves: 'Paraden', spct: 'Quote', spg: 'Paraden/Spiel', dist: 'km', shots: 'Würfe', shotsGK: 'Gegenwürfe', s7: '7-Meter', tfpg: 'Fehler/Spiel', min2: 'Zeitstrafen' };
+function renderCards(shown, cols) {
+  const role = state.f.role, sk = state.sort[0] && state.sort[0].key;
+  const keys = [...(state.f.center ? ['dist'] : []), ...CARD_KEYS[role]];
+  if (sk && sk !== 'name' && sk !== 'year' && !keys.includes(sk)) keys.push(sk);
+  const kc = keys.map((k) => cols.find((c) => c.k === k)).filter(Boolean);
+  let h = '';
+  for (const p of shown) {
+    const s = splitName(p.name), on = state.merk.has(mk(p.id, p.role));
+    h += '<article class="pcard" data-id="' + p.id + '"><div class="pc-head"><button class="star" data-star="' + p.id + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Von der Merkliste entfernen' : 'Auf die Merkliste setzen') + '">' + (on ? '★' : '☆') + '</button>' +
+      '<button class="namebtn" data-open="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button><span class="pc-year">' + (p.year || '') + '</span></div>' +
+      '<div class="pc-team">' + esc(p.team) + (p.club && p.club.canton ? ' (' + esc(p.club.canton) + ')' : '') + (p.position ? ', ' + esc(p.position) : '') + '</div><dl class="pc-stats">';
+    for (const c of kc) h += '<div' + (c.k === sk ? ' class="sorted"' : '') + '><dt>' + esc(CARD_LABEL[c.k] || c.label) + '</dt><dd>' + esc(colText(c, p)) + '</dd></div>';
+    h += '</dl></article>';
+  }
+  if (!shown.length) h = '<div class="card empty">Keine Spieler gefunden. Entferne einen Filter oder senke die Mindestwerte.</div>';
+  $('#cardList').innerHTML = h;
+  // Sortierauswahl fürs Handy
+  const cur = state.sort[0] || defaultSort(role)[0];
+  $('#mSort').innerHTML = '<option value="name">Name</option>' + cols.map((c) => '<option value="' + c.k + '">' + esc(CARD_LABEL[c.k] || c.title) + '</option>').join('');
+  $('#mSort').value = cur.key;
+  $('#mSortDir').textContent = cur.dir < 0 ? '▼ absteigend' : '▲ aufsteigend';
+  $('#mSortDir').setAttribute('aria-label', 'Sortierrichtung: ' + (cur.dir < 0 ? 'absteigend' : 'aufsteigend') + ', zum Umkehren tippen');
+}
+/* Aktive Filter als Chips über der Liste */
+function activeFilterList() {
+  const f = state.f, d = data(), out = [];
+  if (f.q.trim()) out.push({ k: 'q', t: 'Name: «' + f.q.trim() + '»' });
+  if (f.group) { const g = Object.values(d.groups).find((x) => String(x.groupId) === f.group); out.push({ k: 'group', t: g ? groupLabel(g) : 'Gruppe ' + f.group }); }
+  if (f.team) out.push({ k: 'team', t: index(d).teams[f.team] || 'Team' });
+  if (f.yearFrom || f.yearTo) out.push({ k: 'year', t: 'Jahrgang ' + (f.yearFrom && f.yearTo ? (f.yearFrom === f.yearTo ? f.yearFrom : f.yearFrom + '–' + f.yearTo) : f.yearFrom ? 'ab ' + f.yearFrom : 'bis ' + f.yearTo) });
+  if (f.pos) out.push({ k: 'pos', more: 1, t: f.pos === '__none' ? 'Position unbekannt' : f.pos.startsWith('grp:') ? f.pos.slice(4) + ' (alle)' : f.pos });
+  if (f.center) out.push({ k: 'center', more: 1, t: f.radius + ' km um ' + f.center.label });
+  if (f.cantons.size) { const sel = [...f.cantons].sort(), reg = Object.keys(GROSSREGIONEN).find((n) => GROSSREGIONEN[n].length === sel.length && GROSSREGIONEN[n].every((c) => f.cantons.has(c))); out.push({ k: 'cantons', more: 1, t: reg && sel.length > 1 ? 'Region ' + reg : (sel.length > 1 ? 'Kantone ' : 'Kanton ') + sel.join(', ') }); }
+  if (f.minGames !== 1) out.push({ k: 'minGames', more: 1, t: 'Mind. ' + f.minGames + ' Spiele' });
+  if (f.minShots > 0) out.push({ k: 'minShots', more: 1, t: 'Mind. ' + f.minShots + (f.role === 'F' ? ' Würfe' : ' Gegenwürfe') });
+  return out;
+}
+function renderActiveFilters() {
+  const list = activeFilterList(), box = $('#activeFilters');
+  box.hidden = !list.length;
+  box.innerHTML = list.length ? '<span class="lbl">Aktive Filter:</span>' + list.map((x) => '<button class="fchip" data-fclear="' + x.k + '" aria-label="Filter ' + esc(String(x.t)) + ' entfernen"><span>' + esc(String(x.t)) + '</span><i aria-hidden="true">✕</i></button>').join('') +
+    (list.length > 1 ? '<button class="fclear" data-fclear="all">Alle entfernen</button>' : '') : '';
+  const more = list.filter((x) => x.more).length;
+  $('#moreCount').textContent = more || '';
+  $('#filterToggle').textContent = 'Filter' + (list.length ? ' (' + list.length + ' aktiv)' : '');
+  $('#filterDone').textContent = state.list.length === 1 ? '1 Spieler anzeigen' : state.list.length + ' Spieler anzeigen';
+}
+function clearFilter(k) {
+  const f = state.f, all = k === 'all';
+  if (all || k === 'q') { f.q = ''; $('#fName').value = ''; }
+  if (all || k === 'group') f.group = '';
+  if (all || k === 'team') f.team = '';
+  if (all || k === 'year') { f.yearFrom = 0; f.yearTo = 0; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; }
+  if (all || k === 'pos') f.pos = '';
+  if (all || k === 'center') { f.center = null; state.pick = false; }
+  if (all || k === 'cantons') f.cantons = new Set();
+  if (all || k === 'minGames') { f.minGames = 1; $('#fGames').value = 1; }
+  if (all || k === 'minShots') { f.minShots = 0; $('#fShots').value = 0; }
+  if (!f.center) { state.sort = state.sort.filter((s) => s.key !== 'dist'); if (!state.sort.length) { state.sort = defaultSort(f.role); state.sortDefault = true; } }
+  state.limit = 100;
+  renderPlayers();
 }
 const defaultSort = (role) => [{ key: role === 'F' ? 'goals' : 'saves', dir: -1 }];
 function renderSortBar() {
@@ -1110,10 +1263,10 @@ function renderSortBar() {
   $('#chips').innerHTML = state.sort.map((s, i) =>
     '<span class="chip"><button data-flip="' + i + '" title="Richtung umkehren">' + (state.sort.length > 1 ? (i + 1) + '. ' : '') + esc(label(s.key)) + (s.dir < 0 ? ' ▼' : ' ▲') + '</button>' +
     (state.sort.length > 1 ? '<button data-del="' + i + '" aria-label="' + esc(label(s.key)) + ' aus der Sortierung entfernen">×</button>' : '') + '</span>').join('');
-  $('#multi').checked = state.multi;
-  $('#sortHint').textContent = state.multi
-    ? 'Klicke die Spalten nacheinander an. Die zuerst angeklickte zählt am meisten, die nächste entscheidet bei Gleichstand. Zum Neustart auf «Zurücksetzen» klicken.'
-    : 'Ein Klick sortiert nur nach dieser Spalte. Mit «Mehrfach-Sortierung» oder gedrückter Shift-Taste sortierst du nach mehreren Spalten gleichzeitig.';
+  $('#sortReset').hidden = state.sortDefault;
+  $('#sortHint').textContent = state.sort.length > 1
+    ? 'Die erste Spalte zählt am meisten, die nächste entscheidet bei Gleichstand.'
+    : 'Klicke auf eine Spaltenüberschrift, um danach zu sortieren. Ein zweiter Klick dreht die Reihenfolge um. Tipp: Mit gedrückter Shift-Taste kommt eine weitere Spalte dazu.';
 }
 function fillSelects() {
   const d = data(), f = state.f, idx = index(d);
@@ -1231,8 +1384,10 @@ function renderStatus() {
   const players = new Set(r.map((x) => x.playerId)).size, games = Object.values(d.games).filter((g) => g.hasStats).length;
   $('#status').textContent = r.length ? nf(players, 0) + ' Spieler aus ' + nf(games, 0) + ' Spielen' : 'Keine Daten geladen';
   $('#demoBanner').hidden = !state.demo;
-  const empty = !r.length;
+  const empty = !r.length, sh = state.shared ? state.shared.status : 'none';
   $('#emptyState').hidden = !empty; $('#players').hidden = empty;
+  $('#esLoading').hidden = sh !== 'loading'; $('#esWelcome').hidden = sh !== 'locked'; $('#esNoData').hidden = sh === 'loading' || sh === 'locked';
+  $('#esPwErr').textContent = (sh === 'locked' && state.shared.error) || '';
 }
 function renderPlayers() { fillSelects(); fillPositions(); renderTable(); }
 
@@ -1263,9 +1418,9 @@ function renderGame() {
     const gks = t.filter((r) => r.role === 'G').sort((a, b) => b.shotsGK - a.shotsGK || byName(a, b));
     let h = '<h3 style="margin-top:20px">' + esc(name) + ' <span class="muted">' + score + ' Tore</span> <button class="linkbtn small" data-team="' + teamId + '" style="font-family:var(--font-body);font-weight:600;font-size:13px">Team ansehen</button></h3>';
     if (!t.length) return h + '<p class="small muted">Für dieses Team gibt es keine Statistik.</p>';
-    h += '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Spieler</th><th>Tore/Würfe</th><th>Quote</th><th>7m</th><th>TF</th><th>2\'</th></tr></thead><tbody>' +
+    h += '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Spieler</th><th>Tore/Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
       field.map((r) => '<tr' + cls(r, r.goals || r.shots || r.tf || r.min2 || r.warn) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.goals + '/' + r.shots + '</td><td>' + pctTxt(rate(r.goals, r.shots)) + '</td><td>' + (r.shots7 ? r.goals7 + '/' + r.shots7 : '–') + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td></tr>').join('') + '</tbody></table></div>';
-    if (gks.length) h += '<div style="overflow-x:auto;margin-top:10px"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Torhüter</th><th>Paraden</th><th>Quote</th><th>7m</th></tr></thead><tbody>' +
+    if (gks.length) h += '<div style="overflow-x:auto;margin-top:10px"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Torhüter</th><th>Paraden</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th></tr></thead><tbody>' +
       gks.map((r) => '<tr' + cls(r, r.shotsGK) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.saves + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.saves, r.shotsGK)) + '</td><td>' + r.saves7 + '/' + r.shots7GK + '</td></tr>').join('') + '</tbody></table></div>';
     return h;
   };
@@ -1320,7 +1475,7 @@ function renderDrawer() {
     return '<tr class="gamerow" data-game="' + g.gameId + '" tabindex="0"><td>' + esc(fmtDate(g.date)) + '</td><td class="left">' + esc(lg.main) + (lg.sub ? '<br><span class="small muted">' + esc(lg.sub) + '</span>' : '') + '</td><td class="left">' + (home ? '' : '@ ') + esc(gegner) + '</td><td><span class="res-' + cls + '">' + lab + '</span> ' + own + ':' + opp + '</td>' + cells +
       '<td><a class="ext" href="' + gameUrl(g.gameId) + '" target="_blank" rel="noopener noreferrer" aria-label="Spiel auf handball.ch öffnen" title="Auf handball.ch öffnen">↗</a></td></tr>';
   }).join('');
-  const head = role === 'F' ? '<th>Tore/Würfe</th><th>Quote</th><th>TF</th><th>2\'</th>' : '<th>Paraden</th><th>Quote</th><th>7m</th>';
+  const head = role === 'F' ? '<th>Tore/Würfe</th><th>Quote</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th>' : '<th>Paraden</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th>';
   $('#drawer').innerHTML =
     '<div class="dhead"><div><h2 class="dname" id="dTitle"><b>' + esc(s.sur) + '</b> <span>' + esc(s.first) + '</span></h2>' +
     '<p class="muted" style="margin-top:6px"><button class="linkbtn" data-team="' + last.r.teamId + '" title="Team im Gegner-Scouting ansehen">' + esc(team) + '</button>' + (role === 'G' ? ', Torhüter' : '') + (info ? '<br>' + esc(info) : '') + '<br><span class="small">' + esc(groups) + '</span></p></div>' +
@@ -1398,6 +1553,8 @@ function setView(v) {
   state.view = v;
   $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTalent').hidden = v !== 'talent'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten';
   for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['talent', 'tabTalent'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten']]) $('#' + id).setAttribute('aria-selected', v === k);
+  const at = $('.tab[aria-selected="true"]'), tb = $('.tabs'); // Handy: gewählten Reiter in die wischbare Leiste holen
+  if (at && tb.scrollWidth > tb.clientWidth) tb.scrollLeft = at.offsetLeft - tb.offsetLeft - (tb.clientWidth - at.offsetWidth) / 2;
   if (v === 'daten') renderData(); else if (v === 'merk') renderMerk(); else if (v === 'talent') { syncTalInputs(); renderTalent(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
 }
 function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'talent') renderTalent(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); }
@@ -1527,9 +1684,9 @@ const signed = (v, dec) => (v > 0 ? '+' : '') + (dec ? nf(v, dec) : nf1(v));
 function talCols(role) {
   const common = [
     { k: 'liga', label: 'Liga', left: true, v: (a) => a.liga, t: (a) => a.liga },
-    { k: 'year', label: 'Jg', v: (a) => a.year || null, t: (a) => (a.year ? String(a.year) : '–') },
+    { k: 'year', label: 'Jahrgang', v: (a) => a.year || null, t: (a) => (a.year ? String(a.year) : '–') },
     { k: 'age', label: 'Alter', title: 'Jahre jünger (+) oder älter (−) als der Median der Liga', v: (a) => a.ageAdv, t: (a) => (a.ageAdv == null ? '–' : signed(a.ageAdv)) },
-    { k: 'games', label: 'Sp', title: 'Spiele in dieser Liga', v: (a) => a.games, t: (a) => String(a.games) },
+    { k: 'games', label: 'Spiele', title: 'Spiele in dieser Liga', v: (a) => a.games, t: (a) => String(a.games) },
   ];
   const tail = [
     { k: 'perf', label: 'Leistung', title: 'Abstand zum Ligaschnitt in Standardabweichungen (0 ist Durchschnitt)', v: (a) => a.perf, t: (a) => (a.perf == null ? '–' : signed(a.perf, 1)) },
@@ -1537,9 +1694,9 @@ function talCols(role) {
   ];
   const mid = role === 'F'
     ? [
-      { k: 'gpg', label: 'Tore/Sp', v: (a) => a.gpg, t: (a) => (a.gpg == null ? '–' : nf(a.gpg, 1)), sub: (a) => (a.muG == null ? '' : 'Ø ' + nf(a.muG, 1)) },
+      { k: 'gpg', label: 'Tore/Spiel', v: (a) => a.gpg, t: (a) => (a.gpg == null ? '–' : nf(a.gpg, 1)), sub: (a) => (a.muG == null ? '' : 'Ø ' + nf(a.muG, 1)) },
       { k: 'pct', label: 'Quote', v: (a) => a.pct, t: (a) => (a.pct == null ? '–' : Math.round(a.pct * 100) + '%'), sub: (a) => (a.muP == null ? '' : 'Ø ' + Math.round(a.muP * 100) + '%') },
-      { k: 'tfpg', label: 'TF/Sp', title: 'Technische Fehler pro Spiel (weniger ist besser)', v: (a) => a.tfpg, t: (a) => (a.tfpg == null ? '–' : nf(a.tfpg, 1)), sub: (a) => (a.muT == null ? '' : 'Ø ' + nf(a.muT, 1)) },
+      { k: 'tfpg', label: 'Fehler/Spiel', title: 'Technische Fehler pro Spiel (weniger ist besser)', v: (a) => a.tfpg, t: (a) => (a.tfpg == null ? '–' : nf(a.tfpg, 1)), sub: (a) => (a.muT == null ? '' : 'Ø ' + nf(a.muT, 1)) },
     ]
     : [
       { k: 'shotsGK', label: 'Gegenwürfe', v: (a) => a.shotsGK, t: (a) => String(a.shotsGK) },
@@ -1715,9 +1872,9 @@ function renderTeam() {
     '<div class="card"><h3>Letzte Spiele</h3><p class="small muted" style="margin:0 0 6px">Ein Klick öffnet die Statistik des Spiels.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Datum</th><th class="left">Liga</th><th class="left">Gegner</th><th>Resultat</th></tr></thead><tbody>' + (last || '<tr><td colspan="4">Keine Spiele</td></tr>') + '</tbody></table></div></div></div>';
   const fl = td.F.slice().sort((a, b) => b.goals - a.goals || b.shots - a.shots), gl = td.G.slice().sort((a, b) => b.shotsGK - a.shotsGK);
   const pbtn = (p) => { const s = splitName(p.name); return '<button class="namebtn" data-player="' + p.id + '" data-role="' + p.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
-  h += '<div class="card teamsec"><h3>Kader: Feldspieler</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Spieler</span></th><th>Jg</th><th>Sp</th><th>Tore</th><th>Tore/Sp</th><th>Würfe</th><th>Quote</th><th>7m</th><th>TF</th><th>2\'</th></tr></thead><tbody>' +
+  h += '<div class="card teamsec"><h3>Kader: Feldspieler</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Spieler</span></th><th>Jahrgang</th><th>Spiele</th><th>Tore</th><th>Tore/Spiel</th><th>Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
     fl.map((p) => '<tr><td class="name">' + pbtn(p) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + '</span></td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + p.shots + '</td><td>' + pctTxt(rate(p.goals, p.shots)) + '</td><td>' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + '</td><td>' + p.tf + '</td><td>' + p.min2 + '</td></tr>').join('') +
-    '</tbody></table></div>' + (gl.length ? '<h3 style="margin-top:18px">Torhüter</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Torhüter</span></th><th>Jg</th><th>Sp</th><th>Paraden</th><th>Gegenwürfe</th><th>Quote</th><th>7m</th></tr></thead><tbody>' +
+    '</tbody></table></div>' + (gl.length ? '<h3 style="margin-top:18px">Torhüter</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Torhüter</span></th><th>Jahrgang</th><th>Spiele</th><th>Paraden</th><th>Gegenwürfe</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th></tr></thead><tbody>' +
       gl.map((p) => '<tr><td class="name">' + pbtn(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.saves + '</td><td>' + p.shotsGK + '</td><td>' + pctTxt(rate(p.saves, p.shotsGK)) + '</td><td>' + (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') + '</td></tr>').join('') + '</tbody></table></div>' : '') + '</div>';
   if (td.mainGroup != null) {
     const st = teamStanding(d, td.mainGroup), gr = d.groups[td.mainGroup];
@@ -1809,7 +1966,7 @@ function renderCompare(d, body, idx) {
   // Beste Spieler
   const tops = (td, nm) => { const f = td.F.slice().sort((a, b) => b.goals - a.goals).slice(0, 5), g = td.G.slice().sort((a, b) => b.shotsGK - a.shotsGK)[0];
     const pb = (p) => { const s = splitName(p.name); return '<button class="namebtn" data-player="' + p.id + '" data-role="' + p.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
-    return '<div class="card"><h3>Beste Werfer: ' + esc(nm) + '</h3><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Spieler</th><th>Jg</th><th>Sp</th><th>Tore</th><th>Tore/Sp</th><th>Quote</th></tr></thead><tbody>' +
+    return '<div class="card"><h3>Beste Werfer: ' + esc(nm) + '</h3><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Spieler</th><th>Jahrgang</th><th>Spiele</th><th>Tore</th><th>Tore/Spiel</th><th>Quote</th></tr></thead><tbody>' +
       (f.map((p) => '<tr><td class="left">' + pb(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + pctTxt(rate(p.goals, p.shots)) + '</td></tr>').join('') || '<tr><td colspan="6">Keine Statistik</td></tr>') + '</tbody></table></div>' +
       (g ? '<p class="small" style="margin:10px 0 0"><b>Torhüter:</b> ' + pb(g) + ', ' + pctTxt(rate(g.saves, g.shotsGK)) + ' (' + g.saves + ' von ' + g.shotsGK + ')</p>' : '') + '</div>'; };
   h += '<div class="teamgrid">' + tops(ta, nA) + tops(tb, nB) + '</div>';
@@ -1822,7 +1979,7 @@ function openGameDirect(gid) {
 }
 
 /* ---------- Wochenreport ---------- */
-state.rep = { per: '7', from: '', to: '', liga: '' };
+state.rep = { per: '7', from: '', to: '', liga: '', n: lsGet('scouting.repN', 10) };
 const addDays = (iso, n) => { const t = new Date(iso + 'T12:00:00Z'); t.setUTCDate(t.getUTCDate() + n); return t.toISOString().slice(0, 10); };
 const day = (g) => String(g.date).slice(0, 10);
 const fmtDay = (iso) => (iso ? iso.slice(8, 10) + '.' + iso.slice(5, 7) + '.' + iso.slice(2, 4) : '');
@@ -1878,8 +2035,8 @@ function repCompute(d) {
   for (const x of perf) { x.team = idx.teams[x.teamId] || ''; const home = String(x.teamId) === String(x.g.homeTeamId); x.opp = home ? x.g.awayName : x.g.homeName; x.own = home ? x.g.homeScore : x.g.awayScore; x.oth = home ? x.g.awayScore : x.g.homeScore; x.home = home; }
   attachGeo(perf);
   const perfIn = perf.filter(inArea);
-  const bestF = perfIn.filter((x) => x.role === 'F' && x.row.shots >= 5).sort((x, y) => y.row.goals - x.row.goals || y.row.goals / y.row.shots - x.row.goals / x.row.shots).slice(0, 10);
-  const bestG = perfIn.filter((x) => x.role === 'G' && x.row.shotsGK >= 15).sort((x, y) => y.row.saves / y.row.shotsGK - x.row.saves / x.row.shotsGK || y.row.saves - x.row.saves).slice(0, 5);
+  const bestF = perfIn.filter((x) => x.role === 'F' && x.row.shots >= 5).sort((x, y) => y.row.goals - x.row.goals || y.row.goals / y.row.shots - x.row.goals / x.row.shots);
+  const bestG = perfIn.filter((x) => x.role === 'G' && x.row.shotsGK >= 15).sort((x, y) => y.row.saves / y.row.shotsGK - x.row.saves / x.row.shotsGK || y.row.saves - x.row.saves);
   // Neu im Talent-Radar
   const wA = state.t.wAge, after = scoreRanks(end >= rg.last ? T : buildTalent(d, { until: end }), wA), before = scoreRanks(buildTalent(d, { before: start }), wA), newcomers = [];
   for (const [key, v] of after) {
@@ -1889,7 +2046,7 @@ function repCompute(d) {
     newcomers.push({ ...v.a, role: v.a.role, rank: v.rank, of: v.of, score: v.score, rankBefore: bv ? bv.rank : null, ofBefore: bv ? bv.of : null });
   }
   attachGeo(newcomers);
-  const newIn = newcomers.filter(inArea).sort((x, y) => x.rank - y.rank || y.score - x.score).slice(0, 12);
+  const newIn = newcomers.filter(inArea).sort((x, y) => x.rank - y.rank || y.score - x.score);
   // Merkliste
   const merk = [];
   for (const e of state.merk) {
@@ -1903,7 +2060,7 @@ function repCompute(d) {
   }
   for (const x of merk) x.team = idx.teams[x.teamId] || '';
   // Spiele
-  const top = games.filter((g) => g.homeScore + g.awayScore > 0).map((g) => ({ g, liga: ligaOf(g), margin: Math.abs(g.homeScore - g.awayScore), total: g.homeScore + g.awayScore })).sort((x, y) => y.margin - x.margin || y.total - x.total).slice(0, 6);
+  const top = games.filter((g) => g.homeScore + g.awayScore > 0).map((g) => ({ g, liga: ligaOf(g), margin: Math.abs(g.homeScore - g.awayScore), total: g.homeScore + g.awayScore })).sort((x, y) => y.margin - x.margin || y.total - x.total);
   const players = new Set(perf.map((x) => x.id)).size, goals = games.reduce((s, g) => s + g.homeScore + g.awayScore, 0);
   return { rg, ligas, games, hot: hotIn, gk: gkIn, bestF, bestG, newcomers: newIn, merk, top, players, goals };
 }
@@ -1924,9 +2081,12 @@ function renderReport() {
   const wrap = (head, body, empty, cols) => '<div class="tablewrap"><table><thead><tr>' + head + '</tr></thead><tbody>' + (body || '<tr><td class="left" colspan="' + cols + '" style="padding:18px;white-space:normal">' + empty + '</td></tr>') + '</tbody></table></div>';
   const th = (t, left) => '<th' + (left ? ' class="left name"' : '') + '><span class="thbtn" style="display:block;cursor:default;' + (left ? 'text-align:left' : '') + '">' + t + '</span></th>';
   const dlt = (v, dec) => (v >= 0 ? '+' : '') + nf(v, dec);
+  $('#repN').value = String(r.n);
+  const lim = (arr) => (r.n ? arr.slice(0, r.n) : arr);
+  const more = (arr) => (r.n && arr.length > r.n ? '<p class="small muted" style="margin:6px 0 0">' + r.n + ' von ' + arr.length + ' angezeigt. Mehr unter «Spieler pro Liste».</p>' : '');
   const hotRow = (a) => '<tr data-id="' + a.id + '" data-role="F">' + pcell(a) + '<td class="left">' + esc(a.liga) + '</td><td>' + a.p.games + '</td><td>' + nf(a.gP, 1) + '<small>davor ' + nf(a.gB, 1) + '</small></td><td class="' + (a.z >= 0 ? 'up' : 'down') + '">' + dlt(a.gP - a.gB, 1) + '</td><td>' + Math.round(a.pP * 100) + '%</td></tr>';
   const hotHead = th('Spieler', true) + th('Liga', true) + th('Sp') + th('Tore/Sp') + th('Plus/Minus') + th('Quote');
-  const hotTop = R.hot.filter((a) => a.z > 0).slice(0, 10), hotLow = R.hot.slice().sort((x, y) => x.z - y.z).filter((a) => a.z < 0).slice(0, 5);
+  const hotTop = R.hot.filter((a) => a.z > 0), hotLow = R.hot.slice().sort((x, y) => x.z - y.z).filter((a) => a.z < 0);
   const gkRow = (a) => '<tr data-id="' + a.id + '" data-role="G">' + pcell(a) + '<td class="left">' + esc(a.liga) + '</td><td>' + a.p.games + '</td><td>' + Math.round(a.qP * 100) + '%<small>davor ' + Math.round(a.qB * 100) + '%</small></td><td class="' + (a.z >= 0 ? 'up' : 'down') + '">' + dlt((a.qP - a.qB) * 100, 0) + ' Pkt</td><td>' + a.p.saves + '/' + a.p.shotsGK + '</td></tr>';
   const gameCell = (x) => '<td class="left">' + esc(fmtDate(x.g.date)) + ', ' + (x.home ? '' : '@ ') + esc(x.opp) + ' <span class="res-' + (x.own > x.oth ? 's' : x.own < x.oth ? 'n' : 'u') + '">' + (x.own > x.oth ? 'S' : x.own < x.oth ? 'N' : 'U') + '</span> ' + x.own + ':' + x.oth + '</td>';
   const bestRow = (x) => '<tr class="gamerow" data-tgame="' + x.g.gameId + '" tabindex="0">' + pcell(x) + '<td class="left">' + esc(x.liga) + '</td>' + gameCell(x) + '<td>' + x.row.goals + '/' + x.row.shots + '</td><td>' + pctTxt(rate(x.row.goals, x.row.shots)) + '</td></tr>';
@@ -1943,32 +2103,32 @@ function renderReport() {
   };
   const topRow = (x) => '<tr class="gamerow" data-tgame="' + x.g.gameId + '" tabindex="0"><td>' + esc(fmtDate(x.g.date)) + '</td><td class="left">' + esc(x.liga) + '</td><td class="left">' + esc(x.g.homeName) + '</td><td>' + x.g.homeScore + ':' + x.g.awayScore + '</td><td class="left">' + esc(x.g.awayName) + '</td></tr>';
   let h = '';
-  h += '<div class="card repsec"><h3>Spieler in Hochform</h3><p class="small muted">Tore pro Spiel im Zeitraum gegenüber dem Schnitt davor, sortiert nach dem Abstand in Standardabweichungen der Liga. Voraussetzung: mindestens 8 Würfe im Zeitraum und 3 Spiele davor.</p>' + wrap(hotHead, hotTop.map(hotRow).join(''), 'Niemand erfüllt die Voraussetzungen. Wähle einen längeren Zeitraum.', 6) + '</div>';
-  h += '<div class="card repsec"><h3>Formtief</h3><p class="small muted">Wer im Zeitraum klar unter seinem Schnitt lag. Ein schlechtes Wochenende sagt wenig, schau auf mehrere.</p>' + wrap(hotHead, hotLow.map(hotRow).join(''), 'Niemand mit auffälligem Formtief.', 6) + '</div>';
-  h += '<div class="card repsec"><h3>Torhüter in Form</h3><p class="small muted">Paradenquote im Zeitraum gegenüber davor. Voraussetzung: 20 Gegenwürfe im Zeitraum und 3 Spiele davor.</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Sp') + th('Quote') + th('Plus/Minus') + th('Paraden'), R.gk.slice(0, 6).map(gkRow).join(''), 'Keine Torhüter mit genug Daten.', 6) + '</div>';
-  h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), R.bestF.map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) +
-    '<h3 style="margin-top:16px">Beste Torhüter-Leistungen</h3><p class="small muted">Höchste Paradenquote in einem Spiel (mindestens 15 Gegenwürfe).</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Spiel', true) + th('Paraden') + th('Quote'), R.bestG.map(bestGRow).join(''), 'Keine Torhüter mit genug Gegenwürfen.', 5) + '</div>';
+  h += '<div class="card repsec"><h3>Spieler in Hochform</h3><p class="small muted">Tore pro Spiel im Zeitraum gegenüber dem Schnitt davor, sortiert nach dem Abstand in Standardabweichungen der Liga. Voraussetzung: mindestens 8 Würfe im Zeitraum und 3 Spiele davor.</p>' + wrap(hotHead, lim(hotTop).map(hotRow).join(''), 'Niemand erfüllt die Voraussetzungen. Wähle einen längeren Zeitraum.', 6) + more(hotTop) + '</div>';
+  h += '<div class="card repsec"><h3>Formtief</h3><p class="small muted">Wer im Zeitraum klar unter seinem Schnitt lag. Ein schlechtes Wochenende sagt wenig, schau auf mehrere.</p>' + wrap(hotHead, lim(hotLow).map(hotRow).join(''), 'Niemand mit auffälligem Formtief.', 6) + more(hotLow) + '</div>';
+  h += '<div class="card repsec"><h3>Torhüter in Form</h3><p class="small muted">Paradenquote im Zeitraum gegenüber davor. Voraussetzung: 20 Gegenwürfe im Zeitraum und 3 Spiele davor.</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Sp') + th('Quote') + th('Plus/Minus') + th('Paraden'), lim(R.gk).map(gkRow).join(''), 'Keine Torhüter mit genug Daten.', 6) + more(R.gk) + '</div>';
+  h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), lim(R.bestF).map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) + more(R.bestF) +
+    '<h3 style="margin-top:16px">Beste Torhüter-Leistungen</h3><p class="small muted">Höchste Paradenquote in einem Spiel (mindestens 15 Gegenwürfe).</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Spiel', true) + th('Paraden') + th('Quote'), lim(R.bestG).map(bestGRow).join(''), 'Keine Torhüter mit genug Gegenwürfen.', 5) + more(R.bestG) + '</div>';
   h += '<div class="card repsec"><h3>Neu im Talent-Radar</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score aus dem Reiter «Talent-Radar» (Gewicht Alter ' + nf(state.t.wAge, 1) + ', Gewicht Fehler ' + nf(state.t.wTF, 1) + ').</p>' +
-    wrap(th('Spieler', true) + th('Liga', true) + th('Rang jetzt') + th('Rang davor') + th('Score'), R.newcomers.map(newRow).join(''), 'Niemand ist neu in die Spitze gerückt.', 5) + '</div>';
+    wrap(th('Spieler', true) + th('Liga', true) + th('Rang jetzt') + th('Rang davor') + th('Score'), lim(R.newcomers).map(newRow).join(''), 'Niemand ist neu in die Spitze gerückt.', 5) + more(R.newcomers) + '</div>';
   h += '<div class="card repsec"><h3>Deine Merkliste im Zeitraum</h3>' + (R.merk.length ? '<p class="small muted">Wie deine gemerkten Spieler zuletzt gespielt haben, mit dem Vergleich zu ihrem Schnitt davor.</p>' + wrap(th('Spieler', true) + th('Sp') + th('Zahlen', true) + th('Trend', true), R.merk.map(merkRow).join(''), '', 4) : '<p class="small muted" style="margin:0">Noch niemand auf der Merkliste. Merke Spieler mit dem Stern, dann siehst du hier, wie sie gespielt haben.</p>') + '</div>';
-  h += '<div class="card repsec"><h3>Spiele mit den höchsten Resultaten</h3><p class="small muted">Die deutlichsten Resultate des Zeitraums.</p><div class="tablewrap"><table><thead><tr>' + th('Datum', true).replace('left name', 'left') + th('Liga', true).replace('left name', 'left') + th('Heim', true).replace('left name', 'left') + th('Resultat') + th('Gast', true).replace('left name', 'left') + '</tr></thead><tbody>' + (R.top.map(topRow).join('') || '<tr><td class="left" colspan="5" style="padding:18px">Keine Spiele im Zeitraum.</td></tr>') + '</tbody></table></div></div>';
+  h += '<div class="card repsec"><h3>Spiele mit den höchsten Resultaten</h3><p class="small muted">Die deutlichsten Resultate des Zeitraums.</p><div class="tablewrap"><table><thead><tr>' + th('Datum', true).replace('left name', 'left') + th('Liga', true).replace('left name', 'left') + th('Heim', true).replace('left name', 'left') + th('Resultat') + th('Gast', true).replace('left name', 'left') + '</tr></thead><tbody>' + (lim(R.top).map(topRow).join('') || '<tr><td class="left" colspan="5" style="padding:18px">Keine Spiele im Zeitraum.</td></tr>') + '</tbody></table></div>' + more(R.top) + '</div>';
   $('#repBody').innerHTML = h;
 }
 function repText() {
   const R = state.repData; if (!R) return '';
-  const nm = (x) => fullName(x.name), L = [];
+  const nm = (x) => fullName(x.name), L = [], k = state.rep.n || undefined;
   L.push('Wochenreport Handball-Scouting', R.rg.label + ': ' + fmtDay(R.rg.start) + ' bis ' + fmtDay(R.rg.end) + (state.rep.liga ? ' (' + state.rep.liga + ')' : '') + ', ' + R.games.length + ' Spiele, ' + R.goals + ' Tore', '');
   const sec = (title, arr, f) => { L.push(title); if (arr.length) arr.forEach((x) => L.push('- ' + f(x))); else L.push('- niemand'); L.push(''); };
-  sec('In Hochform', R.hot.filter((a) => a.z > 0).slice(0, 5), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): ' + nf(a.gP, 1) + ' Tore/Sp, davor ' + nf(a.gB, 1));
-  sec('Beste Einzelleistungen', R.bestF.slice(0, 5), (x) => nm(x) + ' (' + x.team + '): ' + x.row.goals + '/' + x.row.shots + ' Tore gegen ' + x.opp + ' (' + x.own + ':' + x.oth + ')');
-  sec('Torhüter in Form', R.gk.slice(0, 3), (a) => nm(a) + ' (' + a.team + '): ' + Math.round(a.qP * 100) + ' % Paraden, davor ' + Math.round(a.qB * 100) + ' %');
-  sec('Neu im Talent-Radar', R.newcomers.slice(0, 5), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): Rang ' + a.rank + ' von ' + a.of + (a.rankBefore ? ', davor ' + a.rankBefore : ', neu'));
+  sec('In Hochform', R.hot.filter((a) => a.z > 0).slice(0, k), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): ' + nf(a.gP, 1) + ' Tore/Sp, davor ' + nf(a.gB, 1));
+  sec('Beste Einzelleistungen', R.bestF.slice(0, k), (x) => nm(x) + ' (' + x.team + '): ' + x.row.goals + '/' + x.row.shots + ' Tore gegen ' + x.opp + ' (' + x.own + ':' + x.oth + ')');
+  sec('Torhüter in Form', R.gk.slice(0, k), (a) => nm(a) + ' (' + a.team + '): ' + Math.round(a.qP * 100) + ' % Paraden, davor ' + Math.round(a.qB * 100) + ' %');
+  sec('Neu im Talent-Radar', R.newcomers.slice(0, k), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): Rang ' + a.rank + ' von ' + a.of + (a.rankBefore ? ', davor ' + a.rankBefore : ', neu'));
   sec('Merkliste', R.merk.filter((x) => x.p.games), (x) => nm(x) + ' (' + x.team + '): ' + (x.role === 'F' ? x.p.goals + '/' + x.p.shots + ' Tore/Würfe in ' + x.p.games + ' Spielen' : x.p.saves + '/' + x.p.shotsGK + ' Paraden in ' + x.p.games + ' Spielen'));
   return L.join('\n').trim();
 }
 /* ---------- Gemeinsame Daten (verschlüsselt von der eigenen Website) ---------- */
 const SHARED_URL = 'daten.enc';
-state.shared = { status: 'none', stand: '', error: '' };
+state.shared = { status: /^https?:$/.test(location.protocol) ? 'loading' : 'none', stand: '', error: '' };
 const b64d = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
 const b64e = (u8) => { let s = ''; for (let i = 0; i < u8.length; i += 0x8000) s += String.fromCharCode.apply(null, u8.subarray(i, i + 0x8000)); return btoa(s); };
 async function readAll(readable) {
@@ -1993,7 +2153,8 @@ async function encryptData(text, pw) {
 }
 const fmtStand = (iso) => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleString('de-CH', { weekday: 'long', day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' Uhr'; };
 function renderShared() {
-  const s = state.shared; $('#sharedCard').hidden = s.status === 'none'; if (s.status === 'none') return;
+  const s = state.shared; renderStatus();
+  $('#sharedCard').hidden = s.status === 'none' || s.status === 'loading'; if ($('#sharedCard').hidden) return;
   $('#sharedInfo').textContent = s.status === 'ok' ? 'Die Daten wurden automatisch von der Website geladen. Stand: ' + fmtStand(s.stand) + '.' : (s.error || 'Die gemeinsamen Daten sind durch ein Passwort geschützt.');
   $('#sharedUnlock').hidden = s.status !== 'locked'; $('#sharedReload').hidden = s.status !== 'ok'; $('#sharedForget').hidden = s.status !== 'ok';
 }
@@ -2020,7 +2181,9 @@ async function loadShared() {
   state.sharedText = text;
   const pw = lsGet('scouting.pw', '');
   if (pw && (await openShared(pw))) return;
-  state.shared = { status: 'locked', stand: '', error: pw ? 'Das gespeicherte Passwort stimmt nicht mehr.' : '' }; renderShared(); showPw(pw ? 'Das gespeicherte Passwort stimmt nicht mehr.' : '');
+  state.shared = { status: 'locked', stand: '', error: pw ? 'Das gespeicherte Passwort stimmt nicht mehr.' : '' }; renderShared();
+  // Ohne eigene Daten erscheint die Passwortabfrage direkt auf der Willkommensseite, sonst als Fenster.
+  if (rows(state.real).length) showPw(pw ? 'Das gespeicherte Passwort stimmt nicht mehr.' : '');
 }
 /* ---------- Spielerübersicht Stäfa (gemeinsame Speicherung) ---------- */
 const TC_STUFEN = ['', 'beantragt', 'lokal', 'regional', 'national'];
@@ -2498,6 +2661,27 @@ $('#tabMerk').onclick = () => setView('merk');
 $('#pwOk').onclick = async () => { const pw = $('#pwInput').value; if (!pw) return showPw('Bitte ein Passwort eingeben.'); $('#pwOk').disabled = true; const ok = await openShared(pw); $('#pwOk').disabled = false; if (!ok) showPw('Das Passwort stimmt nicht.'); };
 $('#pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#pwOk').click(); });
 $('#pwLater').onclick = hidePw;
+$('#esPwForm').onsubmit = async (e) => {
+  e.preventDefault();
+  const pw = $('#esPw').value, btn = $('#esPwOk');
+  if (!pw) { $('#esPwErr').textContent = 'Bitte das Passwort eingeben.'; return $('#esPw').focus(); }
+  btn.disabled = true; btn.textContent = 'Wird geöffnet …'; $('#esPwErr').textContent = '';
+  const ok = await openShared(pw);
+  btn.disabled = false; btn.textContent = 'Öffnen';
+  if (!ok) { $('#esPw').select(); $('#esPw').focus(); }
+};
+$('#demoStart3').onclick = startDemo;
+/* Hell / Dunkel / wie das Gerät */
+const THEMES = [['auto', '◐ Auto', 'wie das Gerät'], ['light', '☀ Hell', 'hell'], ['dark', '☾ Dunkel', 'dunkel']];
+function renderTheme() {
+  const cur = lsGet('scouting.theme', 'auto'), t = THEMES.find((x) => x[0] === cur) || THEMES[0];
+  if (t[0] === 'auto') document.documentElement.removeAttribute('data-theme'); else document.documentElement.setAttribute('data-theme', t[0]);
+  $('#themeBtn').textContent = t[1];
+  $('#themeBtn').setAttribute('aria-label', 'Farbschema: ' + t[2] + '. Zum Wechseln klicken');
+  $('#themeBtn').title = 'Farbschema wechseln (Auto, Hell, Dunkel)';
+}
+$('#themeBtn').onclick = () => { const i = THEMES.findIndex((x) => x[0] === lsGet('scouting.theme', 'auto')); lsSet('scouting.theme', THEMES[(i + 1) % THEMES.length][0]); renderTheme(); };
+renderTheme();
 $('#sharedUnlock').onclick = () => showPw('');
 $('#sharedReload').onclick = () => loadShared();
 $('#sharedForget').onclick = () => { lsSet('scouting.pw', ''); state.shared = { status: 'locked', stand: '', error: 'Das Passwort wurde vergessen. Beim nächsten Öffnen musst du es wieder eingeben.' }; renderShared(); };
@@ -2564,6 +2748,7 @@ $('#repPer').onchange = (e) => { state.rep.per = e.target.value; renderReport();
 $('#repFrom').onchange = (e) => { state.rep.from = e.target.value; renderReport(); };
 $('#repTo').onchange = (e) => { state.rep.to = e.target.value; renderReport(); };
 $('#repLiga').onchange = (e) => { state.rep.liga = e.target.value; renderReport(); };
+$('#repN').onchange = (e) => { state.rep.n = Number(e.target.value) || 0; lsSet('scouting.repN', state.rep.n); renderReport(); };
 $('#repAreaBtn').onclick = () => setView('spieler');
 $('#repCopy').onclick = async () => { const ok = await kopieren(repText()); flash($('#repMsg'), ok ? 'Kopiert, jetzt in eine Nachricht einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err'); };
 $('#repBody').addEventListener('click', (e) => {
@@ -2660,7 +2845,6 @@ $('#map').addEventListener('mouseout', (e) => { if (e.target.closest('.dot')) hi
 $('#map').addEventListener('focusin', (e) => { const dot = e.target.closest('.dot'); if (dot) showTip(dot, e); });
 $('#map').addEventListener('focusout', hideTip);
 $('#map').addEventListener('keydown', (e) => { if ((e.key === 'Enter' || e.key === ' ') && e.target.closest('.dot')) { e.preventDefault(); mapClick(e); } });
-$('#multi').onchange = (e) => { state.multi = e.target.checked; lsSet('scouting.multi', state.multi); renderSortBar(); };
 $('#sortReset').onclick = () => { state.sort = defaultSort(state.f.role); state.sortDefault = true; renderTable(); };
 $('#sortbar').addEventListener('click', (e) => {
   const flip = e.target.closest('[data-flip]'), del = e.target.closest('[data-del]');
@@ -2676,7 +2860,7 @@ $('#tbl').addEventListener('click', (e) => {
   if (sortBtn) {
     const k = sortBtn.dataset.sort, first = k === 'name' || k === 'dist' ? 1 : -1, i = state.sort.findIndex((s) => s.key === k);
     if (state.sort.length === 1 && i === 0) state.sort[0].dir *= -1; // einzige Spalte erneut angeklickt: Richtung umkehren
-    else if ((state.multi || e.shiftKey) && !state.sortDefault) { if (i >= 0) state.sort[i].dir *= -1; else state.sort.push({ key: k, dir: first }); }
+    else if (e.shiftKey && !state.sortDefault) { if (i >= 0) state.sort[i].dir *= -1; else state.sort.push({ key: k, dir: first }); }
     else state.sort = [{ key: k, dir: first }]; // erste eigene Wahl ersetzt die Standardsortierung
     state.sortDefault = false;
     return renderTable();
@@ -2684,6 +2868,17 @@ $('#tbl').addEventListener('click', (e) => {
   const star = e.target.closest('[data-star]'); if (star) return toggleMerk(Number(star.dataset.star), state.f.role);
   const tr = e.target.closest('tr[data-id]'); if (tr) openDetail(Number(tr.dataset.id), state.f.role);
 });
+$('#cardList').addEventListener('click', (e) => {
+  const star = e.target.closest('[data-star]'); if (star) return toggleMerk(Number(star.dataset.star), state.f.role);
+  const card = e.target.closest('.pcard[data-id]'); if (card) openDetail(Number(card.dataset.id), state.f.role);
+});
+$('#mSort').onchange = (e) => { const k = e.target.value; state.sort = [{ key: k, dir: k === 'name' || k === 'dist' ? 1 : -1 }]; state.sortDefault = false; state.limit = 100; renderTable(); };
+$('#mSortDir').onclick = () => { if (!state.sort.length) state.sort = defaultSort(state.f.role); state.sort[0].dir *= -1; state.sortDefault = false; renderTable(); };
+$('#activeFilters').addEventListener('click', (e) => { const b = e.target.closest('[data-fclear]'); if (b) clearFilter(b.dataset.fclear); });
+$('#filterToggle').onclick = () => { const open = $('#players').classList.toggle('fopen'); $('#filterToggle').setAttribute('aria-expanded', open); };
+$('#filterDone').onclick = () => { $('#players').classList.remove('fopen'); $('#filterToggle').setAttribute('aria-expanded', 'false'); scrollTo(0, Math.max(0, $('#filterToggle').getBoundingClientRect().top + scrollY - $('.topbar').offsetHeight - 10)); };
+$('#moreFilters').open = !!lsGet('scouting.morefilt', false);
+$('#moreFilters').addEventListener('toggle', () => lsSet('scouting.morefilt', $('#moreFilters').open));
 $('#copyTable').onclick = async () => {
   const cols = colsFor(state.f.role);
   const lines = [['Name', 'Team', ...cols.map((c) => c.label)].join('\t')];

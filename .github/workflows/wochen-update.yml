@@ -1,12 +1,13 @@
 # Jede Woche (und auf Knopfdruck) neue Spiele von handball.ch holen, die verschlüsselte
 # Datei daten.enc aktualisieren und die Website neu veröffentlichen.
+# Beim Hochladen von Dateien wird nur die Website neu veröffentlicht, ohne handball.ch abzufragen.
 name: Wochen-Update
 
 on:
   schedule:
     - cron: '30 4 * * 1'   # jeden Montag um 04:30 UTC, in der Schweiz 05:30 (Winter) bzw. 06:30 Uhr (Sommer)
   workflow_dispatch:       # Knopf «Run workflow» im Reiter Actions
-  push:
+  push:                    # nur Website neu veröffentlichen, keine Abfrage bei handball.ch
     branches: [main]
     paths: ['index.html', 'config.json', 'app-config.json', 'daten.enc', 'tools/**', 'update.mjs', 'crypto.mjs', '.github/workflows/**']
 
@@ -35,6 +36,7 @@ jobs:
 
       - name: Neue Spiele von handball.ch holen
         id: upd
+        if: github.event_name != 'push'   # nur montags (Zeitplan) oder auf Knopfdruck, nicht nach jedem Hochladen
         continue-on-error: true   # Die Website wird auch dann veröffentlicht, wenn das Holen einmal scheitert
         env:
           SCOUT_PASSWORD: ${{ secrets.SCOUT_PASSWORD }}
