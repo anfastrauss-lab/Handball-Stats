@@ -163,6 +163,9 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litebadge { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--ink-2); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: help; }
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
+.zsadd { margin-bottom: 14px; border-color: var(--court); }
+.zsadd td.left { white-space: normal; }
+.team.zusatz { color: var(--court); font-weight: 600; }
 .morelig { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-2); font-size: 11.5px; font-weight: 600; line-height: 17px; vertical-align: 1px; cursor: help; white-space: nowrap; }
 @media (max-width: 520px) { .dhead { flex-wrap: wrap; } .dhead .dname { font-size: 30px; } }
 .merknext { margin-bottom: 18px; }
@@ -528,7 +531,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
   <div class="toolbar">
     <div><h2 style="margin:0">Spielerübersicht Stäfa</h2>
       <p class="small muted" style="margin:4px 0 0;max-width:800px">Alle Spieler, die in einem Team von Handball Stäfa zum Einsatz kommen, über alle geladenen Ligen hinweg. Die Einträge werden zentral gespeichert: Alle berechtigten Personen sehen dieselben Daten und können sie ergänzen. Bei jedem Eintrag steht, wer ihn wann gemacht hat.</p></div>
-    <div class="row" id="zsTools" hidden><span class="small" id="zsUser"></span><span class="small muted" id="zsSync"></span><button class="btn secondary" id="zsRefresh">Aktualisieren</button><button class="btn secondary" id="zsExport">Excel exportieren</button><button class="btn secondary" id="zsLogout">Abmelden</button><span class="msg" id="zsMsg" aria-live="polite"></span></div>
+    <div class="row" id="zsTools" hidden><button class="btn" id="zsAddBtn">+ Spieler hinzufügen</button><span class="small" id="zsUser"></span><span class="small muted" id="zsSync"></span><button class="btn secondary" id="zsRefresh">Aktualisieren</button><button class="btn secondary" id="zsExport">Excel exportieren</button><button class="btn secondary" id="zsLogout">Abmelden</button><span class="msg" id="zsMsg" aria-live="polite"></span></div>
   </div>
   <div class="notice warn" id="zsDemoNote" hidden><b>Demo:</b> Die Einträge bleiben nur in diesem Fenster und werden nirgends gespeichert. Im echten Betrieb werden sie zentral gespeichert und stehen allen berechtigten Personen zur Verfügung.</div>
   <div class="card empty" id="zsNoData" hidden><h2>Noch keine Spielerdaten</h2><p class="muted">Lade zuerst die Daten im Reiter «Daten». Danach erscheinen hier alle Spieler von Handball Stäfa.</p></div>
@@ -549,6 +552,17 @@ table.plain td { text-align: left; padding: 8px 10px; }
   <div id="zsMain" hidden>
     <div class="notice err" id="zsErr" hidden></div>
     <div id="zsBody" hidden>
+      <div class="card zsadd" id="zsAdd" hidden>
+        <div class="toolbar" style="margin:0 0 6px"><h3 style="margin:0">Spieler hinzufügen</h3><button class="btn secondary" id="zsAddClose">Schliessen</button></div>
+        <p class="small muted" style="margin:0 0 10px">Für Spieler, die bei euch trainieren, aber nicht oder für einen anderen Verein spielen. Gesucht wird in allen Spielern der geladenen Ligen. Wer gar keine Spiele hat, ist dort nicht zu finden, den erfasst du unten von Hand.</p>
+        <div class="field" style="max-width:420px"><label for="zsAddQ">Name suchen</label><input type="search" id="zsAddQ" placeholder="z. B. Muster Max" autocomplete="off"></div>
+        <div id="zsAddRes" aria-live="polite"></div>
+        <details class="hint" id="zsManual"><summary>Nicht gefunden? Spieler ohne Spiele von Hand erfassen</summary>
+          <div class="talfilters" style="margin-top:10px"><div class="field"><label for="zsMName">Nachname</label><input type="text" id="zsMName" autocomplete="off"></div><div class="field"><label for="zsMFirst">Vorname</label><input type="text" id="zsMFirst" autocomplete="off"></div><div class="field"><label for="zsMYear">Jahrgang</label><input type="number" id="zsMYear" min="1990" max="2030" inputmode="numeric" placeholder="z. B. 2011"></div></div>
+          <div class="row"><button class="btn" id="zsMGo">Erfassen</button><span class="msg" id="zsMMsg" aria-live="polite"></span></div>
+          <p class="small muted">Von Hand erfasste Spieler haben keine Statistik. Der Jahrgang steht in den Notizen der Akte.</p>
+        </details>
+      </div>
       <div class="tiles" id="zsTiles"></div>
       <div class="card talfilters">
         <div class="field"><label for="zsQ">Name</label><input type="search" id="zsQ" placeholder="Name suchen" autocomplete="off"></div>
@@ -2744,10 +2758,33 @@ function staefaPlayers(d) {
 }
 const ligaSort = (a, b) => { const n = (s) => { const m = /U(\d+)/.exec(s); return m ? Number(m[1]) : s === 'QHL' ? 99 : s === 'NLB' ? 98 : 50; }; return n(a) - n(b) || a.localeCompare(b, 'de'); };
 const leer = (a) => !a || AKTE_FELDER.every(([f]) => !String(a[f] || '').trim());
+/* Zusätzliche Spieler: haben eine Akte, spielen aber (in dieser Saison) nicht für Stäfa.
+   Mit Trainingstagen gelten sie als «trainiert bei uns» und stehen immer in der Liste. Von Hand erfasste haben eine negative Nummer. */
+const zsTrains = (a) => !!a && (Number(a.player_id) < 0 || !!String(a.trainingstage || '').trim()); // von Hand erfasste immer
+const zsYearFromNote = (a) => { const m = /Jahrgang\s*:?\s*(\d{4})/i.exec((a && a.notizen) || ''); return m ? Number(m[1]) : 0; };
+// Statistik dieser Spieler aus allen Teams der aktuellen Saison
+function zsExtras(d, ids) {
+  const m = new Map(), want = new Set(ids.map(String)), idx = index(d);
+  for (const r of rows(d)) {
+    if (!want.has(String(r.playerId))) continue;
+    const g = d.games[r.gameId]; if (!g || !inSeason(d, g, '')) continue;
+    let p = m.get(String(r.playerId));
+    if (!p) m.set(String(r.playerId), (p = { ligas: new Set(), F: { games: 0, goals: 0, shots: 0 }, G: { games: 0, saves: 0, shots: 0 }, last: '', team: '', name: r.name }));
+    p.ligas.add(ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId }));
+    if (r.role === 'F') { p.F.games++; p.F.goals += r.goals || 0; p.F.shots += r.shots || 0; } else if (r.shotsGK > 0) { p.G.games++; p.G.saves += r.sv; p.G.shots += r.sg; }
+    if (String(g.date) >= p.last) { p.last = String(g.date); p.team = idx.teams[r.teamId] || ''; p.name = r.name; }
+  }
+  return m;
+}
+function zsExtraPlayer(d, a, ext) {
+  const pid = a.player_id, e = ext || { ligas: new Set(), F: { games: 0, goals: 0, shots: 0 }, G: { games: 0, saves: 0, shots: 0 }, last: '', team: '' };
+  return { id: pid, name: a.name || e.name || 'Spieler ' + pid, ligas: e.ligas, F: e.F, G: e.G, last: e.last, team: e.team, year: (d.players[pid] || {}).year || zsYearFromNote(a), pos: (d.players[pid] || {}).position || '', games: e.F.games + e.G.games, akte: a, aktiv: false, zusatz: zsTrains(a), manuell: pid < 0 };
+}
 function zsRows(d) {
   const z = state.zs, f = z.f, { players } = staefaPlayers(d), toks = norm(f.q).split(/\s+/).filter(Boolean), seen = new Set();
   let list = players.map((p) => { seen.add(String(p.id)); return { ...p, akte: z.akten[p.id] || null, aktiv: true }; });
-  if (f.archive) for (const a of Object.values(z.akten)) if (!seen.has(String(a.player_id))) list.push({ id: a.player_id, name: a.name || 'Spieler ' + a.player_id, ligas: new Set(), F: { games: 0, goals: 0, shots: 0 }, G: { games: 0, saves: 0, shots: 0 }, last: '', year: (d.players[a.player_id] || {}).year || 0, pos: '', games: 0, akte: a, aktiv: false });
+  const rest = Object.values(z.akten).filter((a) => !seen.has(String(a.player_id)) && (zsTrains(a) || f.archive)), ext = zsExtras(d, rest.map((a) => a.player_id));
+  for (const a of rest) list.push(zsExtraPlayer(d, a, ext.get(String(a.player_id))));
   if (toks.length) list = list.filter((p) => { const hay = norm(p.name) + ' ' + norm(fullName(p.name)); return toks.every((x) => hay.includes(x)); });
   if (f.liga) list = list.filter((p) => p.ligas.has(f.liga));
   if (f.yf) list = list.filter((p) => p.year >= f.yf); if (f.yt) list = list.filter((p) => p.year && p.year <= f.yt);
@@ -2794,7 +2831,8 @@ function renderStaefa() {
     if (p.F.games) zahlen.push(p.F.goals + ' Tore (' + nf(p.F.goals / p.F.games, 1) + '/Sp)');
     if (p.G.games) zahlen.push('Torhüter: ' + (p.G.shots ? Math.round((p.G.saves / p.G.shots) * 100) + '% Paraden' : 'Paraden nicht erfasst (Liveticker lite)'));
     const lg = [...p.ligas].sort(ligaSort).join(', ');
-    h += '<tr data-zid="' + p.id + '" tabindex="0"' + (p.aktiv ? '' : ' class="dim"') + '><td class="name"><button class="namebtn" data-zopen="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + (p.aktiv ? '' : '<span class="team">ohne aktuellen Einsatz</span>') + '</td><td>' + (p.year || '–') + '</td><td class="left">' + esc(lg || '–') + '</td><td>' + (p.games || '–') + '</td><td class="left">' + esc(zahlen.join(', ') || '–') + '</td>' +
+    const zLabel = p.aktiv ? '' : p.zusatz ? 'trainiert bei uns' + (p.team ? ', spielt für ' + p.team : p.manuell ? ', von Hand erfasst' : ', keine Spiele in dieser Saison') : 'ohne aktuellen Einsatz';
+    h += '<tr data-zid="' + p.id + '" tabindex="0"' + (p.aktiv || p.zusatz ? '' : ' class="dim"') + '><td class="name"><button class="namebtn" data-zopen="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + (zLabel ? '<span class="team' + (p.zusatz ? ' zusatz' : '') + '">' + esc(zLabel) + '</span>' : '') + '</td><td>' + (p.year || '–') + '</td><td class="left">' + esc(lg || '–') + '</td><td>' + (p.games || '–') + '</td><td class="left">' + esc(zahlen.join(', ') || '–') + '</td>' +
       '<td class="left">' + esc((a && a.position) || '') + (!(a && a.position) && p.pos ? '<span class="muted small">' + esc(p.pos) + ' (handball.ch)</span>' : '') + '</td><td class="left">' + (a && a.talent_card ? '<span class="tc tc-' + esc(a.talent_card) + '">' + esc(TC_LABEL[a.talent_card] || a.talent_card) + '</span>' : '') + '</td><td class="left">' + esc((a && a.schule_lehre) || '') + '</td><td class="left">' + esc((a && a.trainingstage) || '') + '</td>' +
       '<td class="left small">' + (a ? esc(fmtDT(a.geaendert_am)) + '<br><span class="muted">' + esc(a.geaendert_von || '') + '</span>' : '<span class="muted">noch keine Akte</span>') + '</td></tr>';
   }
@@ -2805,9 +2843,42 @@ function renderStaefa() {
 // ---- Akte eines Spielers ----
 function akteForm(a) { const f = {}; for (const [k] of AKTE_FELDER) f[k] = a ? a[k] || '' : ''; return f; }
 const tageSet = (s) => new Set(String(s || '').split(/[,;\s]+/).map((x) => x.trim()).filter((x) => TAGE.includes(x)));
-function openAkte(pid) {
-  const d = data(), z = state.zs, p = staefaPlayers(d).players.find((x) => x.id === pid) || { id: pid, name: (z.akten[pid] || {}).name || 'Spieler ' + pid, ligas: new Set(), year: (d.players[pid] || {}).year || 0, pos: '' };
-  const a = z.akten[pid] || null; z.open = { pid, name: p.name, p, base: a, form: akteForm(a), dirty: false, conflicts: {}, info: '', msg: '', verlauf: null, lastFocus: document.activeElement };
+// «Spieler hinzufügen»: Suche über alle Spieler der geladenen Daten (alle Saisons, neuester Name und Verein)
+function zsAllPlayers(d) {
+  if (d._zsall && d._zsall.v === (d._ver || 0)) return d._zsall.m;
+  const m = new Map(), idx = index(d);
+  for (const r of rows(d)) {
+    const g = d.games[r.gameId]; if (!g) continue;
+    let p = m.get(r.playerId);
+    if (!p) m.set(r.playerId, (p = { id: r.playerId, name: r.name, team: '', last: '', ligas: new Set(), cur: false }));
+    if (inSeason(d, g, '')) { p.cur = true; p.ligas.add(ligaKey(d.groups[g.groupId] || { name: '' })); }
+    if (String(g.date) >= p.last) { p.last = String(g.date); p.name = r.name; p.team = idx.teams[r.teamId] || ''; }
+  }
+  d._zsall = { v: d._ver || 0, m }; return m;
+}
+function zsAddSearch() {
+  const d = data(), z = state.zs, box = $('#zsAddRes'), toks = norm($('#zsAddQ').value).split(/\s+/).filter(Boolean);
+  if (toks.join('').length < 2) { box.innerHTML = '<p class="small muted" style="margin:6px 0 0">Gib mindestens zwei Buchstaben ein.</p>'; return; }
+  const inList = new Set(staefaPlayers(d).players.map((p) => String(p.id)));
+  const hits = [...zsAllPlayers(d).values()].filter((p) => { const hay = norm(p.name) + ' ' + norm(fullName(p.name)); return toks.every((x) => hay.includes(x)); })
+    .sort((a, b) => (b.cur - a.cur) || fullName(a.name).localeCompare(fullName(b.name), 'de'));
+  if (!hits.length) { box.innerHTML = '<p class="small muted" style="margin:6px 0 0">Kein Spieler mit diesem Namen in den geladenen Daten. Erfasse ihn unten von Hand.</p>'; return; }
+  box.innerHTML = '<div style="overflow-x:auto;margin-top:8px"><table class="dtable"><tbody>' + hits.slice(0, 15).map((p) => {
+    const s = splitName(p.name), year = (d.players[p.id] || {}).year, schon = inList.has(String(p.id)) || z.akten[p.id];
+    return '<tr><td class="left"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + (year ? ' <span class="muted">' + year + '</span>' : '') + '</td><td class="left small">' + esc(p.team) + (p.cur ? '' : ' <span class="muted">(frühere Saison)</span>') + '<br><span class="muted">' + esc([...p.ligas].join(', ')) + '</span></td>' +
+      '<td>' + (schon ? '<button class="btn secondary" data-zopenx="' + p.id + '">Schon dabei, Akte öffnen</button>' : '<button class="btn" data-zadd="' + p.id + '">Hinzufügen</button>') + '</td></tr>';
+  }).join('') + '</tbody></table></div>' + (hits.length > 15 ? '<p class="small muted">' + hits.length + ' Treffer, die ersten 15 angezeigt. Gib mehr vom Namen ein.</p>' : '');
+}
+// neu: { name, year, manuell } für einen Spieler, der über «Spieler hinzufügen» dazukommt
+function openAkte(pid, neu) {
+  const d = data(), z = state.zs, a = z.akten[pid] || null;
+  const p = staefaPlayers(d).players.find((x) => x.id === pid) || zsExtraPlayer(d, a || { player_id: pid, name: neu ? neu.name : '' }, zsExtras(d, [pid]).get(String(pid)));
+  if (neu && neu.year && !p.year) p.year = neu.year;
+  z.open = { pid, name: p.name, p, base: a, form: akteForm(a), dirty: false, conflicts: {}, info: '', msg: '', verlauf: null, lastFocus: document.activeElement };
+  if (neu && !a) {
+    z.open.info = 'Neu in der Übersicht: Trag die Trainingstage ein und speichere. Spieler mit Trainingstagen erscheinen dauerhaft in der Liste als «trainiert bei uns». Wer keine Trainingstage mehr hat, rutscht zu «Auch Akten ohne aktuellen Einsatz».';
+    if (neu.manuell && neu.year) z.open.form.notizen = 'Jahrgang ' + neu.year;
+  }
   renderAkte(); $('#akteDrawer').hidden = false; $('#backdrop').hidden = false; $('#akClose').focus();
   zsStore().verlauf(pid).then((v) => { if (z.open && z.open.pid === pid) { z.open.verlauf = v; renderAkteVerlauf(); } }).catch(() => { if (z.open && z.open.pid === pid) { z.open.verlauf = []; renderAkteVerlauf(); } });
 }
@@ -3117,6 +3188,23 @@ $('#zsYT').oninput = zsF((e) => { state.zs.f.yt = parseInt(e.target.value, 10) |
 $('#zsTC').onchange = zsF((e) => { state.zs.f.tc = e.target.value; });
 $('#zsInc').onchange = zsF((e) => { state.zs.f.incomplete = e.target.checked; });
 $('#zsArc').onchange = zsF((e) => { state.zs.f.archive = e.target.checked; });
+$('#zsAddBtn').onclick = () => { const p = $('#zsAdd'); p.hidden = !p.hidden; if (!p.hidden) { $('#zsAddQ').focus(); zsAddSearch(); } };
+$('#zsAddClose').onclick = () => { $('#zsAdd').hidden = true; };
+$('#zsAddQ').oninput = zsAddSearch;
+$('#zsAddRes').addEventListener('click', (e) => {
+  const add = e.target.closest('[data-zadd]'), open = e.target.closest('[data-zopenx]');
+  if (add) { const pid = Number(add.dataset.zadd), p = zsAllPlayers(data()).get(pid); openAkte(pid, { name: p ? p.name : '' }); }
+  else if (open) openAkte(Number(open.dataset.zopenx));
+});
+$('#zsMGo').onclick = () => {
+  const sur = $('#zsMName').value.trim(), first = $('#zsMFirst').value.trim(), year = parseInt($('#zsMYear').value, 10) || 0, msg = $('#zsMMsg');
+  if (!sur || !first) { msg.className = 'msg err'; msg.textContent = 'Bitte Nachname und Vorname eintragen.'; return; }
+  if (year && (year < 1990 || year > 2030)) { msg.className = 'msg err'; msg.textContent = 'Der Jahrgang sieht nicht richtig aus.'; return; }
+  // Von Hand erfasste Spieler bekommen eine negative Nummer, damit sie nie mit einer Nummer von handball.ch zusammenfallen
+  let pid = -(Math.floor(Date.now() / 1000) % 2000000000); while (state.zs.akten[pid]) pid--;
+  msg.textContent = ''; $('#zsMName').value = ''; $('#zsMFirst').value = ''; $('#zsMYear').value = '';
+  openAkte(pid, { name: sur.toUpperCase() + ' ' + first, year, manuell: true }); // gleiches Format wie handball.ch: NACHNAME Vorname
+};
 $('#zsTbl').addEventListener('click', (e) => {
   const so = e.target.closest('[data-zsort]'); if (so) { const k = so.dataset.zsort, s = state.zs.sort; state.zs.sort = s.key === k ? { key: k, dir: -s.dir } : { key: k, dir: k === 'geaendert' || k === 'games' ? -1 : 1 }; return renderStaefa(); }
   const tr = e.target.closest('tr[data-zid]'); if (tr) openAkte(Number(tr.dataset.zid));
