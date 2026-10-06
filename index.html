@@ -477,9 +477,10 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <summary>So rechnet das Radar</summary>
       <ul class="small muted">
         <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Verglichen werden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe).</li>
-        <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
+        <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt, +1 deutlich besser, +2 herausragend; ein Wert von +0.7 ist also schon klar überdurchschnittlich). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
         <li><b>Liveticker lite:</b> Einige Vereine erfassen ihre Spiele mit dem Liveticker lite. Er zählt nur Tore, keine Würfe und Paraden, und würde sonst 100 % Wurfquote und 0 % Paraden ergeben. Solche Spiele zählen für Tore pro Spiel, aber nicht für die Quoten. Ein Sternchen (*) an der Quote heisst, dass sie nur aus einem Teil der Spiele stammt. Torhüter brauchen 30 Gegenwürfe aus Spielen mit voller Statistik.</li>
-        <li><b>Alter:</b> Der Median des Jahrgangs der Liga ist der Massstab. Ein Spieler, der 2 Jahre jünger ist, bekommt «+2» (höchstens ±3 Jahre zählen).</li>
+        <li><b>Alter:</b> Der mittlere Jahrgang der Liga (Median) ist der Massstab. Ein Spieler, der 2 Jahre jünger ist, bekommt «+2», einer, der älter ist, einen Abzug (höchstens ±3 Jahre zählen). Beispiel: Ein 2009er in der NLB, deren mittlerer Jahrgang etwa 2000 ist, bekommt das Maximum +3.</li>
+        <li><b>Höher ist besser:</b> Das gilt für Leistung und Score. Fahre mit der Maus über einen Wert, dann siehst du, wie er sich zusammensetzt.</li>
         <li><b>Ligastärke:</b> Die Leistung wird innerhalb der Liga gemessen. Damit ein guter Spieler aus der U17 Elite nicht hinter einem gleich guten aus der Promotion landet, bekommt jede Liga eine Stufe: QHL +2, NLB +1.5, 1. Liga und Elite +1, 2. Liga und Inter +0.5, 3. Liga und Promotion 0, tiefere Ligen −0.5. Die Stufen sind grobe Schätzungen. Mit dem Regler «Gewicht Liga» stellst du ein, wie stark sie zählen. Bei 0 zählt nur der Vergleich innerhalb der Liga.</li>
         <li><b>Spielt hoch:</b> Das gelbe Kennzeichen «↑ U17» heisst, dass ein Spieler in dieser Saison in einer höheren Altersklasse spielt als sein Jahrgang. In der Saison 2026/27 gehören zum Beispiel die Jahrgänge 2010 und 2011 in die U17, ein 2012er dort spielt also hoch. «↑ Aktive» heisst: ein Junior spielt bei den Erwachsenen. Das ist oft ein starkes Talentzeichen, auch wenn die Zahlen dort tiefer sind.</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht plus Ligastufe mal Gewicht. Mit den Reglern stellst du ein, wie wichtig dir Alter und Liga sind: Beim Alter gibt 1 pro Jahr einen ganzen Punkt.</li>
@@ -1975,7 +1976,8 @@ function buildTalent(d, opt) {
       }
       T.leagues[role][liga] = L;
       for (const a of list) {
-        a.ageAdv = a.year && med ? clamp(med - a.year, -3, 3) : null;
+        // Jüngere haben einen höheren Jahrgang: 2009 in einer Liga mit Median 2000 → +9, begrenzt auf +3
+        a.ageAdv = a.year && med ? clamp(a.year - med, -3, 3) : null; a.medYear = med;
         if (role === 'F') { a.gpg = a.games ? a.goals / a.games : null; a.pct = a.qs ? a.qg / a.qs : null; a.tfpg = a.games ? a.tf / a.games : null; }
         else a.spct = a.sg ? a.sv / a.sg : null;
         if (L.thin) continue;
@@ -2011,17 +2013,31 @@ function applyPerf(T) {
     }
   }
 }
-const signed = (v, dec) => (v > 0 ? '+' : '') + (dec ? nf(v, dec) : nf1(v));
+// Vorzeichen anzeigen, aber nie «−0.0» (auf die angezeigte Stelle gerundet)
+const signed = (v, dec) => { const m = Math.pow(10, dec || 1), r = Math.round(v * m) / m || 0; return (r > 0 ? '+' : '') + (dec ? nf(r, dec) : nf1(r)); };
+// Rechnung hinter Leistung und Score, zum Nachvollziehen beim Darüberfahren
+function perfTip(a) {
+  if (a.perf == null) return 'Kein Wert: Die Liga hat zu wenige Vergleichsspieler, oder der Spieler hat zu wenige Spiele oder Würfe.';
+  const z = (v) => signed(v, 1);
+  return a.role === 'F'
+    ? 'Leistung ' + z(a.perf) + ' = 0.6 × Tore/Spiel (' + z(a.zG) + ') + 0.4 × Wurfquote (' + z(a.zP) + ') − ' + nf(state.t.wTF, 1) + ' × Fehler (' + z(a.zT) + '). Jeder Wert misst den Abstand zum Ligaschnitt in Standardabweichungen: 0 = Durchschnitt, +1 = deutlich besser, +2 = herausragend. Bei wenigen Spielen wird zum Ligaschnitt hin gedämpft.'
+    : 'Leistung ' + z(a.perf) + ' = Paradenquote im Vergleich zum Ligaschnitt (in Standardabweichungen: 0 = Durchschnitt, +1 = deutlich besser, +2 = herausragend).';
+}
+function scoreTip(a) {
+  if (a.score == null) return '';
+  const t = state.t;
+  return 'Score ' + signed(a.score, 1) + ' = Leistung ' + signed(a.perf, 1) + ' + ' + nf(t.wAge, 1) + ' × Alter (' + signed(a.ageAdv || 0) + ') + ' + nf(t.wLiga, 1) + ' × Ligastufe (' + levelTxt(a.level || 0) + '). Höher ist besser.';
+}
 function talCols(role) {
   const common = [
     { k: 'liga', label: 'Liga', left: true, title: 'Mit «Stufe» ist die geschätzte Stärke der Liga gemeint (siehe «So rechnet das Radar»)', v: (a) => a.liga, t: (a) => a.liga, sub: (a) => (state.t.wLiga ? 'Stufe ' + levelTxt(a.level || 0) : '') },
     { k: 'year', label: 'Jahrgang', v: (a) => a.year || null, t: (a) => (a.year ? String(a.year) : '–') },
-    { k: 'age', label: 'Alter', title: 'Jahre jünger (+) oder älter (−) als der Median der Liga', v: (a) => a.ageAdv, t: (a) => (a.ageAdv == null ? '–' : signed(a.ageAdv)) },
+    { k: 'age', label: 'Alter', title: 'Jahre jünger (+) oder älter (−) als der mittlere Jahrgang der Liga, höchstens ±3', v: (a) => a.ageAdv, t: (a) => (a.ageAdv == null ? '–' : signed(a.ageAdv)), tip: (a) => (a.ageAdv == null ? '' : 'Jahrgang ' + a.year + ', mittlerer Jahrgang der Liga ' + yr(a.medYear) + ': ' + (a.ageAdv > 0 ? 'jünger' : a.ageAdv < 0 ? 'älter' : 'gleich alt') + ' (zählt höchstens ±3 Jahre)') },
     { k: 'games', label: 'Spiele', title: 'Spiele in dieser Liga', v: (a) => a.games, t: (a) => String(a.games) },
   ];
   const tail = [
-    { k: 'perf', label: 'Leistung', title: 'Abstand zum Ligaschnitt in Standardabweichungen (0 ist Durchschnitt)', v: (a) => a.perf, t: (a) => (a.perf == null ? '–' : signed(a.perf, 1)) },
-    { k: 'score', label: 'Score', title: 'Leistung + Alter × Gewicht Alter + Ligastufe × Gewicht Liga', v: (a) => a.score, t: (a) => (a.score == null ? '–' : nf(a.score, 1)), bar: true },
+    { k: 'perf', label: 'Leistung', title: 'Abstand zum Ligaschnitt: 0 = Durchschnitt, +1 = deutlich besser, +2 = herausragend. Fahre über einen Wert für die Rechnung.', v: (a) => a.perf, t: (a) => (a.perf == null ? '–' : signed(a.perf, 1)), tip: perfTip },
+    { k: 'score', label: 'Score', title: 'Leistung + Alter × Gewicht Alter + Ligastufe × Gewicht Liga. Höher ist besser. Fahre über einen Wert für die Rechnung.', v: (a) => a.score, t: (a) => (a.score == null ? '–' : signed(a.score, 1)), tip: scoreTip, bar: true },
   ];
   const mid = role === 'F'
     ? [
@@ -2085,7 +2101,8 @@ function renderTalent() {
       '<button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + upBadge(a.up) + '<span class="team">' + esc(a.team) + (a.club && a.club.canton ? ' (' + esc(a.club.canton) + ')' : '') + (a.position ? ', ' + esc(a.position) : '') + '</span></td>';
     for (const c of cols) {
       let style = ''; if (c.bar && a.score != null) { const w = Math.round((Math.max(a.score, 0) / maxScore) * 100); style = ' style="background:linear-gradient(90deg,var(--bar) ' + w + '%,transparent ' + w + '%)"'; }
-      h += '<td' + (c.left ? ' class="left"' : '') + style + '>' + esc(c.t(a)) + (c.sub && c.sub(a) ? '<small>' + esc(c.sub(a)) + '</small>' : '') + '</td>';
+      const tip = c.tip ? c.tip(a) : '';
+      h += '<td' + (c.left ? ' class="left"' : '') + style + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + esc(c.t(a)) + (c.sub && c.sub(a) ? '<small>' + esc(c.sub(a)) + '</small>' : '') + '</td>';
     }
     h += '</tr>';
   }
