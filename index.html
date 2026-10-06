@@ -178,7 +178,11 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
   body.pprint { background: #fff !important; }
   body.pprint #drawer { position: static; width: auto; max-width: none; box-shadow: none; border: 0; overflow: visible; padding: 0; animation: none; }
   body.pprint #drawer .noprint, body.pprint #dClose, body.pprint #drawer .field, body.pprint #drawer a.ext { display: none !important; }
-  body.pprint .printnote { display: block; margin-top: 16px; border-top: 1px solid #999; padding-top: 8px; white-space: pre-wrap; }
+  body.pprint .printnote { display: block; margin-top: 16px; border-top: 1px solid #999; padding-top: 8px; white-space: pre-wrap; break-inside: avoid; }
+  /* Balken, Kennzeichen und Siegfarben auch ohne «Hintergrundgrafiken drucken» zeigen */
+  body.pprint, body.pprint * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body.pprint h3 { break-after: avoid; }
+  body.pprint .bars { min-height: 0; }
   body.pprint .bars { overflow: visible; flex-wrap: wrap; }
   body.pprint tr, body.pprint .kpis { break-inside: avoid; }
   :root, :root[data-theme] { --bg: #fff !important; --surface: #fff !important; --surface-2: #eef1f1 !important; --ink: #111 !important; --ink-2: #444 !important; --line: #bbb !important; --court: #24557F !important; --bar: #D3E2EF !important; --good: #1F7A47 !important; --bad: #B03A2A !important; color-scheme: light !important; }
@@ -1720,7 +1724,7 @@ function renderDrawer() {
     '<h3 style="margin-top:18px">' + (role === 'F' ? 'Tore pro Spiel' : 'Paraden pro Spiel') + '</h3><div class="bars">' + bars + '</div>' +
     '<h3 style="margin-top:14px">Spiel für Spiel</h3><p class="small muted" style="margin:0 0 6px">Klicke auf ein Spiel für die Statistik beider Teams. Der Pfeil führt zur Seite auf handball.ch.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Datum</th><th class="left">Liga</th><th class="left">Gegner</th><th>Resultat</th>' + head + '<th></th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
     '<div class="field" style="margin-top:18px"><label for="dNote">Notiz</label><textarea id="dNote" placeholder="Eigene Beobachtungen">' + esc(state.notes[id] || '') + '</textarea></div>' +
-    '<div class="printnote"><h3>Notiz</h3><p>' + (esc(state.notes[id] || '') || '–') + '</p><p class="small muted">Erstellt am ' + esc(new Date().toLocaleDateString('de-CH')) + ' mit Handball Scouting. Daten: handball.ch' + (multi ? ', Kennzahlen Saison ' + esc(gameSeason(d, mine[0].g)) : '') + '.</p></div>';
+    '<div class="printnote">' + (String(state.notes[id] || '').trim() ? '<h3>Notiz</h3><p>' + esc(state.notes[id]) + '</p>' : '') + '<p class="small muted">Erstellt am ' + esc(new Date().toLocaleDateString('de-CH')) + ' mit Handball Scouting. Daten: handball.ch' + (multi ? ', Kennzahlen Saison ' + esc(gameSeason(d, mine[0].g)) : '') + '.</p></div>';
 }
 
 /* ---------- Spielervergleich (2 bis 3 Spieler derselben Rolle) ---------- */
@@ -3240,7 +3244,7 @@ $('#copyTable').onclick = async () => {
   const ok = await kopieren(lines.join('\n'));
   flash($('#copyMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
-window.addEventListener('afterprint', () => document.body.classList.remove('pprint'));
+window.addEventListener('afterprint', () => { document.body.classList.remove('pprint'); if (state.titleBefore) { document.title = state.titleBefore; state.titleBefore = ''; } });
 $('#cmpGo').onclick = openCompare;
 $('#cmpClear').onclick = () => { state.cmp = []; saveCmp(); if (state.open && state.open.cmp) closeDetail(); else if (state.open) renderDrawer(); };
 $('#backdrop').onclick = () => { if (state.zs.open) closeAkte(); else closeDetail(); };
@@ -3248,7 +3252,12 @@ $('#drawer').addEventListener('click', (e) => {
   if (e.target.closest('#dClose')) return closeDetail();
   if (e.target.closest('#dStar')) return toggleMerk(state.open.id, state.open.role);
   if (e.target.closest('#dCmp')) { toggleCmp(state.open.id, state.open.role); return renderDrawer(); }
-  if (e.target.closest('#dPrint')) { document.body.classList.add('pprint'); window.print(); return; }
+  if (e.target.closest('#dPrint')) {
+    // Der Seitentitel wird zum vorgeschlagenen Dateinamen der PDF
+    state.titleBefore = document.title;
+    document.title = state.open.cmp ? 'Spielervergleich ' + new Date().toLocaleDateString('de-CH') : 'Scouting-Bericht ' + (state.open.name || '');
+    document.body.classList.add('pprint'); window.print(); return;
+  }
   const cdel = e.target.closest('[data-cmpdel]'); if (cdel) { state.cmp = state.cmp.filter((x) => String(x.id) !== cdel.dataset.cmpdel); saveCmp(); return renderDrawer(); }
   if (e.target.closest('#dBack')) return showPlayer(state.open.id, state.open.role);
   const tm = e.target.closest('[data-team]'); if (tm) { const tid = tm.dataset.team; closeDetail(); return selectTeam(tid); }
