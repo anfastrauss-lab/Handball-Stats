@@ -2760,7 +2760,16 @@ const ligaSort = (a, b) => { const n = (s) => { const m = /U(\d+)/.exec(s); retu
 const leer = (a) => !a || AKTE_FELDER.every(([f]) => !String(a[f] || '').trim());
 /* Zusätzliche Spieler: haben eine Akte, spielen aber (in dieser Saison) nicht für Stäfa.
    Mit Trainingstagen gelten sie als «trainiert bei uns» und stehen immer in der Liste. Von Hand erfasste haben eine negative Nummer. */
-const zsTrains = (a) => !!a && (Number(a.player_id) < 0 || !!String(a.trainingstage || '').trim()); // von Hand erfasste immer
+const zsTrains = (a) => !!a && !!String(a.trainingstage || '').trim();
+// Alle, die je (in irgendeiner geladenen Saison) für ein Stäfa-Team gespielt haben
+function zsEverStaefa(d) {
+  if (d._zsever && d._zsever.v === (d._ver || 0)) return d._zsever.s;
+  const T = staefaTeams(d), s = new Set(); for (const r of rows(d)) if (T.ids.has(String(r.teamId))) s.add(String(r.playerId));
+  d._zsever = { v: d._ver || 0, s }; return s;
+}
+// Zusätzlich aufgenommen = immer in der Liste: von Hand erfasst, mit Trainingstagen, oder nie für Stäfa gespielt
+// (dann wurde die Akte bewusst über «Spieler hinzufügen» angelegt). Ehemalige ohne Trainingstage → «ohne aktuellen Einsatz».
+const zsZusatz = (d, a) => !!a && (Number(a.player_id) < 0 || zsTrains(a) || !zsEverStaefa(d).has(String(a.player_id)));
 const zsYearFromNote = (a) => { const m = /Jahrgang\s*:?\s*(\d{4})/i.exec((a && a.notizen) || ''); return m ? Number(m[1]) : 0; };
 // Statistik dieser Spieler aus allen Teams der aktuellen Saison
 function zsExtras(d, ids) {
@@ -2778,12 +2787,12 @@ function zsExtras(d, ids) {
 }
 function zsExtraPlayer(d, a, ext) {
   const pid = a.player_id, e = ext || { ligas: new Set(), F: { games: 0, goals: 0, shots: 0 }, G: { games: 0, saves: 0, shots: 0 }, last: '', team: '' };
-  return { id: pid, name: a.name || e.name || 'Spieler ' + pid, ligas: e.ligas, F: e.F, G: e.G, last: e.last, team: e.team, year: (d.players[pid] || {}).year || zsYearFromNote(a), pos: (d.players[pid] || {}).position || '', games: e.F.games + e.G.games, akte: a, aktiv: false, zusatz: zsTrains(a), manuell: pid < 0 };
+  return { id: pid, name: a.name || e.name || 'Spieler ' + pid, ligas: e.ligas, F: e.F, G: e.G, last: e.last, team: e.team, year: (d.players[pid] || {}).year || zsYearFromNote(a), pos: (d.players[pid] || {}).position || '', games: e.F.games + e.G.games, akte: a, aktiv: false, zusatz: zsZusatz(d, a), trainiert: zsTrains(a), manuell: pid < 0 };
 }
 function zsRows(d) {
   const z = state.zs, f = z.f, { players } = staefaPlayers(d), toks = norm(f.q).split(/\s+/).filter(Boolean), seen = new Set();
   let list = players.map((p) => { seen.add(String(p.id)); return { ...p, akte: z.akten[p.id] || null, aktiv: true }; });
-  const rest = Object.values(z.akten).filter((a) => !seen.has(String(a.player_id)) && (zsTrains(a) || f.archive)), ext = zsExtras(d, rest.map((a) => a.player_id));
+  const rest = Object.values(z.akten).filter((a) => !seen.has(String(a.player_id)) && (zsZusatz(d, a) || f.archive)), ext = zsExtras(d, rest.map((a) => a.player_id));
   for (const a of rest) list.push(zsExtraPlayer(d, a, ext.get(String(a.player_id))));
   if (toks.length) list = list.filter((p) => { const hay = norm(p.name) + ' ' + norm(fullName(p.name)); return toks.every((x) => hay.includes(x)); });
   if (f.liga) list = list.filter((p) => p.ligas.has(f.liga));
@@ -2831,7 +2840,7 @@ function renderStaefa() {
     if (p.F.games) zahlen.push(p.F.goals + ' Tore (' + nf(p.F.goals / p.F.games, 1) + '/Sp)');
     if (p.G.games) zahlen.push('Torhüter: ' + (p.G.shots ? Math.round((p.G.saves / p.G.shots) * 100) + '% Paraden' : 'Paraden nicht erfasst (Liveticker lite)'));
     const lg = [...p.ligas].sort(ligaSort).join(', ');
-    const zLabel = p.aktiv ? '' : p.zusatz ? 'trainiert bei uns' + (p.team ? ', spielt für ' + p.team : p.manuell ? ', von Hand erfasst' : ', keine Spiele in dieser Saison') : 'ohne aktuellen Einsatz';
+    const zLabel = p.aktiv ? '' : p.zusatz ? (p.trainiert ? 'trainiert bei uns' : 'zusätzlich aufgenommen') + (p.team ? ', spielt für ' + p.team : p.manuell ? ', von Hand erfasst' : ', keine Spiele in dieser Saison') : 'ohne aktuellen Einsatz';
     h += '<tr data-zid="' + p.id + '" tabindex="0"' + (p.aktiv || p.zusatz ? '' : ' class="dim"') + '><td class="name"><button class="namebtn" data-zopen="' + p.id + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + (zLabel ? '<span class="team' + (p.zusatz ? ' zusatz' : '') + '">' + esc(zLabel) + '</span>' : '') + '</td><td>' + (p.year || '–') + '</td><td class="left">' + esc(lg || '–') + '</td><td>' + (p.games || '–') + '</td><td class="left">' + esc(zahlen.join(', ') || '–') + '</td>' +
       '<td class="left">' + esc((a && a.position) || '') + (!(a && a.position) && p.pos ? '<span class="muted small">' + esc(p.pos) + ' (handball.ch)</span>' : '') + '</td><td class="left">' + (a && a.talent_card ? '<span class="tc tc-' + esc(a.talent_card) + '">' + esc(TC_LABEL[a.talent_card] || a.talent_card) + '</span>' : '') + '</td><td class="left">' + esc((a && a.schule_lehre) || '') + '</td><td class="left">' + esc((a && a.trainingstage) || '') + '</td>' +
       '<td class="left small">' + (a ? esc(fmtDT(a.geaendert_am)) + '<br><span class="muted">' + esc(a.geaendert_von || '') + '</span>' : '<span class="muted">noch keine Akte</span>') + '</td></tr>';
@@ -2876,8 +2885,10 @@ function openAkte(pid, neu) {
   if (neu && neu.year && !p.year) p.year = neu.year;
   z.open = { pid, name: p.name, p, base: a, form: akteForm(a), dirty: false, conflicts: {}, info: '', msg: '', verlauf: null, lastFocus: document.activeElement };
   if (neu && !a) {
-    z.open.info = 'Neu in der Übersicht: Trag die Trainingstage ein und speichere. Spieler mit Trainingstagen erscheinen dauerhaft in der Liste als «trainiert bei uns». Wer keine Trainingstage mehr hat, rutscht zu «Auch Akten ohne aktuellen Einsatz».';
-    if (neu.manuell && neu.year) z.open.form.notizen = 'Jahrgang ' + neu.year;
+    z.open.info = 'Neu in der Übersicht: Klicke auf «Speichern», dann steht er in der Liste. Trag am besten auch die Trainingstage ein, dann heisst es dort «trainiert bei uns».';
+    // Vorausgefüllte Notiz, damit sich die neue Akte sofort speichern lässt (und man später sieht, warum er drin ist)
+    const heute = new Date().toLocaleDateString('de-CH'), team = p.team ? ', spielt für ' + p.team : '';
+    z.open.form.notizen = (neu.manuell && neu.year ? 'Jahrgang ' + neu.year + '\n' : '') + 'Zusätzlich aufgenommen am ' + heute + team + '.';
   }
   renderAkte(); $('#akteDrawer').hidden = false; $('#backdrop').hidden = false; $('#akClose').focus();
   zsStore().verlauf(pid).then((v) => { if (z.open && z.open.pid === pid) { z.open.verlauf = v; renderAkteVerlauf(); } }).catch(() => { if (z.open && z.open.pid === pid) { z.open.verlauf = []; renderAkteVerlauf(); } });
