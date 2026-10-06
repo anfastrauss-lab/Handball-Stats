@@ -19,6 +19,8 @@ const normT = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g
 const LIGEN_TEIL = (Array.isArray(cfg.ligenEnthalten) ? cfg.ligenEnthalten : []).map(normT).filter(Boolean);
 const VEREINE = (Array.isArray(cfg.vereineEnthalten) ? cfg.vereineEnthalten : []).map(normT).filter(Boolean);
 const PAUSE_MS = Number(process.env.PAUSE_MS ?? cfg.pausenMs ?? 250);
+// Wie viele frühere Saisons zusätzlich geladen werden (für «Entwicklung über Saisons»). 0 = nur die aktuelle.
+const VORSAISONS = Math.max(0, Math.min(3, parseInt(cfg.vorsaisons, 10) || 0));
 // Ehrlich benannt: ein privates Projekt, das einmal pro Woche wenige Abfragen stellt.
 const HEADERS = { 'Content-Type': 'application/json', Accept: 'application/json', 'User-Agent': 'HandballScoutingPrivat/1.0 (woechentlicher Abruf, privates Projekt)' };
 
@@ -67,48 +69,64 @@ const bekannt = new Set(data.games.filter((g) => g.hasStats).map((g) => g.gameId
 console.log('Bisher: ' + data.groups.length + ' Gruppen, ' + data.games.length + ' Spiele, ' + data.stats.length + ' Spielerzeilen.');
 
 // 2) Gruppen der gewünschten Ligen über das Menü der aktuellen Saison finden
-const gruppenInfo = new Map(), proLiga = new Map();
+const gruppenInfo = new Map(), proLiga = new Map(), vorsaisonGruppen = new Set(), aktuelleGruppen = new Set();
 try {
   const saison = liste(((await abfrage(null, Q_SEASON, {})) || {}).season);
   const aktuell = saison.find((s) => s.isActual) || saison[0];
   const baum = await abfrage('getMenu', Q_MENU, { s: aktuell.objectId });
-  const gehe = (knoten, liga) => {
+  const gehe = (knoten, liga, ziel) => {
     for (const m of liste(knoten)) {
       if (m.objectType === 'league') liga = m.name;
-      if (m.objectType === 'group' && liga) { gruppenInfo.set(m.objectId, liga); if (!proLiga.has(liga)) proLiga.set(liga, []); proLiga.get(liga).push(m.objectId); }
-      gehe(m.menuItem, liga);
+      if (m.objectType === 'group' && liga) { gruppenInfo.set(m.objectId, liga); if (!ziel.has(liga)) ziel.set(liga, []); ziel.get(liga).push(m.objectId); }
+      gehe(m.menuItem, liga, ziel);
     }
   };
-  gehe(baum && baum.menuItem, null);
+  gehe(baum && baum.menuItem, null, proLiga);
+  for (const id of gruppenInfo.keys()) aktuelleGruppen.add(id);
+  // Frühere Saisons: nur die Ligen aus config.json (die Saisons haben fortlaufende Nummern)
+  for (let k = 1; k <= VORSAISONS; k++) {
+    const alt = new Map(), b = await abfrage('getMenu', Q_MENU, { s: aktuell.objectId - k });
+    gehe(b && b.menuItem, null, alt);
+    let n = 0;
+    for (const [liga, ids] of alt) if (LIGEN.includes(liga) || LIGEN_TEIL.some((m) => normT(liga).includes(m))) for (const id of ids) { vorsaisonGruppen.add(id); n++; }
+    console.log('Saison ' + (aktuell.objectId - k) + ': ' + n + ' Gruppen der gewünschten Ligen.');
+  }
 } catch (e) { console.warn('Menü konnte nicht gelesen werden: ' + e.message); }
 for (const l of LIGEN) if (!proLiga.has(l)) console.warn('Liga «' + l + '» wurde im Menü nicht gefunden (Schreibweise in config.json prüfen).');
 const alle = new Set(data.groups.map((g) => g.groupId));
 for (const l of LIGEN) for (const id of proLiga.get(l) || []) alle.add(id);
 for (const [liga, ids] of proLiga) if (LIGEN_TEIL.some((m) => normT(liga).includes(m))) for (const id of ids) alle.add(id);
+for (const id of vorsaisonGruppen) alle.add(id);
+// Abgeschlossene Gruppen (alle Spiele seit mindestens 14 Tagen vorbei und vollständig geholt) nicht mehr jede Woche abfragen
+const fertig = new Set(Array.isArray(data.fertig) ? data.fertig : []);
+for (const id of fertig) alle.delete(id);
+if (fertig.size) console.log(fertig.size + ' abgeschlossene Gruppen werden übersprungen.');
 // Gruppen suchen, in denen ein Team des gewünschten Vereins spielt (auch Juniorinnen, Cup und so weiter)
 const vorab = new Map();
 if (VEREINE.length) {
   let gefunden = 0;
-  for (const groupId of gruppenInfo.keys()) {
-    if (alle.has(groupId)) continue;
+  for (const groupId of aktuelleGruppen) {
+    if (alle.has(groupId) || fertig.has(groupId)) continue;
     const sp = liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games); vorab.set(groupId, sp);
     if (sp.some((g) => VEREINE.some((m) => normT(g.homeTeamName).includes(m) || normT(g.awayTeamName).includes(m)))) { alle.add(groupId); gefunden++; }
   }
   console.log('Zusätzliche Gruppen mit Teams des Vereins (' + (cfg.vereineEnthalten || []).join(', ') + '): ' + gefunden);
 }
-if (!alle.size) fail('Es wurde keine einzige Gruppe gefunden. Entweder blockiert handball.ch den Abruf, oder die Ligen in config.json stimmen nicht.');
+if (!alle.size && !fertig.size) fail('Es wurde keine einzige Gruppe gefunden. Entweder blockiert handball.ch den Abruf, oder die Ligen in config.json stimmen nicht.');
 console.log(alle.size + ' Gruppen werden geprüft.');
 
 // 3) Pro Gruppe die Spielliste lesen und nur neue Spiele holen
-const neu = { groups: [], games: [], stats: [], players: [], clubs: [], teams: [] };
+const neu = { groups: [], games: [], stats: [], players: [], clubs: [], teams: [], fixtures: [] };
 for (const c of liste(((await abfrage(null, Q_CLUBS, {})) || {}).club)) {
   const lat = Number(c.latitude), lon = Number(c.longitude);
   if (c.clubId != null && Number.isFinite(lat) && Number.isFinite(lon) && lat && lon) neu.clubs.push({ clubId: c.clubId, name: c.name, zip: c.zipCode || '', city: c.city || '', canton: c.canton || '', lat, lon });
 }
 const spieler = new Map(), teams = new Map(), jetzt = Date.now();
 let nr = 0;
+const VORBEI_MS = 14 * 24 * 3600 * 1000;
 for (const groupId of alle) {
   nr++;
+  const fehlerVorher = failed;
   const nav = erstes(((await abfrage('getGroupNavigationDetail', Q_NAV, { groupId })) || {}).groupNavigationDetail) || {};
   const spiele = vorab.has(groupId) ? vorab.get(groupId) : liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games);
   if (!spiele.length) { console.warn('Gruppe ' + groupId + ': keine Spiele gefunden.'); continue; }
@@ -118,9 +136,16 @@ for (const groupId of alle) {
   }
   const liga = gruppenInfo.get(groupId) || nav.categoryName || '';
   neu.groups.push({ groupId, name: nav.groupName || 'Gruppe ' + groupId, category: liga, season: nav.seasonName || '', gameIds: spiele.map((g) => g.objectId) });
+  // Spielplan: kommende Spiele für «Nächste Spiele» (pro Gruppe bei jedem Lauf komplett ersetzt)
+  for (const g of spiele) {
+    const t = new Date(g.gameDateTime).getTime();
+    if (Number.isFinite(t) && t > jetzt && zahl(g.homeTeamScore) + zahl(g.awayTeamScore) === 0) neu.fixtures.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, awayTeamId: g.awayTeamId, awayName: g.awayTeamName });
+  }
   const offen = spiele.filter((g) => zahl(g.homeTeamScore) + zahl(g.awayTeamScore) > 0 && new Date(g.gameDateTime).getTime() <= jetzt && !bekannt.has(g.objectId));
   console.log('Gruppe ' + nr + '/' + alle.size + ' (' + liga + ' ' + (nav.groupName || groupId) + '): ' + offen.length + ' neue Spiele');
-  if (!offen.length) continue;
+  // Abgeschlossen, wenn alle Spiele seit 14 Tagen vorbei sind und in diesem Lauf nichts schiefging (wird am Ende geprüft)
+  const vorbei = spiele.every((g) => new Date(g.gameDateTime).getTime() < jetzt - VORBEI_MS);
+  if (!offen.length) { if (vorbei && failed === fehlerVorher) fertig.add(groupId); continue; }
   for (const p of liste(((await abfrage('getPlayerStats', Q_PSTATS, { groupId })) || {}).playerStats)) {
     if (p.playerId != null && p.playerYear) spieler.set(p.playerId, { playerId: p.playerId, year: zahl(p.playerYear), position: p.position || '', hand: p.hand || '' });
   }
@@ -144,13 +169,14 @@ for (const groupId of alle) {
     }
     neu.games.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, homeScore: zahl(g.homeTeamScore), awayTeamId: g.awayTeamId, awayName: g.awayTeamName, awayScore: zahl(g.awayTeamScore), hasStats: mit });
   }
+  if (vorbei && failed === fehlerVorher) fertig.add(groupId);
 }
 neu.players = [...spieler.values()]; neu.teams = [...teams.values()];
 
 // 4) Sicherheitsnetz: bei zu vielen Fehlern nichts überschreiben
 console.log('Abfragen: ' + total + ', fehlgeschlagen: ' + failed + '.');
 if (total && failed / total > 0.15) fail('Zu viele Abfragen sind fehlgeschlagen (' + failed + ' von ' + total + '). ' + FILE + ' wurde nicht verändert.');
-if (!neu.groups.length) fail('Keine einzige Gruppe konnte gelesen werden. ' + FILE + ' wurde nicht verändert.');
+if (alle.size && !neu.groups.length) fail('Keine einzige Gruppe konnte gelesen werden. ' + FILE + ' wurde nicht verändert.');
 
 // 5) Zusammenführen (gleiche Regeln wie im Tool)
 const gr = new Map(data.groups.map((g) => [g.groupId, g])), gm = new Map(data.games.map((g) => [g.gameId, g])), st = new Map(data.stats.map((r) => [r.gameId + '|' + r.playerId, r]));
@@ -164,8 +190,11 @@ for (const t of neu.teams) tm.set(t.teamId, t);
 let entfernt = 0;
 for (const g of neu.groups) { const behalten = new Set(g.gameIds); for (const [id, sp] of gm) if (String(sp.groupId) === String(g.groupId) && !behalten.has(id)) { gm.delete(id); entfernt++; } }
 if (entfernt) for (const [k, r] of st) if (!gm.has(r.gameId)) st.delete(k);
-const out = { version: 4, erstellt: new Date().toISOString(), groups: [...gr.values()], games: [...gm.values()], stats: [...st.values()], players: [...pl.values()], clubs: [...cl.values()], teams: [...tm.values()] };
+// Spielplan: Gruppen dieses Laufs liefern ihre kommenden Spiele neu, für die übrigen bleiben die alten (nur noch künftige)
+const gelesen = new Set(neu.groups.map((g) => String(g.groupId)));
+const fixtures = (Array.isArray(data.fixtures) ? data.fixtures : []).filter((f) => !gelesen.has(String(f.groupId)) && new Date(f.date).getTime() > jetzt).concat(neu.fixtures);
+const out = { version: 4, erstellt: new Date().toISOString(), groups: [...gr.values()], games: [...gm.values()], stats: [...st.values()], players: [...pl.values()], clubs: [...cl.values()], teams: [...tm.values()], fixtures, fertig: [...fertig] };
 
 // 6) Verschlüsselt speichern (erst in eine Zwischendatei, damit nie eine halbe Datei liegen bleibt)
 fs.writeFileSync(FILE + '.tmp', encrypt(JSON.stringify(out), PW)); fs.renameSync(FILE + '.tmp', FILE);
-console.log('Fertig: ' + neu.games.length + ' neue Spiele' + (entfernt ? ', ' + entfernt + ' fremde Spiele entfernt' : '') + '. Jetzt ' + out.groups.length + ' Gruppen, ' + out.games.length + ' Spiele, ' + out.stats.length + ' Spielerzeilen, ' + out.players.length + ' Spieler.');
+console.log('Fertig: ' + neu.games.length + ' neue Spiele' + (entfernt ? ', ' + entfernt + ' fremde Spiele entfernt' : '') + '. Jetzt ' + out.groups.length + ' Gruppen, ' + out.games.length + ' Spiele, ' + out.stats.length + ' Spielerzeilen, ' + out.players.length + ' Spieler, ' + out.fixtures.length + ' kommende Spiele.');

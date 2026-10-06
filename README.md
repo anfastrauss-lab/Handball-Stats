@@ -83,6 +83,15 @@ Das Passwort bei `SCOUT_PASSWORD` stimmt nicht mehr mit dem überein, mit dem `d
 **Eine Liga fehlt, oder du willst weitere Ligen.**
 Klicke im Projekt auf `config.json`, dann auf das Stift-Symbol. Die Namen müssen genau so geschrieben sein wie auf handball.ch, zum Beispiel «Junioren U13 Promotion S1». Speichern. Die neuen Ligen werden beim nächsten Montagslauf geholt. Wenn du nicht warten willst: unter «Actions», «Wochen-Update», «Run workflow» den Lauf von Hand starten.
 
+**Frühere Saisons laden (für «Entwicklung über die Saisons» im Spielerprofil).**
+In `config.json` steht `"vorsaisons": 0`. Stell die Zahl auf `1`, um zusätzlich die letzte Saison zu laden (höchstens `3`). Geladen werden dieselben Ligen wie bei `ligen` und `ligenEnthalten`. Der erste Lauf danach dauert länger (etwa so lang wie der allererste, rund 1'000 Abfragen). Danach gelten die alten Gruppen als abgeschlossen und werden nicht mehr abgefragt. Spielerliste, Talent-Radar, Teams und Wochenreport zeigen weiterhin die aktuelle Saison. In der Spielerliste lässt sich die Saison wählen, sobald mehrere geladen sind.
+
+**Abgeschlossene Gruppen.**
+Sind alle Spiele einer Gruppe seit mindestens 14 Tagen vorbei und vollständig geholt, fragt der Wochenlauf diese Gruppe nicht mehr ab (zum Beispiel beendete Qualifikationsrunden). Das spart Abfragen bei handball.ch.
+
+**Spielplan («Nächste Spiele»).**
+Bei jedem Lauf speichert das Programm auch die kommenden Spiele der geladenen Gruppen. Die Merkliste zeigt damit, wann deine gemerkten Spieler spielen. Verschiebungen unter der Woche erscheinen erst beim nächsten Lauf; die Halle steht auf der verlinkten Spielseite von handball.ch.
+
 **Wann handball.ch abgefragt wird.**
 Nur montags früh und wenn du unter «Actions» von Hand auf «Run workflow» klickst. Wenn du Dateien hochlädst (zum Beispiel eine neue `index.html`), wird nur die Website neu veröffentlicht, ohne handball.ch abzufragen.
 
