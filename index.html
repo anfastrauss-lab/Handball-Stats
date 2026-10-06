@@ -163,6 +163,7 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litebadge { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--ink-2); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: help; }
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
+.morelig { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-2); font-size: 11.5px; font-weight: 600; line-height: 17px; vertical-align: 1px; cursor: help; white-space: nowrap; }
 @media (max-width: 520px) { .dhead { flex-wrap: wrap; } .dhead .dname { font-size: 30px; } }
 .merknext { margin-bottom: 18px; }
 .merknext td.left { white-space: normal; }
@@ -465,7 +466,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <div class="field"><label for="talMS" id="lblTalMS">Mindestwürfe</label><input type="number" id="talMS" min="0" value="15" inputmode="numeric"></div>
       <div class="field"><label for="talW">Gewicht Alter: <b id="talWVal"></b></label><input type="range" id="talW" min="0" max="1" step="0.1" value="0.5"></div>
       <div class="field"><label for="talL" title="Wie stark die Stärke der Liga in den Score einfliesst. 0 vergleicht nur innerhalb der Liga.">Gewicht Liga: <b id="talLVal"></b></label><input type="range" id="talL" min="0" max="1" step="0.1" value="0.5"></div>
-      <div class="field"><span class="lbl">Altersklasse</span><label class="check" title="Spieler, die in einer höheren Altersklasse spielen als ihr Jahrgang, z. B. ein 2012er in der U17"><input type="checkbox" id="talUp"> Nur Spieler, die hochspielen</label></div>
+      <div class="field"><span class="lbl">Anzeige</span><label class="check" title="Spieler, die in einer höheren Altersklasse spielen als ihr Jahrgang, z. B. ein 2012er in der U17"><input type="checkbox" id="talUp"> Nur Spieler, die hochspielen</label><label class="check" title="Spieler, die in mehreren Ligen spielen, stehen dann je Liga in einer eigenen Zeile"><input type="checkbox" id="talSplit"> Jede Liga einzeln zeigen</label></div>
       <div class="field" id="talTField"><label for="talT" title="Wie stark technische Fehler die Leistung senken. 0 ignoriert sie.">Gewicht Fehler: <b id="talTVal"></b></label><input type="range" id="talT" min="0" max="1" step="0.1" value="0.3"></div>
       <div class="field wide2"><span class="lbl">Gebiet</span><div class="small" id="talArea"></div><button class="btn secondary" id="talAreaBtn" style="margin-top:4px">Gebiet ändern</button></div>
     </div>
@@ -485,7 +486,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <li><b>Spielt hoch:</b> Das gelbe Kennzeichen «↑ U17» heisst, dass ein Spieler in dieser Saison in einer höheren Altersklasse spielt als sein Jahrgang. In der Saison 2026/27 gehören zum Beispiel die Jahrgänge 2010 und 2011 in die U17, ein 2012er dort spielt also hoch. «↑ Aktive» heisst: ein Junior spielt bei den Erwachsenen. Das ist oft ein starkes Talentzeichen, auch wenn die Zahlen dort tiefer sind.</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht plus Ligastufe mal Gewicht. Mit den Reglern stellst du ein, wie wichtig dir Alter und Liga sind: Beim Alter gibt 1 pro Jahr einen ganzen Punkt.</li>
         <li><b>Saison:</b> Das Radar zeigt immer die aktuelle Saison. Frühere Saisons siehst du im Spielerprofil unter «Entwicklung über die Saisons».</li>
-        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, steht je Liga in einer eigenen Zeile. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
+        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als Hinweis «+ U17 Elite» daneben (Zahlen beim Darüberfahren). Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Liga siehst du alle Zeilen. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
       </ul>
     </details>
   </div>
@@ -1921,7 +1922,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
-state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, up: false, sort: { key: 'score', dir: -1 }, limit: 100 };
+state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, up: false, split: false, sort: { key: 'score', dir: -1 }, limit: 100 };
 state.team = null; state.team2 = null;
 
 // Ligastufe für den ligaübergreifenden Vergleich: wie viel stärker eine Liga ungefähr ist (in Standardabweichungen)
@@ -2052,6 +2053,16 @@ function talCols(role) {
   const dist = state.f.center ? [{ k: 'dist', label: 'km', title: 'Luftlinie zum gewählten Mittelpunkt', v: (a) => (a.dist == null ? null : a.dist), t: (a) => (a.dist == null ? '–' : nf(a.dist, 0)) }] : [];
   return [...common.slice(0, 2), ...dist, ...common.slice(2), ...mid, ...tail];
 }
+// Hinweis «+ U17 Elite» auf weitere Ligen des Spielers, mit deren Zahlen beim Darüberfahren
+function otherLigas(a) {
+  if (!a.others || !a.others.length) return '';
+  const F = a.role === 'F';
+  const tip = 'Spielt auch in: ' + a.others.map((o) => o.liga + ' (' + o.games + (o.games === 1 ? ' Spiel' : ' Spiele') + ', ' +
+    (F ? nf(o.gpg || 0, 1) + ' Tore/Spiel' : (o.spct == null ? 'Quote –' : Math.round(o.spct * 100) + '% Paraden')) + ', Score ' + (o.score == null ? '–' : signed(o.score, 1)) + ')').join('; ') +
+    '. Angezeigt ist die Liga mit dem besten Score. Alle Ligen einzeln: Schalter «Jede Liga einzeln zeigen».';
+  const short = a.others.map((o) => o.liga.replace(/^(Junioren|Juniorinnen|Männer|Frauen)\s+/i, '')).join(', ');
+  return ' <span class="morelig" title="' + esc(tip) + '">+ ' + esc(short) + '</span>';
+}
 function talentList() {
   const d = data(), T = buildTalent(d), t = state.t, role = t.role;
   let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
@@ -2060,11 +2071,23 @@ function talentList() {
   if (toks.length) list = list.filter((a) => { const hay = norm(a.name) + ' ' + norm(fullName(a.name)); return toks.every((x) => hay.includes(x)); });
   if (t.yearFrom) list = list.filter((a) => a.year >= t.yearFrom);
   if (t.yearTo) list = list.filter((a) => a.year && a.year <= t.yearTo);
-  if (t.up) list = list.filter((a) => a.up);
   attachGeo(list);
+  for (const a of list) { a.score = a.perf == null ? null : a.perf + t.wAge * (a.ageAdv || 0) + t.wLiga * (a.level || 0); a.others = []; a.upShow = a.up; }
+  // Eine Zeile pro Spieler: die Liga mit dem besten Score (bei Gleichstand die mit mehr Spielen).
+  // Ausnahme: eine Liga ist gewählt oder «Jede Liga einzeln zeigen» ist an.
+  if (!t.liga && !t.split) {
+    const val = (x) => (x.score == null ? -1e9 : x.score), best = new Map();
+    for (const a of list) { const b = best.get(a.id); if (!b || val(a) - val(b) > 0 || (val(a) === val(b) && a.games > b.games)) best.set(a.id, a); }
+    for (const a of list) {
+      const b = best.get(a.id); if (b === a) continue;
+      b.others.push(a);
+      if (a.up && (!b.upShow || a.up.cat > b.upShow.cat)) b.upShow = a.up; // Hochspielen in einer anderen Liga trotzdem zeigen
+    }
+    list = [...best.values()];
+  }
+  if (t.up) list = list.filter((a) => a.upShow);
   const total = list.length;
   list = list.filter(inArea);
-  for (const a of list) a.score = a.perf == null ? null : a.perf + t.wAge * (a.ageAdv || 0) + t.wLiga * (a.level || 0);
   const cols = talCols(role), sk = t.sort, col = cols.find((c) => c.k === sk.key);
   const byName = (x, y) => fullName(x.name).localeCompare(fullName(y.name), 'de');
   list.sort((x, y) => {
@@ -2086,7 +2109,7 @@ function renderTalent() {
   $('#talLiga').innerHTML = '<option value="">Alle Ligen</option>' + ligas.map((l) => '<option value="' + esc(l) + '">' + esc(l) + '</option>').join(''); $('#talLiga').value = t.liga;
   $('#talRoleF').setAttribute('aria-pressed', t.role === 'F'); $('#talRoleG').setAttribute('aria-pressed', t.role === 'G');
   $('#lblTalMS').textContent = t.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
-  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talUp').checked = !!t.up; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = t.role === 'G';
+  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talUp').checked = !!t.up; $('#talSplit').checked = !!t.split; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = t.role === 'G';
   const parts = []; if (f.center) parts.push('Umkreis ' + f.radius + ' km um ' + f.center.label); if (f.cantons.size) parts.push('Kantone ' + [...f.cantons].sort().join(', '));
   $('#talArea').textContent = parts.length ? parts.join(', ') : 'Kein Gebietsfilter aktiv';
   const list = talentList(), cols = talCols(t.role), shown = list.slice(0, t.limit), sk = t.sort;
@@ -2098,7 +2121,7 @@ function renderTalent() {
   for (const a of shown) {
     const s = splitName(a.name), on = state.merk.has(mk(a.id, a.role));
     h += '<tr data-id="' + a.id + '" data-role="' + a.role + '"><td class="name"><button class="star" data-tstar="' + a.id + '" data-role="' + a.role + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Von der Merkliste entfernen' : 'Auf die Merkliste setzen') + '">' + (on ? '★' : '☆') + '</button>' +
-      '<button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + upBadge(a.up) + '<span class="team">' + esc(a.team) + (a.club && a.club.canton ? ' (' + esc(a.club.canton) + ')' : '') + (a.position ? ', ' + esc(a.position) : '') + '</span></td>';
+      '<button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + upBadge(a.upShow) + otherLigas(a) + '<span class="team">' + esc(a.team) + (a.club && a.club.canton ? ' (' + esc(a.club.canton) + ')' : '') + (a.position ? ', ' + esc(a.position) : '') + '</span></td>';
     for (const c of cols) {
       let style = ''; if (c.bar && a.score != null) { const w = Math.round((Math.max(a.score, 0) / maxScore) * 100); style = ' style="background:linear-gradient(90deg,var(--bar) ' + w + '%,transparent ' + w + '%)"'; }
       const tip = c.tip ? c.tip(a) : '';
@@ -3139,6 +3162,7 @@ $('#talMS').oninput = (e) => { const v = Math.max(0, parseInt(e.target.value, 10
 $('#talW').oninput = (e) => { state.t.wAge = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talL').oninput = (e) => { state.t.wLiga = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talUp').onchange = (e) => { state.t.up = e.target.checked; state.t.limit = 100; renderTalent(); };
+$('#talSplit').onchange = (e) => { state.t.split = e.target.checked; state.t.limit = 100; renderTalent(); };
 $('#talT').oninput = (e) => { state.t.wTF = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talAreaBtn').onclick = () => setView('spieler');
 $('#talMore').onclick = () => { state.t.limit += 100; renderTalent(); };
