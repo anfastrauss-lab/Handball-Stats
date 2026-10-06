@@ -164,6 +164,11 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
 .zsadd { margin-bottom: 14px; border-color: var(--court); }
+tr.totrow td { font-weight: 700; border-top: 2px solid var(--ink-2); background: var(--surface-2); }
+tr.totrow td small { font-weight: 400; color: var(--ink-2); }
+tr.totrow:hover td { background: var(--surface-2); }
+.gamesum th, .gamesum td { text-align: right; } .gamesum th.left, .gamesum td.left { text-align: left; }
+.gamesum td.win { color: var(--court); font-weight: 700; }
 .zsadd td.left { white-space: normal; }
 .team.zusatz { color: var(--court); font-weight: 600; }
 .morelig { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 4px; border: 1px solid var(--line); color: var(--ink-2); font-size: 11.5px; font-weight: 600; line-height: 17px; vertical-align: 1px; cursor: help; white-space: nowrap; }
@@ -463,6 +468,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <div class="field wide2"><span class="lbl" id="lblTalRole">Rolle</span><div class="seg" role="group" aria-labelledby="lblTalRole"><button id="talRoleF" aria-pressed="true">Feldspieler</button><button id="talRoleG" aria-pressed="false">Torhüter</button></div></div>
       <div class="field"><label for="talQ">Name</label><input type="search" id="talQ" placeholder="Name suchen" autocomplete="off"></div>
       <div class="field"><label for="talLiga">Liga</label><select id="talLiga"></select></div>
+      <div class="field" id="talPosField"><label for="talPos" title="Die Position ist auf handball.ch meist nur bei QHL- und NLB-Teams eingetragen">Position</label><select id="talPos"></select></div>
       <div class="field"><label for="talYF">Jahrgang ab</label><input type="number" id="talYF" min="1950" max="2030" placeholder="z. B. 2009" inputmode="numeric"></div>
       <div class="field"><label for="talYT">Jahrgang bis</label><input type="number" id="talYT" min="1950" max="2030" placeholder="z. B. 2011" inputmode="numeric"></div>
       <div class="field"><label for="talMG">Mindestspiele</label><input type="number" id="talMG" min="1" value="3" inputmode="numeric"></div>
@@ -1296,7 +1302,7 @@ function computeList() {
     if (f.yearFrom) list = list.filter((p) => p.year >= f.yearFrom);
     if (f.yearTo) list = list.filter((p) => p.year && p.year <= f.yearTo);
     if (f.up) list = list.filter((p) => p.up);
-    if (f.pos) list = list.filter((p) => (f.pos === '__none' ? !p.position : f.pos.startsWith('grp:') ? p.position.startsWith(f.pos.slice(4)) : p.position === f.pos));
+    if (f.pos) list = list.filter((p) => posMatch(p.position, f.pos));
     const toks = q.split(/\s+/).filter(Boolean);
     if (toks.length) list = list.filter((p) => { const hay = norm(p.name) + ' ' + norm(fullName(p.name)); return toks.every((x) => hay.includes(x)); });
     state.baseCache = { key, list };
@@ -1463,17 +1469,21 @@ function fillSelects() {
   $('#fTeam').value = f.team;
   fillAreaControls();
 }
-function fillPositions() {
-  const d = data(), f = state.f;
+// Positionsfilter (Spielerliste und Talent-Radar): einzelne Position, Gruppe «grp:Rückraum» oder «__none» = unbekannt
+const posMatch = (pos, sel) => (sel === '__none' ? !pos : sel.startsWith('grp:') ? pos.startsWith(sel.slice(4)) : pos === sel);
+function posOptions(d) {
   const vals = [...new Set(Object.values(d.players).map((p) => p.position).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
   const first = {}; for (const v of vals) (first[v.split(' ')[0]] ||= []).push(v);
   let o = '<option value="">Alle Positionen</option>';
   for (const [w, list] of Object.entries(first)) if (list.length > 1) o += '<option value="grp:' + esc(w) + '">' + esc(w) + ' (alle)</option>';
-  o += vals.map((v) => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('') + '<option value="__none">Position unbekannt</option>';
-  $('#fPos').innerHTML = o;
-  if (![...$('#fPos').options].some((x) => x.value === f.pos)) f.pos = '';
-  $('#fPos').value = f.pos;
+  return o + vals.map((v) => '<option value="' + esc(v) + '">' + esc(v) + '</option>').join('') + '<option value="__none">Position unbekannt</option>';
 }
+function fillPosSelect(sel, obj) {
+  $(sel).innerHTML = posOptions(data());
+  if (![...$(sel).options].some((x) => x.value === obj.pos)) obj.pos = '';
+  $(sel).value = obj.pos;
+}
+function fillPositions() { fillPosSelect('#fPos', state.f); }
 /* ---------- Karte und Gebietsfilter ---------- */
 const MAP = JSON.parse($('#mapdata').textContent);
 const projXY = (lat, lon) => [(lon - MAP.LON0) * MAP.KX, (MAP.LAT1 - lat) * MAP.KY];
@@ -1585,6 +1595,36 @@ function leagueOf(gr) {
 const gameUrl = (id) => 'https://www.handball.ch/de/matchcenter/spiele/' + id + '#/stats';
 function showGame(id) { state.open.game = id; renderDrawer(); $('#drawer').scrollTop = 0; const b = $('#dBack'); if (b) b.focus(); }
 function showPlayer(id, role) { state.open = { id, role }; renderDrawer(); $('#drawer').scrollTop = 0; $('#dClose').focus(); }
+// Summen eines Teams über Spielerzeilen (ein Spiel oder eine Saison). lite: mindestens eine Zeile aus einem Lite-Spiel ohne Würfe
+function teamTotals(list) {
+  const S = { goals: 0, shots: 0, qg: 0, qs: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, saves: 0, shotsGK: 0, sv: 0, sg: 0, saves7: 0, shots7GK: 0, lite: false, n: 0 };
+  for (const r of list) {
+    if (r.lite) S.lite = true;
+    if (r.role === 'F') { S.n++; for (const k of ['goals', 'goals7', 'shots7', 'tf', 'min2', 'qg', 'qs']) S[k] += r[k] || 0; if (!r.lite) S.shots += r.shots || 0; }
+    else { S.shotsGK += r.shotsGK || 0; S.sv += r.sv || 0; S.sg += r.sg || 0; if (!r.lite) { S.saves += r.saves || 0; S.saves7 += r.saves7 || 0; S.shots7GK += r.shots7GK || 0; } }
+  }
+  return S;
+}
+// Spielstatistik: beide Teams nebeneinander, der bessere Wert ist markiert
+function gameSummary(g, A, B) {
+  if (!A || !B || (!A.n && !B.n)) return '';
+  const row = (label, a, b, va, vb, better) => {
+    const win = better && va != null && vb != null && va !== vb ? ((va - vb) * better > 0 ? 'a' : 'b') : '';
+    return '<tr><td class="left">' + label + '</td><td' + (win === 'a' ? ' class="win"' : '') + '>' + a + '</td><td' + (win === 'b' ? ' class="win"' : '') + '>' + b + '</td></tr>';
+  };
+  const q = (S) => rate(S.qg, S.qs), sq = (S) => rate(S.sv, S.sg);
+  const lite = A.lite || B.lite;
+  return '<h3 style="margin-top:22px">Spielstatistik</h3><div style="overflow-x:auto"><table class="dtable gamesum"><thead><tr><th class="left"></th><th>' + esc(g.homeName) + '</th><th>' + esc(g.awayName) + '</th></tr></thead><tbody>' +
+    row('Tore', g.homeScore, g.awayScore, g.homeScore, g.awayScore, 1) +
+    row('Würfe', lite ? '–' : A.shots, lite ? '–' : B.shots, null, null, 0) +
+    row('Wurfquote', pctTxt(q(A)), pctTxt(q(B)), q(A), q(B), 1) +
+    row('7-Meter', A.shots7 ? A.goals7 + '/' + A.shots7 : '–', B.shots7 ? B.goals7 + '/' + B.shots7 : '–', null, null, 0) +
+    row('Technische Fehler', A.tf, B.tf, A.tf, B.tf, -1) +
+    row('Zeitstrafen', A.min2, B.min2, A.min2, B.min2, -1) +
+    row('Paraden', lite ? '–' : A.saves, lite ? '–' : B.saves, lite ? null : A.saves, lite ? null : B.saves, 1) +
+    row('Paradenquote', pctTxt(sq(A)), pctTxt(sq(B)), sq(A), sq(B), 1) +
+    '</tbody></table></div>' + (lite ? '<p class="small muted" style="margin:4px 0 0">Liveticker lite: Würfe und Paraden wurden nicht erfasst.</p>' : '');
+}
 function renderGame() {
   const d = data(), gid = state.open.game, g = d.games[gid];
   const back = state.open.id == null ? '' : '<button class="btn secondary" id="dBack">← ' + esc(state.open.name || 'Zurück') + '</button>';
@@ -1595,16 +1635,20 @@ function renderGame() {
   const me = (r) => state.open.id === r.playerId && state.open.role === r.role;
   const cls = (r, active) => { const c = [me(r) ? 'me' : '', active ? '' : 'dim'].filter(Boolean).join(' '); return c ? ' class="' + c + '"' : ''; };
   const nm = (r) => { const s = splitName(r.name); return '<button class="namebtn" data-player="' + r.playerId + '" data-role="' + r.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
+  const sums = {}; // Summen pro Team, für «Team gesamt» und die Spielstatistik unten
   const block = (teamId, name, score) => {
     const t = rs.filter((r) => String(r.teamId) === String(teamId));
+    const S = (sums[teamId] = teamTotals(t));
     const field = t.filter((r) => r.role === 'F').sort((a, b) => b.goals - a.goals || b.shots - a.shots || byName(a, b));
     const gks = t.filter((r) => r.role === 'G').sort((a, b) => b.shotsGK - a.shotsGK || byName(a, b));
     let h = '<h3 style="margin-top:20px">' + esc(name) + ' <span class="muted">' + score + ' Tore</span> <button class="linkbtn small" data-team="' + teamId + '" style="font-family:var(--font-body);font-weight:600;font-size:13px">Team ansehen</button></h3>';
     if (!t.length) return h + '<p class="small muted">Für dieses Team gibt es keine Statistik.</p>';
     h += '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Spieler</th><th>Tore/Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
-      field.map((r) => '<tr' + cls(r, r.goals || r.shots || r.tf || r.min2 || r.warn) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.goals + '/' + (r.shots && !r.lite ? r.shots : r.goals ? '–' : 0) + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + (r.shots7 ? r.goals7 + '/' + r.shots7 : '–') + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td></tr>').join('') + '</tbody></table></div>';
+      field.map((r) => '<tr' + cls(r, r.goals || r.shots || r.tf || r.min2 || r.warn) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + r.goals + '/' + (r.shots && !r.lite ? r.shots : r.goals ? '–' : 0) + '</td><td>' + pctTxt(rate(r.qg, r.qs)) + '</td><td>' + (r.shots7 ? r.goals7 + '/' + r.shots7 : '–') + '</td><td>' + r.tf + '</td><td>' + r.min2 + '</td></tr>').join('') +
+      '<tr class="totrow"><td class="left"></td><td class="left">Team gesamt</td><td>' + S.goals + '/' + (S.lite ? '–' : S.shots) + '</td><td>' + pctTxt(rate(S.qg, S.qs)) + '</td><td>' + (S.shots7 ? S.goals7 + '/' + S.shots7 : '–') + '</td><td>' + S.tf + '</td><td>' + S.min2 + '</td></tr></tbody></table></div>';
     if (gks.length) h += '<div style="overflow-x:auto;margin-top:10px"><table class="dtable"><thead><tr><th class="left">Nr</th><th class="left">Torhüter</th><th>Paraden</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th></tr></thead><tbody>' +
-      gks.map((r) => '<tr' + cls(r, r.shotsGK) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + (r.lite ? '–' : r.saves) + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.sv, r.sg)) + '</td><td>' + (r.lite ? '–' : r.saves7 + '/' + r.shots7GK) + '</td></tr>').join('') + '</tbody></table></div>';
+      gks.map((r) => '<tr' + cls(r, r.shotsGK) + '><td class="left">' + (r.nr || '') + '</td><td class="left">' + nm(r) + '</td><td>' + (r.lite ? '–' : r.saves) + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.sv, r.sg)) + '</td><td>' + (r.lite ? '–' : r.saves7 + '/' + r.shots7GK) + '</td></tr>').join('') +
+      (gks.length > 1 ? '<tr class="totrow"><td class="left"></td><td class="left">Torhüter gesamt</td><td>' + (S.lite ? '–' : S.saves) + '/' + S.shotsGK + '</td><td>' + pctTxt(rate(S.sv, S.sg)) + '</td><td>' + (S.lite ? '–' : S.saves7 + '/' + S.shots7GK) + '</td></tr>' : '') + '</tbody></table></div>';
     return h;
   };
   $('#drawer').innerHTML =
@@ -1614,6 +1658,7 @@ function renderGame() {
     '<div class="row">' + back + '<a class="btn secondary" id="dWeb" href="' + gameUrl(gid) + '" target="_blank" rel="noopener noreferrer">Auf handball.ch öffnen</a></div>' +
     (isLite(d, gid) ? '<div class="notice warn" style="margin:14px 0 0"><span class="litebadge">Lite</span> Dieses Spiel wurde mit dem <b>Liveticker lite</b> erfasst. Er zählt nur Tore, keine Würfe und Paraden. Deshalb fehlen hier Würfe und Quoten, und das Spiel zählt bei den Spielern nicht für Quoten.</div>' : '') +
     block(g.homeTeamId, g.homeName, g.homeScore) + block(g.awayTeamId, g.awayName, g.awayScore) +
+    gameSummary(g, sums[g.homeTeamId], sums[g.awayTeamId]) +
     '<p class="small muted" style="margin-top:14px">Ausgegraut sind Spieler im Kader ohne eigene Aktion. Ein Klick auf einen Namen öffnet sein Profil.</p>';
 }
 function openDetail(id, role) {
@@ -1936,7 +1981,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
-state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, up: false, split: false, sort: { key: 'score', dir: -1 }, limit: 100 };
+state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, up: false, split: false, pos: '', sort: { key: 'score', dir: -1 }, limit: 100 };
 state.team = null; state.team2 = null;
 
 // Ligastufe für den ligaübergreifenden Vergleich: wie viel stärker eine Liga ungefähr ist (in Standardabweichungen)
@@ -2088,6 +2133,7 @@ function talentList() {
   const d = data(), T = buildTalent(d), t = state.t, role = t.role;
   let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
   if (t.liga) list = list.filter((a) => a.liga === t.liga);
+  if (t.pos) list = list.filter((a) => posMatch(a.position || '', t.pos));
   const toks = norm(t.q).split(/\s+/).filter(Boolean);
   if (toks.length) list = list.filter((a) => { const hay = norm(a.name) + ' ' + norm(fullName(a.name)); return toks.every((x) => hay.includes(x)); });
   if (t.yearFrom) list = list.filter((a) => a.year >= t.yearFrom);
@@ -2128,6 +2174,7 @@ function renderTalent() {
   const ligas = [...new Set(T[t.role].map((a) => a.liga))].sort((a, b) => a.localeCompare(b, 'de'));
   if (t.liga && !ligas.includes(t.liga)) t.liga = '';
   $('#talLiga').innerHTML = '<option value="">Alle Ligen</option>' + ligas.map((l) => '<option value="' + esc(l) + '">' + esc(l) + '</option>').join(''); $('#talLiga').value = t.liga;
+  fillPosSelect('#talPos', t);
   $('#talRoleF').setAttribute('aria-pressed', t.role === 'F'); $('#talRoleG').setAttribute('aria-pressed', t.role === 'G');
   $('#lblTalMS').textContent = t.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
   $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talUp').checked = !!t.up; $('#talSplit').checked = !!t.split; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = t.role === 'G';
@@ -2270,8 +2317,12 @@ function renderTeam() {
   const pbtn = (p) => { const s = splitName(p.name); return '<button class="namebtn" data-player="' + p.id + '" data-role="' + p.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
   h += '<div class="card teamsec"><h3>Kader: Feldspieler</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Spieler</span></th><th>Jahrgang</th><th>Spiele</th><th>Tore</th><th>Tore/Spiel</th><th>Würfe</th><th>Quote</th><th title="7-Meter: Tore/Würfe">7-Meter</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th></tr></thead><tbody>' +
     fl.map((p) => '<tr><td class="name">' + pbtn(p) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + '</span></td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.goals + '</td><td>' + (p.games ? nf(p.goals / p.games, 1) : '–') + '</td><td>' + p.shots + '</td><td title="' + esc(partTip(p.qn, p.games)) + '">' + pctTxt(rate(p.qg, p.qs)) + partMark(p.qn, p.games) + '</td><td>' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + '</td><td>' + p.tf + '</td><td>' + p.min2 + '</td></tr>').join('') +
+    (fl.length ? (() => { const t = (k) => fl.reduce((s, p) => s + (p[k] || 0), 0), sg = new Set(rows(d).filter((r) => String(r.teamId) === td.id && d.games[r.gameId] && inSeason(d, d.games[r.gameId], '')).map((r) => r.gameId)).size;
+      return '<tr class="totrow"><td class="name">Team gesamt<span class="team" style="margin-left:0">' + sg + ' Spiele mit Statistik</span></td><td></td><td>' + sg + '</td><td>' + t('goals') + '</td><td>' + (sg ? nf(t('goals') / sg, 1) : '–') + '</td><td>' + t('shots') + '</td><td>' + pctTxt(rate(t('qg'), t('qs'))) + '</td><td>' + (t('shots7') ? t('goals7') + '/' + t('shots7') : '–') + '</td><td>' + t('tf') + (sg ? ' <small>' + nf(t('tf') / sg, 1) + '/Sp</small>' : '') + '</td><td>' + t('min2') + (sg ? ' <small>' + nf(t('min2') / sg, 1) + '/Sp</small>' : '') + '</td></tr>'; })() : '') +
     '</tbody></table></div>' + (gl.length ? '<h3 style="margin-top:18px">Torhüter</h3><div class="tablewrap"><table><thead><tr><th class="left name"><span class="thbtn" style="display:block;text-align:left;cursor:default">Torhüter</span></th><th>Jahrgang</th><th>Spiele</th><th>Paraden</th><th>Gegenwürfe</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th></tr></thead><tbody>' +
-      gl.map((p) => '<tr><td class="name">' + pbtn(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.sv + '</td><td>' + p.sg + '</td><td title="' + esc(partTip(p.sn, p.games)) + '">' + pctTxt(rate(p.sv, p.sg)) + partMark(p.sn, p.games) + '</td><td>' + (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') + '</td></tr>').join('') + '</tbody></table></div>' : '') + '</div>';
+      gl.map((p) => '<tr><td class="name">' + pbtn(p) + '</td><td>' + (p.year || '–') + '</td><td>' + p.games + '</td><td>' + p.sv + '</td><td>' + p.sg + '</td><td title="' + esc(partTip(p.sn, p.games)) + '">' + pctTxt(rate(p.sv, p.sg)) + partMark(p.sn, p.games) + '</td><td>' + (p.shots7GK ? p.saves7 + '/' + p.shots7GK : '–') + '</td></tr>').join('') +
+      (gl.length > 1 ? (() => { const t = (k) => gl.reduce((s, p) => s + (p[k] || 0), 0); return '<tr class="totrow"><td class="name">Torhüter gesamt</td><td></td><td></td><td>' + t('sv') + '</td><td>' + t('sg') + '</td><td>' + pctTxt(rate(t('sv'), t('sg'))) + '</td><td>' + (t('shots7GK') ? t('saves7') + '/' + t('shots7GK') : '–') + '</td></tr>'; })() : '') +
+      '</tbody></table></div>' : '') + '</div>';
   if (td.mainGroup != null) {
     const st = teamStanding(d, td.mainGroup), gr = d.groups[td.mainGroup];
     h += '<div class="card teamsec"><h3>Tabelle: ' + esc(gr ? groupLabel(gr) : 'Gruppe') + '</h3><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Rang</th><th class="left">Team</th><th>Sp</th><th>S</th><th>U</th><th>N</th><th>Tore</th><th>Diff</th><th>Pkt</th></tr></thead><tbody>' +
@@ -3268,6 +3319,7 @@ $('#talMS').oninput = (e) => { const v = Math.max(0, parseInt(e.target.value, 10
 $('#talW').oninput = (e) => { state.t.wAge = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talL').oninput = (e) => { state.t.wLiga = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talUp').onchange = (e) => { state.t.up = e.target.checked; state.t.limit = 100; renderTalent(); };
+$('#talPos').onchange = (e) => { state.t.pos = e.target.value; state.t.limit = 100; renderTalent(); };
 $('#talSplit').onchange = (e) => { state.t.split = e.target.checked; state.t.limit = 100; renderTalent(); };
 $('#talT').oninput = (e) => { state.t.wTF = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talAreaBtn').onclick = () => setView('spieler');
