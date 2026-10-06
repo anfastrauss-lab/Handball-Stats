@@ -486,7 +486,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <li><b>Spielt hoch:</b> Das gelbe Kennzeichen «↑ U17» heisst, dass ein Spieler in dieser Saison in einer höheren Altersklasse spielt als sein Jahrgang. In der Saison 2026/27 gehören zum Beispiel die Jahrgänge 2010 und 2011 in die U17, ein 2012er dort spielt also hoch. «↑ Aktive» heisst: ein Junior spielt bei den Erwachsenen. Das ist oft ein starkes Talentzeichen, auch wenn die Zahlen dort tiefer sind.</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht plus Ligastufe mal Gewicht. Mit den Reglern stellst du ein, wie wichtig dir Alter und Liga sind: Beim Alter gibt 1 pro Jahr einen ganzen Punkt.</li>
         <li><b>Saison:</b> Das Radar zeigt immer die aktuelle Saison. Frühere Saisons siehst du im Spielerprofil unter «Entwicklung über die Saisons».</li>
-        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als Hinweis «+ U17 Elite» daneben (Zahlen beim Darüberfahren). Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Liga siehst du alle Zeilen. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
+        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als grauer Hinweis «+ U15 Promotion» daneben. Spielt er in einer davon hoch, steht stattdessen das gelbe «↑ U17 Elite». Die Zahlen dort siehst du beim Darüberfahren. Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Liga siehst du alle Zeilen. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
       </ul>
     </details>
   </div>
@@ -2054,14 +2054,21 @@ function talCols(role) {
   return [...common.slice(0, 2), ...dist, ...common.slice(2), ...mid, ...tail];
 }
 // Hinweis «+ U17 Elite» auf weitere Ligen des Spielers, mit deren Zahlen beim Darüberfahren
-function otherLigas(a) {
-  if (!a.others || !a.others.length) return '';
-  const F = a.role === 'F';
-  const tip = 'Spielt auch in: ' + a.others.map((o) => o.liga + ' (' + o.games + (o.games === 1 ? ' Spiel' : ' Spiele') + ', ' +
-    (F ? nf(o.gpg || 0, 1) + ' Tore/Spiel' : (o.spct == null ? 'Quote –' : Math.round(o.spct * 100) + '% Paraden')) + ', Score ' + (o.score == null ? '–' : signed(o.score, 1)) + ')').join('; ') +
-    '. Angezeigt ist die Liga mit dem besten Score. Alle Ligen einzeln: Schalter «Jede Liga einzeln zeigen».';
-  const short = a.others.map((o) => o.liga.replace(/^(Junioren|Juniorinnen|Männer|Frauen)\s+/i, '')).join(', ');
-  return ' <span class="morelig" title="' + esc(tip) + '">+ ' + esc(short) + '</span>';
+// Kennzeichen hinter dem Namen im Talent-Radar: «Spielt hoch» und weitere Ligen, ohne Doppelungen.
+// Ist eine weitere Liga genau die, in der er hochspielt, wird beides zu einem gelben «↑ U17 Elite».
+const shortLiga = (l) => String(l).replace(/^(Junioren|Juniorinnen|Männer|Frauen)\s+/i, '');
+function ligaStats(o) {
+  return o.liga + ': ' + o.games + (o.games === 1 ? ' Spiel' : ' Spiele') + ', ' +
+    (o.role === 'F' ? nf(o.gpg || 0, 1) + ' Tore/Spiel' : (o.spct == null ? 'Quote –' : Math.round(o.spct * 100) + '% Paraden')) + ', Score ' + (o.score == null ? '–' : signed(o.score, 1));
+}
+function talBadges(a) {
+  const others = a.others || [], ups = others.filter((o) => o.up), rest = others.filter((o) => !o.up), hint = ' Angezeigt ist die Liga mit dem besten Score. Alle Ligen einzeln: Schalter «Jede Liga einzeln zeigen».';
+  let h = '';
+  if (a.up) h += upBadge(a.up); // die gezeigte Zeile ist selbst die höhere Klasse
+  else if (ups.length) h += ' <span class="upbadge" title="' + esc(upText(a.upShow) + '. Zahlen dort: ' + ups.map(ligaStats).join('; ') + '.' + hint) + '">↑ ' + esc(ups.map((o) => shortLiga(o.liga)).join(', ')) + '</span>';
+  const plain = a.up ? others : rest; // wenn die gezeigte Zeile hochgespielt ist, sind alle übrigen normale Zusatzligen
+  if (plain.length) h += ' <span class="morelig" title="' + esc('Spielt auch in: ' + plain.map(ligaStats).join('; ') + '.' + hint) + '">+ ' + esc(plain.map((o) => shortLiga(o.liga)).join(', ')) + '</span>';
+  return h;
 }
 function talentList() {
   const d = data(), T = buildTalent(d), t = state.t, role = t.role;
@@ -2121,7 +2128,7 @@ function renderTalent() {
   for (const a of shown) {
     const s = splitName(a.name), on = state.merk.has(mk(a.id, a.role));
     h += '<tr data-id="' + a.id + '" data-role="' + a.role + '"><td class="name"><button class="star" data-tstar="' + a.id + '" data-role="' + a.role + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Von der Merkliste entfernen' : 'Auf die Merkliste setzen') + '">' + (on ? '★' : '☆') + '</button>' +
-      '<button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + upBadge(a.upShow) + otherLigas(a) + '<span class="team">' + esc(a.team) + (a.club && a.club.canton ? ' (' + esc(a.club.canton) + ')' : '') + (a.position ? ', ' + esc(a.position) : '') + '</span></td>';
+      '<button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' + talBadges(a) + '<span class="team">' + esc(a.team) + (a.club && a.club.canton ? ' (' + esc(a.club.canton) + ')' : '') + (a.position ? ', ' + esc(a.position) : '') + '</span></td>';
     for (const c of cols) {
       let style = ''; if (c.bar && a.score != null) { const w = Math.round((Math.max(a.score, 0) / maxScore) * 100); style = ' style="background:linear-gradient(90deg,var(--bar) ' + w + '%,transparent ' + w + '%)"'; }
       const tip = c.tip ? c.tip(a) : '';
