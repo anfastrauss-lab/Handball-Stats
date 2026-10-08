@@ -174,8 +174,8 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .wsres { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .wsres .btn { min-height: 48px; }
 .wsundo { margin-left: 8px; min-height: 40px; }
-.wsres .btn:first-child { background: #B03A2A; border-color: #B03A2A; color: #fff; }
-.wsres .btn:nth-child(2) { background: #1F7A47; border-color: #1F7A47; color: #fff; }
+.wsres .btn:first-child { background: #1F7A47; border-color: #1F7A47; color: #fff; }
+.wsres .btn:nth-child(2) { background: #B03A2A; border-color: #B03A2A; color: #fff; }
 svg.court, svg.goal { width: 100%; height: auto; display: block; touch-action: manipulation; user-select: none; }
 svg.pick { cursor: crosshair; }
 svg.goal { max-width: 460px; } svg.court { max-width: 520px; } svg.goal.small { max-width: 240px; }
@@ -189,12 +189,12 @@ svg.goal { max-width: 460px; } svg.court { max-width: 520px; } svg.goal.small { 
 .goal .gbig { font-size: 24px; font-weight: 800; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
 .goal .gsub { font-size: 13px; text-anchor: middle; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
 .goal.small .gbig { font-size: 30px; }
-svg .dot { stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; fill-opacity: .95; } svg .dot.g { fill: #E8141C; } svg .dot.s { fill: #00B140; } svg .dot.o { fill: var(--ink-2); }
+svg .dot { stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; fill-opacity: .95; } svg .dot.g { fill: #00B140; } svg .dot.s { fill: #E8141C; } svg .dot.o { fill: transparent; stroke: #E8141C; stroke-width: 2px; }
 svg .mark { fill: var(--signal); stroke: var(--ink); stroke-width: 1.5; }
 .goal .mark { stroke-width: 3; }
 .lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 2px 0 8px; vertical-align: 0; }
 td .lg { margin-left: 0; }
-.lg.g { background: #E8141C; } .lg.s { background: #00B140; } .lg.o { background: var(--ink-2); }
+.lg.g { background: #00B140; } .lg.s { background: #E8141C; } .lg.o { background: transparent; box-shadow: inset 0 0 0 2px #E8141C; }
 .wslegend { margin: 6px 0 0; }
 .wsana { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .wsana > .card { margin: 0; }
@@ -3094,12 +3094,12 @@ const wsDotCls = (s) => (s.ergebnis === 'tor' ? 'g' : s.ergebnis === 'parade' ? 
 function courtSVG(shots, opt) {
   opt = opt || {};
   const byZ = {}; for (const s of shots) { if (!s.zone || s.zone === '7M') continue; const z = (byZ[s.zone] ||= { n: 0, tor: 0, par: 0 }); z.n++; if (s.ergebnis === 'tor') z.tor++; if (s.ergebnis === 'parade') z.par++; }
-  const LP = { LA: [17, 22], RL: [42, 118], RM: [100, 128], RR: [158, 118], RA: [183, 22], KM: [100, 82] };
+  const LP = { LA: [27, 14], RL: [42, 118], RM: [100, 128], RR: [158, 118], RA: [173, 14], KM: [100, 82] };
   let h = '<svg class="court' + (opt.click ? ' pick' : '') + '" id="' + (opt.id || '') + '" viewBox="0 0 200 140" role="img" aria-label="Spielfeld mit Wurfpositionen">' +
     '<rect x="0" y="0" width="200" height="140" class="cbg"/><polyline points="' + dLine(60) + '" class="l6"/><polyline points="' + dLine(90) + '" class="l9"/>' +
     '<line x1="96" y1="70" x2="104" y2="70" class="l7"/><line x1="85" y1="1.5" x2="115" y2="1.5" class="lgoal"/>';
   for (const s of shots) if (s.x != null && s.zone !== '7M') h += '<circle cx="' + (+s.x).toFixed(1) + '" cy="' + (+s.y).toFixed(1) + '" r="2.4" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + (WS_ZONES[s.zone] || '') + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>';
-  if (opt.labels !== false) for (const [z, [x, y]] of Object.entries(LP)) { const v = byZ[z]; if (!v) continue; h += '<text x="' + x + '" y="' + y + '" class="ztxt">' + (opt.tw ? v.par + '/' + (v.tor + v.par) : v.tor + '/' + v.n) + '</text>'; }
+  if (opt.labels !== false) for (const [z, [x, y]] of Object.entries(LP)) { const v = byZ[z]; if (!v) continue; h += '<text x="' + x + '" y="' + y + '" class="ztxt">' + (opt.tw ? v.par + '/' + (v.tor + v.par) : v.tor + '/' + v.n + ' · ' + Math.round((v.tor / v.n) * 100) + '%') + '</text>'; }
   if (opt.marker && opt.marker.x != null) h += '<circle cx="' + opt.marker.x.toFixed(1) + '" cy="' + opt.marker.y.toFixed(1) + '" r="4" class="mark"/>';
   return h + '</svg>';
 }
@@ -3133,8 +3133,8 @@ function wingGoalSVG(shots, opt) {
     h += '<polygon points="' + [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)].join(' ') + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
     if (v && !opt.click) {
       const [cx, cy] = wingPt((u0 + u1) / 2, (v0 + v1) / 2, side), sc = 1 - 0.25 * (u0 + u1) / 2;
-      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.n / tot) * 100) + '%';
-      const sub = opt.tw ? v.par + '/' + (v.par + v.tor) + ' geh.' : v.tor + '/' + v.n;
+      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.tor / v.n) * 100) + '%';
+      const sub = opt.tw ? v.par + '/' + (v.par + v.tor) + ' geh.' : v.tor + '/' + v.n + ' · ' + Math.round((v.n / tot) * 100) + '%';
       txt += '<text x="' + cx.toFixed(1) + '" y="' + (cy - 2).toFixed(1) + '" class="gbig" style="font-size:' + Math.round(22 * sc) + 'px">' + big + '</text>' + (opt.small ? '' : '<text x="' + cx.toFixed(1) + '" y="' + (cy + 16).toFixed(1) + '" class="gsub">' + sub + '</text>');
     }
   }));
@@ -3157,8 +3157,8 @@ function goalSVG(shots, opt) {
     const z = r + c, v = cells[z], col = mir ? { l: 2, m: 1, r: 0 }[c] : { l: 0, m: 1, r: 2 }[c], x = col * 100, y = { o: 0, m: 1, u: 2 }[r] * (200 / 3);
     h += '<rect x="' + x + '" y="' + y.toFixed(1) + '" width="100" height="' + (200 / 3).toFixed(1) + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
     if (v && !opt.click) {
-      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.n / tot) * 100) + '%';
-      const sub = opt.tw ? v.par + ' von ' + (v.par + v.tor) + ' gehalten' : v.tor + (v.tor === 1 ? ' Tor / ' : ' Tore / ') + v.n;
+      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.tor / v.n) * 100) + '%';
+      const sub = opt.tw ? v.par + ' von ' + (v.par + v.tor) + ' gehalten' : v.tor + '/' + v.n + ' Tore · ' + Math.round((v.n / tot) * 100) + '%';
       txt += '<text x="' + (x + 50) + '" y="' + (y + 30).toFixed(1) + '" class="gbig">' + big + '</text>' + (opt.small ? '' : '<text x="' + (x + 50) + '" y="' + (y + 50).toFixed(1) + '" class="gsub">' + sub + '</text>');
     }
   }
@@ -3190,7 +3190,7 @@ function wsTendencies(shots, tw, mir) {
   return out;
 }
 const wsSum = (L) => { const tor = L.filter((s) => s.ergebnis === 'tor').length, par = L.filter((s) => s.ergebnis === 'parade').length; return { n: L.length, tor, par, quote: tor + par ? Math.round((par / (tor + par)) * 100) : null }; };
-const WS_LEGEND = '<p class="small muted wslegend"><span class="lg g"></span> Tor <span class="lg s"></span> Gehalten <span class="lg o"></span> Pfosten, vorbei oder geblockt</p>';
+const WS_LEGEND = '<p class="small muted wslegend"><span class="lg g"></span> Tor <span class="lg s"></span> Fehlwurf: gehalten <span class="lg o"></span> Fehlwurf: Pfosten, vorbei oder geblockt</p>';
 
 // ---- Spiele, Kader ----
 function wsGames(d) {
@@ -3303,18 +3303,27 @@ async function wsSave(res) {
     ws.cur = wsBlank(); ws.last = { id: saved.id, game: String(g.gameId), txt: 'Gespeichert: ' + (p ? (p.nr ? p.nr + ' ' : '') + splitName(p.name).sur : 'unbekannt') + ', ' + WS_ZONES[row.zone] + (row.gx != null ? ' → ' + wsGoalTxt(row) : '') + ', ' + wsResTxt(res) + '.' }; renderWurf();
   } catch (e) { msg('Speichern nicht möglich: ' + (e.message || 'keine Verbindung'), 'err'); }
 }
+// Wurfquoten: beim Werfer pro Position, sonst pro Werfer
+function wsQuoteTable(L, kind) {
+  const by = kind === 'werfer' ? (s) => (s.situation === 'gegenstoss' ? 'Gegenstoss' : WS_ZONES[s.zone] || '–') : (s) => (s.player_id ? fullName(s.spieler) + (s.nr ? ' (' + s.nr + ')' : '') : 'unbekannt');
+  const m = new Map(); for (const s of L) { const k = by(s), o = m.get(k) || { k, n: 0, tor: 0, par: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor++; if (s.ergebnis === 'parade') o.par++; m.set(k, o); }
+  const R = [...m.values()].sort((a, b) => b.n - a.n || b.tor - a.tor); if (!R.length) return '';
+  const q = (o) => Math.round((o.tor / o.n) * 100), cls = (o) => (o.n < 3 ? '' : q(o) >= 65 ? ' class="res-s"' : q(o) < 45 ? ' class="res-n"' : '');
+  return '<div class="card"><h3>' + (kind === 'werfer' ? 'Wurfquote pro Position' : 'Wurfquoten der Werfer') + '</h3><p class="small muted" style="margin:0 0 8px">Wurfquote = Tore / alle Würfe (auch vorbei, geblockt, gehalten). Ab 3 Würfen: grün ab 65 %, rot unter 45 %.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">' + (kind === 'werfer' ? 'Position' : 'Werfer') + '</th><th>Würfe</th><th>Tore</th><th>Quote</th><th>Gehalten</th><th>Vorbei/Pfosten/Block</th></tr></thead><tbody>' +
+    R.map((o) => '<tr><td class="left">' + esc(o.k) + '</td><td>' + o.n + '</td><td>' + o.tor + '</td><td><b' + cls(o) + '>' + q(o) + ' %</b></td><td>' + o.par + '</td><td>' + (o.n - o.tor - o.par) + '</td></tr>').join('') + '</tbody></table></div></div>';
+}
 function wsAnalysisHTML(d) {
   const ws = state.ws, a = ws.ana, S = ws.shots;
   const groups = { werfer: new Map(), tw: new Map(), team: new Map() };
   for (const s of S) {
-    if (s.player_id) { const k = String(s.player_id), o = groups.werfer.get(k) || { id: k, label: fullName(s.spieler) + ' (' + s.angriff_team + ')', n: 0 }; o.n++; groups.werfer.set(k, o); }
-    if (s.tw_id) { const k = String(s.tw_id), o = groups.tw.get(k) || { id: k, label: fullName(s.tw_name) + ' (' + s.tw_team + ')', n: 0 }; o.n++; groups.tw.set(k, o); }
-    if (s.angriff_team_id) { const k = String(s.angriff_team_id), o = groups.team.get(k) || { id: k, label: s.angriff_team + (s.liga ? ' (' + s.liga + ')' : ''), n: 0 }; o.n++; groups.team.set(k, o); }
+    if (s.player_id) { const k = String(s.player_id), o = groups.werfer.get(k) || { id: k, label: fullName(s.spieler) + ' (' + s.angriff_team + ')', n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.werfer.set(k, o); }
+    if (s.tw_id) { const k = String(s.tw_id), o = groups.tw.get(k) || { id: k, label: fullName(s.tw_name) + ' (' + s.tw_team + ')', n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.tw.set(k, o); }
+    if (s.angriff_team_id) { const k = String(s.angriff_team_id), o = groups.team.get(k) || { id: k, label: s.angriff_team + (s.liga ? ' (' + s.liga + ')' : ''), n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.team.set(k, o); }
   }
   const list = [...groups[a.kind].values()].sort((x, y) => y.n - x.n || x.label.localeCompare(y.label, 'de'));
   if (!list.some((x) => x.id === a.id)) a.id = list[0] ? list[0].id : '';
   let h = '<div class="card"><div class="row" style="align-items:end"><div class="field"><span class="lbl">Auswerten</span><div class="seg seg3"><button data-wskind="werfer" aria-pressed="' + (a.kind === 'werfer') + '">Werfer</button><button data-wskind="tw" aria-pressed="' + (a.kind === 'tw') + '">Torhüter</button><button data-wskind="team" aria-pressed="' + (a.kind === 'team') + '">Team</button></div></div>' +
-    '<div class="field" style="flex:1 1 260px"><label for="wsAnaId">' + (a.kind === 'werfer' ? 'Werfer' : a.kind === 'tw' ? 'Torhüter' : 'Team (Würfe dieses Teams)') + '</label><select id="wsAnaId">' + (list.length ? list.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === a.id ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe</option>').join('') : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
+    '<div class="field" style="flex:1 1 260px"><label for="wsAnaId">' + (a.kind === 'werfer' ? 'Werfer' : a.kind === 'tw' ? 'Torhüter' : 'Team (Würfe dieses Teams)') + '</label><select id="wsAnaId">' + (list.length ? list.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === a.id ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe' + (a.kind === 'tw' ? '' : ', Quote ' + Math.round(((x.tor || 0) / x.n) * 100) + ' %') + '</option>').join('') : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
     '<div class="field"><label for="wsAnaSit">Situation</label><select id="wsAnaSit"><option value="">alle</option>' + WS_SIT.map(([k, l]) => '<option value="' + k + '"' + (a.sit === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
     '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button></div></div></div></div>';
   if (!a.id) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
@@ -3322,9 +3331,10 @@ function wsAnalysisHTML(d) {
   const mine = S.filter((s) => String(s[key]) === a.id && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), tw = a.kind === 'tw', mir = ws.persp === 'tw';
   const front = mine.filter((s) => !wsWing(s)), wing = mine.filter(wsWing);
   const tend = wsTendencies(mine, tw, mir);
-  h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore, ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + WS_LEGEND + '</div>' : '') +
-    (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + '</p>' + goalSVG(wing, { wing: wsWingSide(wing), tw }) + WS_LEGEND + '</div>' : '') +
-    '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
+  h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore' + (tw ? ', ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') : ' (Wurfquote <b>' + (sm.n ? Math.round((sm.tor / sm.n) * 100) : 0) + ' %</b>)') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + WS_LEGEND + '</div>' : '') +
+    (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + '</p>' + goalSVG(wing, { wing: wsWingSide(wing), tw }) + WS_LEGEND + '</div>' : '') +
+    '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe und Wurfquote pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
+    wsQuoteTable(mine, a.kind) +
     '<div class="card"><h3>Tendenzen</h3>' + (tend.length ? '<ul class="insights">' + tend.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted" style="margin:0">Für Tendenzen braucht es mindestens 5 erfasste Würfe.</p>') + '</div>';
   return h;
 }
