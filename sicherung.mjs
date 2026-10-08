@@ -1,5 +1,5 @@
 // Sicherung der Spielerübersicht und der Merklisten: liest Akten, Techniktests, Änderungsverlauf und (falls eingerichtet)
-// die Merklisten aus dem Zentralspeicher und legt sie verschlüsselt in den Ordner «sicherung» (eine Datei pro Tag). Läuft wöchentlich über GitHub.
+// die Merklisten und Wurfbilder aus dem Zentralspeicher und legt sie verschlüsselt in den Ordner «sicherung» (eine Datei pro Tag). Läuft wöchentlich über GitHub.
 import fs from 'node:fs';
 import path from 'node:path';
 import { encrypt } from './crypto.mjs';
@@ -44,6 +44,7 @@ const daten = {
   merklisten_mitglieder: await optional(token, 'merklisten_mitglieder?select=*&order=liste_id'),
   merkliste: await optional(token, 'merkliste?select=*&order=liste_id,player_id'),
   empfehlungen: await optional(token, 'empfehlungen?select=*&order=id'),
+  wuerfe: await optional(token, 'wuerfe?select=*&order=id'),
 };
 if (daten.merklisten && !daten.merklisten.length) console.log('Hinweis: Keine Merklisten gefunden. Hat der Sicherungs-Zugang in der Tabelle «personen» die Rolle «Sicherung»? Sonst sieht er nur eigene Listen.');
 fs.mkdirSync(DIR, { recursive: true });
@@ -51,4 +52,4 @@ const tag = new Date().toISOString().slice(0, 10), datei = path.join(DIR, 'siche
 fs.writeFileSync(datei + '.tmp', encrypt(JSON.stringify(daten), SCOUT)); fs.renameSync(datei + '.tmp', datei);
 const alt = fs.readdirSync(DIR).filter((f) => /^sicherung-\d{4}-\d{2}-\d{2}\.enc$/.test(f)).sort();
 for (const f of alt.slice(0, Math.max(0, alt.length - BEHALTEN))) fs.unlinkSync(path.join(DIR, f));
-console.log('Sicherung geschrieben: ' + datei + ' (' + daten.spieler_akten.length + ' Akten, ' + daten.techniktests.length + ' Techniktests, ' + daten.verlauf.length + ' Verlaufseinträge, ' + personen.length + ' Personen' + (daten.merklisten ? ', ' + daten.merklisten.length + ' Merklisten mit ' + (daten.merkliste || []).length + ' Einträgen' : '') + ').');
+console.log('Sicherung geschrieben: ' + datei + ' (' + daten.spieler_akten.length + ' Akten, ' + daten.techniktests.length + ' Techniktests, ' + daten.verlauf.length + ' Verlaufseinträge, ' + personen.length + ' Personen' + (daten.merklisten ? ', ' + daten.merklisten.length + ' Merklisten mit ' + (daten.merkliste || []).length + ' Einträgen' : '') + (daten.wuerfe ? ', ' + daten.wuerfe.length + ' Würfe' : '') + ').');

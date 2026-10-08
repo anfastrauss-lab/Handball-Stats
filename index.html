@@ -163,6 +163,50 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litebadge { display: inline-block; padding: 0 6px; border-radius: 4px; border: 1px solid var(--ink-2); color: var(--ink-2); font-size: 11px; font-weight: 700; line-height: 16px; vertical-align: 1px; cursor: help; }
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
+/* Wurfbilder */
+.wsgrid { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.3fr) minmax(240px, 1.3fr); gap: 16px; margin-top: 14px; }
+.wsstep { font-weight: 700; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.wsshooters { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
+.wsp { text-align: left; padding: 9px 8px; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wsp b { display: inline-block; min-width: 22px; }
+.wsp.on, .chipbtn.on { background: var(--court); color: var(--court-ink); border-color: var(--court); }
+.chipbtn { border: 1px solid var(--court); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 5px 11px; min-height: 34px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; }
+.wsres { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wsres .btn { min-height: 48px; }
+.wsres .btn:first-child { background: #B03A2A; border-color: #B03A2A; color: #fff; }
+.wsres .btn:nth-child(2) { background: #1F7A47; border-color: #1F7A47; color: #fff; }
+svg.court, svg.goal { width: 100%; height: auto; display: block; touch-action: manipulation; user-select: none; }
+svg.pick { cursor: crosshair; }
+svg.goal { max-width: 460px; } svg.court { max-width: 520px; } svg.goal.small { max-width: 240px; }
+.court .cbg { fill: var(--surface-2); stroke: var(--line); }
+.court .l6 { fill: var(--lake); stroke: var(--court); stroke-width: 1; }
+.court .l9 { fill: none; stroke: var(--court); stroke-width: .8; stroke-dasharray: 3 2; }
+.court .l7, .court .lgoal { stroke: var(--court); stroke-width: 1.2; } .court .lgoal { stroke-width: 3; }
+.court .ztxt { font-size: 9px; font-weight: 700; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.goal .gcell { fill: var(--court); stroke: var(--line); stroke-width: 1; }
+.goal .gframe { fill: none; stroke: var(--ink); stroke-width: 6; }
+.goal .gbig { font-size: 24px; font-weight: 800; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
+.goal .gsub { font-size: 13px; text-anchor: middle; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
+.goal.small .gbig { font-size: 30px; }
+svg .dot { stroke: var(--surface); stroke-width: 1; fill-opacity: .7; } svg .dot.g { fill: var(--bad); } svg .dot.s { fill: var(--good); } svg .dot.o { fill: var(--ink-2); }
+svg .mark { fill: var(--signal); stroke: var(--ink); stroke-width: 1.5; }
+.goal .mark { stroke-width: 3; }
+.lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 2px 0 8px; vertical-align: 0; }
+td .lg { margin-left: 0; }
+.lg.g { background: var(--bad); } .lg.s { background: var(--good); } .lg.o { background: var(--ink-2); }
+.wslegend { margin: 6px 0 0; }
+.wsana { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.wsana > .card { margin: 0; }
+.wsprep { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
+.wsprep .card { margin: 0; break-inside: avoid; }
+.wsplhead { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.wsplbody { display: grid; grid-template-columns: minmax(130px, 1fr) 1.3fr; gap: 10px; align-items: start; margin-top: 8px; }
+.wsplbody ul.insights { margin: 0; padding-left: 16px; }
+.seg3 { grid-template-columns: 1fr 1fr 1fr; }
+#wsSub { max-width: 520px; margin-bottom: 14px; }
+@media (max-width: 900px) { .wsgrid { grid-template-columns: 1fr 1fr; } .wsgrid > div:first-child { grid-column: 1 / -1; } }
+@media (max-width: 640px) { .wsgrid, .wsana { grid-template-columns: 1fr; } .wsprep { grid-template-columns: 1fr; } }
+@media print { body.pprint .wsprep { display: block; } body.pprint .wsprep .card { margin-bottom: 10px; } }
 .zsadd { margin-bottom: 14px; border-color: var(--court); }
 /* Talent-Tabelle kompakt: weniger Innenabstand, Ligaschnitt und Stufe klein unter dem Wert */
 #talTbl td { padding: 7px 8px; }
@@ -400,6 +444,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
   <nav class="tabs" role="tablist" aria-label="Ansicht">
     <button class="tab" role="tab" id="tabSpieler" aria-selected="true" aria-controls="viewSpieler">Spieler</button>
     <button class="tab" role="tab" id="tabTeams" aria-selected="false" aria-controls="viewTeams">Teams</button>
+    <button class="tab" role="tab" id="tabWurf" aria-selected="false" aria-controls="viewWurf">Wurfbilder</button>
     <button class="tab" role="tab" id="tabReport" aria-selected="false" aria-controls="viewReport">Wochenreport</button>
     <button class="tab" role="tab" id="tabMerk" aria-selected="false" aria-controls="viewMerk">Merkliste <span class="badge" id="merkCount"></span></button>
     <button class="tab" role="tab" id="tabDaten" aria-selected="false" aria-controls="viewDaten">Daten</button>
@@ -568,6 +613,13 @@ table.plain td { text-align: left; padding: 8px 10px; }
     <div class="btnrow" id="teamCmpBtns" hidden><button class="btn secondary" id="teamSwap">Teams tauschen</button><button class="btn secondary" id="teamCmpOff">Vergleich beenden</button></div>
   </div>
   <div id="teamBody"></div>
+</section>
+
+<section id="viewWurf" role="tabpanel" aria-labelledby="tabWurf" hidden>
+  <div class="toolbar"><div><h2 style="margin:0">Wurfbilder</h2><p class="muted small" style="margin:4px 0 0">Würfe an der Linie oder am Video erfassen und Torhüter auf die Werfer des nächsten Gegners vorbereiten.</p></div></div>
+  <div class="seg seg3" id="wsSub" role="group" aria-label="Bereich"><button data-wsub="erfassen" aria-pressed="true">Erfassen</button><button data-wsub="auswertung" aria-pressed="false">Auswertung</button><button data-wsub="vorbereitung" aria-pressed="false">Gegner-Vorbereitung</button></div>
+  <div class="notice" id="wsNote" hidden></div>
+  <div id="wsBody"></div>
 </section>
 
 <section id="viewReport" role="tabpanel" aria-labelledby="tabReport" hidden>
@@ -1829,6 +1881,7 @@ function profSummary(p, role, label) {
 function renderDrawer() {
   if (!state.open) return;
   if (state.open.cmp) return renderPlayerCompare();
+  if (state.open.prep) return wsPrepDrawer();
   if (state.open.game != null) return renderGame();
   const d = data(), { id, role } = state.open, idx = index(d);
   const allMine = rows(d).filter((r) => r.playerId === id && r.role === role).map((r) => ({ r, g: d.games[r.gameId] })).filter((x) => x.g)
@@ -2028,13 +2081,13 @@ async function loadFiles(files) {
 function setView(v) {
   if (v === 'talent') { state.mode = 'talent'; lsSet('scouting.modus', 'talent'); v = 'spieler'; } // früherer Reiter «Talent-Radar»
   state.view = v;
-  $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten';
-  for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten']]) $('#' + id).setAttribute('aria-selected', v === k);
+  $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten'; $('#viewWurf').hidden = v !== 'wurf';
+  for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten'], ['wurf', 'tabWurf']]) $('#' + id).setAttribute('aria-selected', v === k);
   const at = $('.tab[aria-selected="true"]'), tb = $('.tabs'); // Handy: gewählten Reiter in die wischbare Leiste holen
   if (at && tb.scrollWidth > tb.clientWidth) tb.scrollLeft = at.offsetLeft - tb.offsetLeft - (tb.clientWidth - at.offsetWidth) / 2;
-  if (v === 'daten') renderData(); else if (v === 'merk') { renderMerk(); if (zsMode() === 'demo' || zsMode() === 'verbunden') smLoad(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
+  if (v === 'daten') renderData(); else if (v === 'merk') { renderMerk(); if (zsMode() === 'demo' || zsMode() === 'verbunden') smLoad(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'wurf') { renderWurf(); wsLoad(); } else if (v === 'teams') renderTeam(); else renderPlayers();
 }
-function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); renderNewBox(); tourMaybe(); }
+function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else if (state.view === 'wurf') renderWurf(); else renderPlayers(); renderDrawer(); renderCmpBar(); renderNewBox(); tourMaybe(); }
 function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: [], team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); smLoad(); }
 function setRole(r) {
   state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100; state.t.sort = [{ key: 'score', dir: -1 }]; state.t.limit = 100;
@@ -2889,6 +2942,10 @@ const SB = {
   merkDel: async (lid, pid, rolle) => sbJson(await SB.req('merkliste?liste_id=eq.' + eq(lid) + '&player_id=eq.' + eq(pid) + '&rolle=eq.' + eq(rolle), { method: 'DELETE', headers: { Prefer: 'return=minimal' } })),
   empfAdd: async (e) => (await sbJson(await SB.req('empfehlungen', { method: 'POST', headers: { Prefer: 'return=representation' }, body: e })))[0],
   empfDone: async (id) => sbJson(await SB.req('empfehlungen?id=eq.' + eq(id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: { erledigt: true } })),
+  // Wurfbilder (Einrichtung siehe ANLEITUNG-WURFBILDER.md)
+  shotsAll: async () => SB.getAll('wuerfe?select=*&order=id'),
+  shotAdd: async (row) => (await sbJson(await SB.req('wuerfe', { method: 'POST', headers: { Prefer: 'return=representation' }, body: row })))[0],
+  shotDel: async (id) => sbJson(await SB.req('wuerfe?id=eq.' + eq(id), { method: 'DELETE', headers: { Prefer: 'return=minimal' } })),
   verlauf: async (pid) => sbJson(await SB.req('verlauf?select=*&player_id=eq.' + eq(pid) + '&order=zeit.desc,id.desc&limit=100')),
   verlaufAll: async () => SB.getAll('verlauf?select=*&order=id.desc'),
   async restore(daten) {
@@ -2946,8 +3003,311 @@ const MEM = {
   async merkDel(lid, pid, rolle) { delete MEM.sm().merk[lid + ':' + pid + ':' + rolle]; },
   async empfAdd(e) { const s = MEM.sm(), r = { ...e, id: s.nextE++, erstellt_am: new Date().toISOString(), erledigt: false }; s.empf.push(r); return { ...r }; },
   async empfDone(id) { const e = MEM.sm().empf.find((x) => x.id === id); if (e) e.erledigt = true; },
+  // Wurfbilder in der Demo: erfundene Würfe für einige Spiele, jeder Werfer mit eigener Lieblingsecke
+  async shotsAll() {
+    const m = MEM.init(); if (m.shots) return m.shots.map((s) => ({ ...s }));
+    m.shots = []; m.nextShot = 1; const d = data(); let seed = 7; const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+    const games = Object.values(d.games).sort((a, b) => String(b.date).localeCompare(String(a.date))).slice(0, 6);
+    const POS = [[30, 30, 'LA'], [55, 105, 'RL'], [100, 110, 'RM'], [145, 105, 'RR'], [170, 30, 'RA'], [100, 64, 'KM']];
+    for (const g of games) for (const [atk, def] of [[g.homeTeamId, g.awayTeamId], [g.awayTeamId, g.homeTeamId]]) {
+      const ros = wsRoster(d, atk, 'F'), sh = aggregate(d, { role: 'F', group: [], team: String(atk) }).sort((a, b) => b.goals - a.goals).slice(0, 7).map((a) => ros.find((p) => p.id === a.id)).filter(Boolean), gk = wsRoster(d, def, 'G')[0]; if (!sh.length) continue;
+      for (let i = 0; i < 26; i++) {
+        const p = sh[Math.floor(rnd() * rnd() * sh.length)], pref = p.id % 6, seven = rnd() < 0.1, pos = POS[(p.id + (rnd() < 0.3 ? 1 : 0)) % 6];
+        const x = seven ? 100 : pos[0] + (rnd() - 0.5) * 24, y = seven ? 70 : Math.max(6, pos[1] + (rnd() - 0.5) * 20);
+        const gx = rnd() < 0.65 ? [40, 260, 50, 250, 150, 60][pref] + (rnd() - 0.5) * 70 : rnd() * 300, gy = rnd() < 0.6 ? [170, 30, 40, 170, 100, 160][pref] + (rnd() - 0.5) * 50 : rnd() * 200;
+        const r = rnd(), erg = r < 0.55 ? 'tor' : r < 0.82 ? 'parade' : r < 0.88 ? 'pfosten' : r < 0.95 ? 'vorbei' : 'block', onGoal = erg === 'tor' || erg === 'parade';
+        const cgx = Math.max(4, Math.min(296, gx)), cgy = Math.max(4, Math.min(196, gy)), sit = seven ? '7m' : rnd() < 0.15 ? 'gegenstoss' : 'position';
+        m.shots.push({ id: m.nextShot++, game_id: g.gameId, spiel: g.homeName + ' – ' + g.awayName, datum: g.date, liga: ligaKey(d.groups[g.groupId] || { name: '' }), angriff_team_id: atk, angriff_team: atk === g.homeTeamId ? g.homeName : g.awayName,
+          player_id: p.id, spieler: p.name, nr: p.nr || null, tw_id: gk ? gk.id : null, tw_name: gk ? gk.name : '', tw_team: atk === g.homeTeamId ? g.awayName : g.homeName,
+          x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, gx: onGoal ? Math.round(cgx) : null, gy: onGoal ? Math.round(cgy) : null, zone: wsZone(x, y, sit), tor_zone: onGoal ? wsGoalZone(cgx, cgy) : null, ergebnis: erg, situation: sit, art: null, erfasst_von: 'Demo-Nutzer', erfasst_am: g.date });
+      }
+    }
+    return m.shots.map((s) => ({ ...s }));
+  },
+  async shotAdd(row) { const m = MEM.init(); if (!m.shots) await MEM.shotsAll(); const r = { ...row, id: m.nextShot++ }; m.shots.push(r); return { ...r }; },
+  async shotDel(id) { const m = MEM.init(); m.shots = (m.shots || []).filter((s) => s.id !== id); },
 };
 const zsStore = () => (state.demo ? MEM : SB);
+
+/* ---------- Wurfbilder: Würfe erfassen (live oder am Video), auswerten, Gegner-Vorbereitung für Torhüter ----------
+   Feld: 0..200 breit (20 m), 0..140 tief, Tor oben bei y = 0 zwischen x = 85 und 115. Aus Sicht der Angreifer ist links links.
+   Tor: 0..300 breit, 0..200 hoch, gezeichnet aus Sicht des Werfers (Umschalter «Sicht Torhüter» spiegelt). */
+const WS_ZONES = { LA: 'Linksaussen', RL: 'Rückraum links', RM: 'Rückraum Mitte', RR: 'Rückraum rechts', RA: 'Rechtsaussen', KM: 'Kreis / Durchbruch', '7M': '7-Meter' };
+const WS_RES = [['tor', 'Tor'], ['parade', 'Gehalten'], ['pfosten', 'Pfosten/Latte'], ['vorbei', 'Vorbei'], ['block', 'Geblockt']];
+const WS_SIT = [['position', 'Positionsangriff'], ['gegenstoss', 'Gegenstoss'], ['7m', '7-Meter']];
+const WS_ART = ['Sprungwurf', 'Standwurf', 'Schlagwurf', 'Hüftwurf', 'Dreher', 'Heber', 'Aufsetzer'];
+const WS_ROW = { o: 'oben', m: 'Mitte', u: 'unten' }, WS_COL = { l: 'links', m: 'Mitte', r: 'rechts' };
+const wsZoneTxt = (z) => (z ? (z[0] === 'm' && z[1] === 'm' ? 'Mitte' : WS_ROW[z[0]] + ' ' + WS_COL[z[1]]) : '');
+const wsResTxt = (r) => (WS_RES.find((x) => x[0] === r) || [r, r])[1];
+const WS_LOCAL = 'scouting.wuerfe';
+function wsBlank(sit) { return { pid: null, nr: null, name: '', unknown: false, x: null, y: null, gx: null, gy: null, sit: sit || 'position', art: '' }; }
+state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: 'tw', ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
+const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL/i.test(ligaKey(d.groups[gid] || { name: '' }));
+
+// ---- Speicher: Zentralspeicher (Tabelle «wuerfe») oder dieser Browser ----
+async function wsLoad() {
+  const ws = state.ws, mode = zsMode();
+  if (mode === 'demo' || mode === 'verbunden') {
+    try { ws.shots = await zsStore().shotsAll(); ws.store = 'shared'; ws.note = ''; }
+    catch (e) {
+      if (e.status === 401) return;
+      const fehlt = e.status === 404 || /wuerfe|relation|schema cache|does not exist|not find/i.test(e.message || '');
+      ws.store = 'local'; ws.note = fehlt ? 'fehlt' : 'fehler:' + (e.message || ''); ws.shots = lsGet(WS_LOCAL, []);
+    }
+  } else { ws.store = 'local'; ws.note = mode === 'anmelden' ? 'anmelden' : ''; ws.shots = lsGet(WS_LOCAL, []); }
+  ws.loaded = true; if (state.view === 'wurf') renderWurf();
+}
+async function wsAdd(row) {
+  row.erfasst_von = (state.zs.me && state.zs.me.name) || ''; row.erfasst_am = new Date().toISOString();
+  if (state.ws.store === 'shared') { const r = await zsStore().shotAdd(row); state.ws.shots.push(r || row); }
+  else { const all = lsGet(WS_LOCAL, []); row.id = -Date.now(); all.push(row); lsSet(WS_LOCAL, all); state.ws.shots = all; }
+}
+async function wsDel(id) {
+  if (state.ws.store === 'shared' && id > 0) await zsStore().shotDel(id);
+  else lsSet(WS_LOCAL, lsGet(WS_LOCAL, []).filter((s) => s.id !== id));
+  state.ws.shots = state.ws.shots.filter((s) => s.id !== id);
+}
+// Würfe aus diesem Browser in den Zentralspeicher übertragen
+async function wsImport() {
+  const local = lsGet(WS_LOCAL, []); let n = 0;
+  for (const s of local) { const { id, ...row } = s; try { await zsStore().shotAdd(row); n++; } catch (e) { state.ws.msg = 'Übertragen abgebrochen: ' + (e.message || 'keine Verbindung'); break; } }
+  if (n === local.length) lsSet(WS_LOCAL, []); else lsSet(WS_LOCAL, local.slice(n));
+  await wsLoad();
+}
+
+// ---- Geometrie ----
+function wsZone(x, y, sit) {
+  if (sit === '7m') return '7M';
+  const px = Math.min(Math.max(x, 85), 115), dist = Math.hypot(x - px, y), ang = Math.atan2(x - 100, Math.max(y, 0.01)) * 180 / Math.PI;
+  if (dist <= 90) return Math.abs(ang) >= 58 ? (x < 100 ? 'LA' : 'RA') : 'KM';
+  if (Math.abs(ang) >= 70) return x < 100 ? 'LA' : 'RA';
+  return ang < -22 ? 'RL' : ang > 22 ? 'RR' : 'RM';
+}
+const wsGoalZone = (gx, gy) => (gx == null ? null : (gy < 200 / 3 ? 'o' : gy < 400 / 3 ? 'm' : 'u') + (gx < 100 ? 'l' : gx < 200 ? 'm' : 'r'));
+const arcPts = (cx, r, a0, a1) => { const p = []; for (let i = 0; i <= 14; i++) { const t = (a0 + (a1 - a0) * i / 14) * Math.PI / 180; p.push((cx + r * Math.cos(t)).toFixed(1) + ',' + (r * Math.sin(t)).toFixed(1)); } return p; };
+const dLine = (r) => [...arcPts(85, r, 180, 90), ...arcPts(115, r, 90, 0)].join(' ');
+function svgPoint(ev, svg) { const r = svg.getBoundingClientRect(), vb = svg.viewBox.baseVal; return [vb.x + ((ev.clientX - r.left) / r.width) * vb.width, vb.y + ((ev.clientY - r.top) / r.height) * vb.height]; }
+const wsDotCls = (s) => (s.ergebnis === 'tor' ? 'g' : s.ergebnis === 'parade' ? 's' : 'o');
+
+// Spielfeld mit Würfen (Punkte) und Zonen-Zahlen
+function courtSVG(shots, opt) {
+  opt = opt || {};
+  const byZ = {}; for (const s of shots) { if (!s.zone || s.zone === '7M') continue; const z = (byZ[s.zone] ||= { n: 0, tor: 0, par: 0 }); z.n++; if (s.ergebnis === 'tor') z.tor++; if (s.ergebnis === 'parade') z.par++; }
+  const LP = { LA: [17, 22], RL: [42, 118], RM: [100, 128], RR: [158, 118], RA: [183, 22], KM: [100, 82] };
+  let h = '<svg class="court' + (opt.click ? ' pick' : '') + '" id="' + (opt.id || '') + '" viewBox="0 0 200 140" role="img" aria-label="Spielfeld mit Wurfpositionen">' +
+    '<rect x="0" y="0" width="200" height="140" class="cbg"/><polyline points="' + dLine(60) + '" class="l6"/><polyline points="' + dLine(90) + '" class="l9"/>' +
+    '<line x1="96" y1="70" x2="104" y2="70" class="l7"/><line x1="85" y1="1.5" x2="115" y2="1.5" class="lgoal"/>';
+  for (const s of shots) if (s.x != null && s.zone !== '7M') h += '<circle cx="' + (+s.x).toFixed(1) + '" cy="' + (+s.y).toFixed(1) + '" r="2.4" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + (WS_ZONES[s.zone] || '') + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>';
+  if (opt.labels !== false) for (const [z, [x, y]] of Object.entries(LP)) { const v = byZ[z]; if (!v) continue; h += '<text x="' + x + '" y="' + y + '" class="ztxt">' + (opt.tw ? v.par + '/' + (v.tor + v.par) : v.tor + '/' + v.n) + '</text>'; }
+  if (opt.marker && opt.marker.x != null) h += '<circle cx="' + opt.marker.x.toFixed(1) + '" cy="' + opt.marker.y.toFixed(1) + '" r="4" class="mark"/>';
+  return h + '</svg>';
+}
+// Tor mit 3×3 Zonen: Anteil und Erfolg pro Zone, Punkte der einzelnen Würfe
+function goalSVG(shots, opt) {
+  opt = opt || {};
+  const mir = !!opt.mirror, onGoal = shots.filter((s) => s.gx != null), cells = {}, tot = onGoal.length || 1;
+  for (const s of onGoal) { const z = wsGoalZone(+s.gx, +s.gy), c = (cells[z] ||= { n: 0, tor: 0, par: 0 }); c.n++; if (s.ergebnis === 'tor') c.tor++; if (s.ergebnis === 'parade') c.par++; }
+  const max = Math.max(1, ...Object.values(cells).map((c) => c.n)); let txt = '';
+  let h = '<svg class="goal' + (opt.click ? ' pick' : '') + (opt.small ? ' small' : '') + '" id="' + (opt.id || '') + '" viewBox="-14 -14 328 228" role="img" aria-label="Tor mit Trefferzonen">';
+  for (const r of ['o', 'm', 'u']) for (const c of ['l', 'm', 'r']) {
+    const z = r + c, v = cells[z], col = mir ? { l: 2, m: 1, r: 0 }[c] : { l: 0, m: 1, r: 2 }[c], x = col * 100, y = { o: 0, m: 1, u: 2 }[r] * (200 / 3);
+    h += '<rect x="' + x + '" y="' + y.toFixed(1) + '" width="100" height="' + (200 / 3).toFixed(1) + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
+    if (v && !opt.click) {
+      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.n / tot) * 100) + '%';
+      const sub = opt.tw ? v.par + ' von ' + (v.par + v.tor) + ' gehalten' : v.tor + (v.tor === 1 ? ' Tor / ' : ' Tore / ') + v.n;
+      txt += '<text x="' + (x + 50) + '" y="' + (y + 30).toFixed(1) + '" class="gbig">' + big + '</text>' + (opt.small ? '' : '<text x="' + (x + 50) + '" y="' + (y + 50).toFixed(1) + '" class="gsub">' + sub + '</text>');
+    }
+  }
+  h += '<rect x="0" y="0" width="300" height="200" class="gframe"/>';
+  if (opt.dots !== false) for (const s of onGoal) h += '<circle cx="' + (mir ? 300 - s.gx : +s.gx).toFixed(1) + '" cy="' + (+s.gy).toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + wsZoneTxt(wsGoalZone(+s.gx, +s.gy)) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>';
+  if (opt.marker && opt.marker.gx != null) h += '<circle cx="' + (mir ? 300 - opt.marker.gx : opt.marker.gx).toFixed(1) + '" cy="' + opt.marker.gy.toFixed(1) + '" r="9" class="mark"/>';
+  h += txt;
+  return h + '</svg>';
+}
+// Tendenzen in Worten
+function wsTendencies(shots, tw, mir) {
+  const flip = (z) => (mir && z ? z[0] + ({ l: 'r', m: 'm', r: 'l' }[z[1]]) : z), zt = (z) => wsZoneTxt(flip(z)), sicht = mir ? 'aus Sicht Torhüter' : 'aus Sicht Werfer';
+  const out = [], og = shots.filter((s) => s.gx != null && s.zone !== '7M'), s7 = shots.filter((s) => s.zone === '7M');
+  const count = (L, f) => { const m = {}; for (const s of L) { const k = f(s); if (k) m[k] = (m[k] || 0) + 1; } return Object.entries(m).sort((a, b) => b[1] - a[1]); };
+  if (og.length >= 5) {
+    const gz = count(og, (s) => wsGoalZone(+s.gx, +s.gy)); if (gz[0]) out.push('Zielt am häufigsten <b>' + esc(zt(gz[0][0])) + '</b> (' + Math.round((gz[0][1] / og.length) * 100) + ' %' + (gz[1] ? ', danach ' + esc(zt(gz[1][0])) + ' ' + Math.round((gz[1][1] / og.length) * 100) + ' %' : '') + '), ' + sicht + '.');
+    const rows = count(og, (s) => WS_ROW[wsGoalZone(+s.gx, +s.gy)[0]]), cols = count(og, (s) => WS_COL[flip(wsGoalZone(+s.gx, +s.gy))[1]]);
+    if (rows[0] && rows[0][1] / og.length >= 0.5) out.push('Höhe: meist <b>' + esc(rows[0][0]) + '</b> (' + Math.round((rows[0][1] / og.length) * 100) + ' %).');
+    if (cols[0] && cols[0][1] / og.length >= 0.5) out.push('Seite: meist <b>' + esc(cols[0][0]) + '</b> ' + sicht + ' (' + Math.round((cols[0][1] / og.length) * 100) + ' %).');
+  }
+  const pz = count(shots.filter((s) => s.zone && s.zone !== '7M'), (s) => s.zone); if (pz[0] && shots.length >= 5) out.push('Wirft vor allem von <b>' + esc(WS_ZONES[pz[0][0]]) + '</b> (' + pz[0][1] + ' von ' + shots.filter((s) => s.zone && s.zone !== '7M').length + ').');
+  const art = count(shots, (s) => s.art); if (art[0] && art[0][1] >= 3) out.push('Häufigste Wurfart: <b>' + esc(art[0][0]) + '</b> (' + art[0][1] + '×).');
+  if (s7.length) { const z7 = count(s7.filter((s) => s.gx != null), (s) => wsGoalZone(+s.gx, +s.gy)); out.push('7-Meter: ' + s7.filter((s) => s.ergebnis === 'tor').length + ' von ' + s7.length + (z7[0] ? ', am häufigsten <b>' + esc(zt(z7[0][0])) + '</b> (' + z7[0][1] + '×)' : '') + '.'); }
+  if (tw && og.length >= 5) { const sv = og.filter((s) => s.ergebnis === 'parade').length; out.push('Paradenquote auf Würfe aufs Tor: <b>' + Math.round((sv / Math.max(1, og.filter((s) => s.ergebnis === 'parade' || s.ergebnis === 'tor').length)) * 100) + ' %</b>.'); }
+  return out;
+}
+const wsSum = (L) => { const tor = L.filter((s) => s.ergebnis === 'tor').length, par = L.filter((s) => s.ergebnis === 'parade').length; return { n: L.length, tor, par, quote: tor + par ? Math.round((par / (tor + par)) * 100) : null }; };
+const WS_LEGEND = '<p class="small muted wslegend"><span class="lg g"></span> Tor <span class="lg s"></span> Gehalten <span class="lg o"></span> Pfosten, vorbei oder geblockt</p>';
+
+// ---- Spiele, Kader ----
+function wsGames(d) {
+  const all = state.ws.allLeagues, now = refNow(), out = [];
+  for (const f of Object.values(d.fixtures || {})) { const t = new Date(f.date).getTime(); if (t > now - 864e5 && t < now + 14 * 864e5 && (all || wsTopLeague(d, f.groupId))) out.push({ ...f, kommend: true }); }
+  for (const g of Object.values(d.games)) { const t = new Date(g.date).getTime(); if (t <= now + 864e5 && t > now - 60 * 864e5 && inSeason(d, g, '') && (all || wsTopLeague(d, g.groupId))) out.push({ ...g, kommend: false }); }
+  return out.sort((a, b) => (a.kommend !== b.kommend ? (a.kommend ? -1 : 1) : a.kommend ? String(a.date).localeCompare(String(b.date)) : String(b.date).localeCompare(String(a.date))));
+}
+function wsRoster(d, teamId, role) {
+  const m = new Map();
+  for (const r of rows(d)) {
+    if (String(r.teamId) !== String(teamId) || (role && r.role !== role) || (role === 'F' && r.skipF)) continue;
+    const g = d.games[r.gameId]; if (!g || !inSeason(d, g, '')) continue;
+    const p = m.get(r.playerId) || { id: r.playerId, name: r.name, nr: r.nr || 0, last: '' };
+    if (String(g.date) >= p.last) { p.last = String(g.date); p.name = r.name; p.nr = r.nr || p.nr; }
+    m.set(r.playerId, p);
+  }
+  return [...m.values()].sort((a, b) => (a.nr || 99) - (b.nr || 99) || fullName(a.name).localeCompare(fullName(b.name), 'de'));
+}
+function wsGameObj(d) { const v = state.ws.game; if (!v) return null; const id = Number(v.slice(2)); return v[0] === 'f' ? (d.fixtures || {})[id] || null : d.games[id] || null; }
+
+// ---- Ansicht ----
+function renderWurf() {
+  const d = data(), ws = state.ws, note = $('#wsNote');
+  if (ws.allLeagues == null) ws.allLeagues = !Object.values(d.games).some((g) => wsTopLeague(d, g.groupId)); // ohne QHL/NLB-Daten (z. B. Demo): alle Ligen
+  document.querySelectorAll('[data-wsub]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.wsub === ws.sub)));
+  const local = lsGet(WS_LOCAL, []).length;
+  let n = '';
+  if (!ws.loaded) n = 'Würfe werden geladen …';
+  else if (ws.store === 'shared' && state.demo) n = 'Demo: Die Würfe sind erfunden. Was du erfasst, wird nicht gespeichert.';
+  else if (ws.store === 'shared') n = 'Die Würfe werden im Zentralspeicher gespeichert: Alle Angemeldeten sehen sie und können erfassen.' + (local ? ' <button class="btn secondary" id="wsImport">' + local + ' Würfe aus diesem Browser übertragen</button>' : '');
+  else if (ws.note === 'fehlt') n = '<b>Die Tabelle für Wurfbilder ist im Zentralspeicher noch nicht eingerichtet.</b> Anleitung: ANLEITUNG-WURFBILDER.md. Bis dahin werden Würfe nur in diesem Browser gespeichert.';
+  else if (ws.note.startsWith('fehler:')) n = 'Der Zentralspeicher ist gerade nicht erreichbar (' + esc(ws.note.slice(7)) + '). Würfe werden vorerst in diesem Browser gespeichert.';
+  else n = 'Ohne Anmeldung werden die Würfe nur in diesem Browser gespeichert.' + (ws.note === 'anmelden' ? ' Melde dich im Reiter «Spielerübersicht Stäfa» an, damit alle sie sehen.' : '');
+  note.innerHTML = n + (ws.msg ? '<br><span class="msg err">' + esc(ws.msg) + '</span>' : ''); note.hidden = !n; ws.msg = '';
+  if (!rows(d).length) { $('#wsBody').innerHTML = '<div class="card empty"><p class="muted">Lade zuerst Daten oder schau dir die Demo an.</p></div>'; return; }
+  $('#wsBody').innerHTML = ws.sub === 'auswertung' ? wsAnalysisHTML(d) : ws.sub === 'vorbereitung' ? wsPrepHTML(d) : wsCaptureHTML(d);
+}
+function wsCaptureHTML(d) {
+  const ws = state.ws, games = wsGames(d), g = wsGameObj(d), c = ws.cur;
+  const opt = (x) => '<option value="' + (x.kommend ? 'f:' : 'g:') + x.gameId + '"' + ((x.kommend ? 'f:' : 'g:') + x.gameId === ws.game ? ' selected' : '') + '>' + esc(fmtWhen(x.date) + ' · ' + x.homeName + ' – ' + x.awayName) + '</option>';
+  let h = '<div class="card wscap"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 320px"><label for="wsGame">Spiel</label><select id="wsGame"><option value="">Spiel wählen …</option>' +
+    (games.some((x) => x.kommend) ? '<optgroup label="Kommende Spiele (live erfassen)">' + games.filter((x) => x.kommend).map(opt).join('') + '</optgroup>' : '') +
+    (games.some((x) => !x.kommend) ? '<optgroup label="Gespielte Spiele (am Video)">' + games.filter((x) => !x.kommend).map(opt).join('') + '</optgroup>' : '') + '</select></div>' +
+    '<label class="check"><input type="checkbox" id="wsAll"' + (ws.allLeagues ? ' checked' : '') + '> alle Ligen statt nur QHL/NLB</label></div>';
+  if (!g) return h + '<p class="small muted" style="margin:8px 0 0">Wähle ein Spiel. Kommende Spiele (aus dem Spielplan) eignen sich für die Erfassung an der Linie, gespielte für die Analyse am Video.</p></div>';
+  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, defId = atkHome ? g.awayTeamId : g.homeTeamId, atkName = atkHome ? g.homeName : g.awayName, defName = atkHome ? g.awayName : g.homeName;
+  const shooters = wsRoster(d, atkId, 'F'), gks = wsRoster(d, defId, 'G');
+  h += '<div class="row" style="margin-top:10px;align-items:end"><div class="field"><span class="lbl">Wer wirft?</span><div class="seg"><button data-wsatk="home" aria-pressed="' + atkHome + '">' + esc(g.homeName) + '</button><button data-wsatk="away" aria-pressed="' + !atkHome + '">' + esc(g.awayName) + '</button></div></div>' +
+    '<div class="field"><label for="wsTw">Im Tor von ' + esc(defName) + '</label><select id="wsTw"><option value="">unbekannt</option>' + gks.map((p) => '<option value="' + p.id + '"' + (String(p.id) === ws.tw ? ' selected' : '') + '>' + (p.nr ? p.nr + ' · ' : '') + esc(fullName(p.name)) + '</option>').join('') + '</select></div></div>';
+  h += '<div class="wsgrid"><div><div class="wsstep">1. Werfer <span class="muted small">' + esc(atkName) + '</span></div><div class="wsshooters">' +
+    shooters.map((p) => '<button class="wsp' + (c.pid === p.id ? ' on' : '') + '" data-wsp="' + p.id + '"><b>' + (p.nr || '–') + '</b> ' + esc(splitName(p.name).sur) + '</button>').join('') +
+    '<button class="wsp' + (c.unknown ? ' on' : '') + '" data-wsp="?"><b>?</b> unbekannt</button></div>' + (shooters.length ? '' : '<p class="small muted">Für dieses Team sind noch keine Spieler bekannt. Wähle «unbekannt».</p>') + '</div>' +
+    '<div><div class="wsstep">2. Position <span class="chips">' + WS_SIT.map(([k, l]) => '<button class="chipbtn' + (c.sit === k ? ' on' : '') + '" data-wssit="' + k + '">' + l + '</button>').join('') + '</span></div>' + courtSVG([], { click: true, id: 'wsCourt', marker: c, labels: false }) +
+    '<p class="small muted" style="margin:2px 0 0">' + (c.sit === '7m' ? '7-Meter: Position wird automatisch gesetzt.' : c.x != null ? 'Position: ' + esc(WS_ZONES[wsZone(c.x, c.y, c.sit)]) : 'Tippe auf das Feld, von wo geworfen wurde.') + '</p></div>' +
+    '<div><div class="wsstep">3. Ziel im Tor <span class="muted small">Sicht Werfer</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: c }) +
+    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span></div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div>' +
+    '<details class="hint" style="margin-top:8px"' + (c.art ? ' open' : '') + '><summary>Wurfart (freiwillig)</summary><div class="chips" style="margin-top:6px">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div></details></div></div>' +
+    '<p class="msg" id="wsMsg" aria-live="polite"></p></div>';
+  const inGame = state.ws.shots.filter((s) => String(s.game_id) === String(g.gameId)).reverse();
+  const sum = (tid) => wsSum(inGame.filter((s) => String(s.angriff_team_id) === String(tid)));
+  const A = sum(g.homeTeamId), B = sum(g.awayTeamId);
+  h += '<div class="card"><h3>Würfe in diesem Spiel</h3><p class="small muted" style="margin:0 0 8px">' + esc(g.homeName) + ': ' + A.n + ' Würfe, ' + A.tor + ' Tore · ' + esc(g.awayName) + ': ' + B.n + ' Würfe, ' + B.tor + ' Tore' + (inGame.length ? ' · Der neuste Wurf steht oben, ✕ löscht ihn.' : '') + '</p>' +
+    (inGame.length ? '<div style="overflow-x:auto"><table class="dtable"><tbody>' + inGame.slice(0, 40).map((s) => '<tr><td class="left">' + esc(s.angriff_team) + '</td><td class="left">' + (s.nr ? s.nr + ' · ' : '') + esc(s.spieler ? fullName(s.spieler) : 'unbekannt') + '</td><td class="left">' + esc(WS_ZONES[s.zone] || '') + (s.situation === 'gegenstoss' ? ' (Gegenstoss)' : '') + '</td><td class="left">' + esc(wsZoneTxt(s.tor_zone) || '–') + '</td><td class="left"><span class="lg ' + wsDotCls(s) + '"></span> ' + esc(wsResTxt(s.ergebnis)) + '</td><td><button class="linkbtn" data-wsdel="' + s.id + '" aria-label="Wurf löschen">✕</button></td></tr>').join('') + '</tbody></table></div>' : '<p class="small muted" style="margin:0">Noch keine Würfe erfasst.</p>') + '</div>';
+  return h;
+}
+// Speichern beim Tippen auf ein Ergebnis
+async function wsSave(res) {
+  const d = data(), ws = state.ws, g = wsGameObj(d), c = ws.cur, msg = (t, cls) => { const m = $('#wsMsg'); if (m) { m.className = 'msg ' + (cls || ''); m.textContent = t; } };
+  if (!g) return;
+  if (!c.pid && !c.unknown) return msg('Bitte zuerst den Werfer wählen (oder «unbekannt»).', 'err');
+  if (c.sit !== '7m' && c.x == null) return msg('Bitte die Position auf dem Feld antippen.', 'err');
+  if ((res === 'tor' || res === 'parade') && c.gx == null) return msg('Bitte antippen, wohin im Tor geworfen wurde.', 'err');
+  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, gk = ws.tw ? wsRoster(d, atkHome ? g.awayTeamId : g.homeTeamId, 'G').find((p) => String(p.id) === ws.tw) : null;
+  const p = c.pid ? wsRoster(d, atkId, 'F').find((x) => x.id === c.pid) : null, x = c.sit === '7m' ? 100 : c.x, y = c.sit === '7m' ? 70 : c.y;
+  const row = { game_id: g.gameId, spiel: g.homeName + ' – ' + g.awayName, datum: g.date, liga: ligaKey(d.groups[g.groupId] || { name: '' }), angriff_team_id: atkId, angriff_team: atkHome ? g.homeName : g.awayName,
+    player_id: p ? p.id : null, spieler: p ? p.name : '', nr: p ? p.nr || null : null, tw_id: gk ? gk.id : null, tw_name: gk ? gk.name : '', tw_team: atkHome ? g.awayName : g.homeName,
+    x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, gx: c.gx == null ? null : Math.round(c.gx), gy: c.gy == null ? null : Math.round(c.gy), zone: wsZone(x, y, c.sit), tor_zone: c.gx == null ? null : wsGoalZone(c.gx, c.gy), ergebnis: res, situation: c.sit, art: c.art || null };
+  try {
+    await wsAdd(row);
+    ws.cur = wsBlank(); renderWurf();
+    msg('Gespeichert: ' + (p ? (p.nr ? p.nr + ' ' : '') + splitName(p.name).sur : 'unbekannt') + ', ' + WS_ZONES[row.zone] + (row.tor_zone ? ' → ' + wsZoneTxt(row.tor_zone) : '') + ', ' + wsResTxt(res) + '.', 'ok');
+  } catch (e) { msg('Speichern nicht möglich: ' + (e.message || 'keine Verbindung'), 'err'); }
+}
+function wsAnalysisHTML(d) {
+  const ws = state.ws, a = ws.ana, S = ws.shots;
+  const groups = { werfer: new Map(), tw: new Map(), team: new Map() };
+  for (const s of S) {
+    if (s.player_id) { const k = String(s.player_id), o = groups.werfer.get(k) || { id: k, label: fullName(s.spieler) + ' (' + s.angriff_team + ')', n: 0 }; o.n++; groups.werfer.set(k, o); }
+    if (s.tw_id) { const k = String(s.tw_id), o = groups.tw.get(k) || { id: k, label: fullName(s.tw_name) + ' (' + s.tw_team + ')', n: 0 }; o.n++; groups.tw.set(k, o); }
+    if (s.angriff_team_id) { const k = String(s.angriff_team_id), o = groups.team.get(k) || { id: k, label: s.angriff_team + (s.liga ? ' (' + s.liga + ')' : ''), n: 0 }; o.n++; groups.team.set(k, o); }
+  }
+  const list = [...groups[a.kind].values()].sort((x, y) => y.n - x.n || x.label.localeCompare(y.label, 'de'));
+  if (!list.some((x) => x.id === a.id)) a.id = list[0] ? list[0].id : '';
+  let h = '<div class="card"><div class="row" style="align-items:end"><div class="field"><span class="lbl">Auswerten</span><div class="seg seg3"><button data-wskind="werfer" aria-pressed="' + (a.kind === 'werfer') + '">Werfer</button><button data-wskind="tw" aria-pressed="' + (a.kind === 'tw') + '">Torhüter</button><button data-wskind="team" aria-pressed="' + (a.kind === 'team') + '">Team</button></div></div>' +
+    '<div class="field" style="flex:1 1 260px"><label for="wsAnaId">' + (a.kind === 'werfer' ? 'Werfer' : a.kind === 'tw' ? 'Torhüter' : 'Team (Würfe dieses Teams)') + '</label><select id="wsAnaId">' + (list.length ? list.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === a.id ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe</option>').join('') : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
+    '<div class="field"><label for="wsAnaSit">Situation</label><select id="wsAnaSit"><option value="">alle</option>' + WS_SIT.map(([k, l]) => '<option value="' + k + '"' + (a.sit === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
+    '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button></div></div></div></div>';
+  if (!a.id) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
+  const key = a.kind === 'werfer' ? 'player_id' : a.kind === 'tw' ? 'tw_id' : 'angriff_team_id';
+  const mine = S.filter((s) => String(s[key]) === a.id && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), tw = a.kind === 'tw', mir = ws.persp === 'tw';
+  const tend = wsTendencies(mine, tw, mir);
+  h += '<div class="wsana"><div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore, ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(mine, { mirror: mir, tw }) + WS_LEGEND + '</div>' +
+    '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
+    '<div class="card"><h3>Tendenzen</h3>' + (tend.length ? '<ul class="insights">' + tend.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted" style="margin:0">Für Tendenzen braucht es mindestens 5 erfasste Würfe.</p>') + '</div>';
+  return h;
+}
+function wsPrepHTML(d) {
+  const ws = state.ws, teams = teamList(d), ids = new Set(teams.map((t) => t.id));
+  if (!ids.has(ws.prep)) ws.prep = (teams.find((t) => ws.shots.some((s) => String(s.angriff_team_id) === t.id)) || teams[0] || {}).id || '';
+  let h = '<div class="card"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 300px"><label for="wsPrep">Gegner</label><select id="wsPrep">' + teams.map((t) => '<option value="' + esc(t.id) + '"' + (t.id === ws.prep ? ' selected' : '') + '>' + esc(t.label) + '</option>').join('') + '</select></div>' +
+    '<button class="btn secondary" id="wsPrepPdf">⎙ Als PDF für den Torhüter</button></div></div>';
+  return h + wsPrepBody(d, ws.prep);
+}
+function wsPrepBody(d, teamId) {
+  if (!teamId) return '';
+  const S = state.ws.shots.filter((s) => String(s.angriff_team_id) === String(teamId)), team = (teamList(d).find((t) => t.id === String(teamId)) || {}).name || '';
+  const F = aggregate(d, { role: 'F', group: [], team: String(teamId) }).sort((a, b) => b.goals - a.goals).slice(0, 10);
+  const next = Object.values(d.fixtures || {}).filter((f) => new Date(f.date).getTime() > refNow() && (String(f.homeTeamId) === String(teamId) || String(f.awayTeamId) === String(teamId))).sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
+  let h = '<div class="card"><h3>' + esc(team) + '</h3><p class="small muted" style="margin:0 0 8px">' + (next ? 'Nächstes Spiel: ' + esc(fmtWhen(next.date)) + ', ' + esc(next.homeName) + ' – ' + esc(next.awayName) + '. ' : '') + S.length + ' erfasste Würfe dieses Teams. Werfer sortiert nach Toren in dieser Saison.</p>' +
+    (S.length >= 5 ? '<div class="wsana"><div><b class="small">Team: wohin geworfen wird</b> <span class="small muted">(Sicht Torhüter)</span>' + goalSVG(S, { mirror: true }) + '</div><div><b class="small">Team: von wo</b>' + courtSVG(S, {}) + '</div></div>' + WS_LEGEND : '') + '</div>';
+  h += '<div class="wsprep">' + F.map((p) => {
+    const mine = S.filter((s) => String(s.player_id) === String(p.id)), tend = wsTendencies(mine, false, true), s = splitName(p.name);
+    return '<div class="card wspl"><div class="wsplhead"><div><b>' + (mine[0] && mine[0].nr ? mine[0].nr + ' · ' : '') + esc(s.sur) + '</b> ' + esc(s.first) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + (p.year ? (p.position ? ', ' : '') + p.year : '') + '</span></div>' +
+      '<div class="small" style="text-align:right">' + nf(p.games ? p.goals / p.games : 0, 1) + ' Tore/Spiel<br><span class="muted">7m ' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + ' · Quote ' + pctTxt(rate(p.qg, p.qs)) + '</span></div></div>' +
+      (mine.length ? '<div class="wsplbody">' + goalSVG(mine, { mirror: true, small: true }) + '<div>' + (tend.length ? '<ul class="insights small">' + tend.slice(0, 4).map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted">' + mine.length + ' erfasste Würfe, noch zu wenige für Tendenzen.</p>') + '</div></div>' : '<p class="small muted" style="margin:6px 0 0">Noch keine erfassten Würfe.</p>') + '</div>';
+  }).join('') + '</div>';
+  return h;
+}
+// Vorbereitungsblatt im Seitenfenster (dort gibt es den Druck- und PDF-Knopf)
+function wsPrepOpen() { const t = teamList(data()).find((x) => x.id === state.ws.prep); if (!t) return; state.lastFocus = document.activeElement; state.open = { prep: t.id, name: t.name }; renderDrawer(); $('#drawer').scrollTop = 0; }
+function wsPrepDrawer() {
+  const d = data(), t = teamList(d).find((x) => x.id === state.open.prep);
+  $('#drawer').innerHTML = '<div class="dhead"><div><h2 class="dname" id="dTitle">Torhüter-Vorbereitung</h2><p class="muted" style="margin-top:6px">' + esc(new Date().toLocaleDateString('de-CH')) + ' · Torbilder aus Sicht des Torhüters</p></div><div class="row noprint"><button class="btn secondary" id="dPrint" title="Druckansicht öffnen. Im Druckfenster «Als PDF speichern» wählen.">⎙ PDF</button><button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div></div>' + (t ? wsPrepBody(d, t.id) : '');
+  $('#drawer').hidden = false; $('#backdrop').hidden = false;
+}
+// Ereignisse im Reiter
+document.querySelectorAll('[data-wsub]').forEach((b) => (b.onclick = () => { state.ws.sub = b.dataset.wsub; lsSet('scouting.wsub', state.ws.sub); renderWurf(); }));
+$('#wsNote').addEventListener('click', (e) => { if (e.target.closest('#wsImport')) wsImport(); });
+$('#wsBody').addEventListener('click', (e) => {
+  const ws = state.ws, t = e.target;
+  const court = t.closest('#wsCourt'); if (court) { if (ws.cur.sit === '7m') return; const [x, y] = svgPoint(e, court); ws.cur.x = Math.max(0, Math.min(200, x)); ws.cur.y = Math.max(0, Math.min(140, y)); return renderWurf(); }
+  const goal = t.closest('#wsGoal'); if (goal) { const [x, y] = svgPoint(e, goal); ws.cur.gx = Math.max(-10, Math.min(310, x)); ws.cur.gy = Math.max(-10, Math.min(210, y)); return renderWurf(); }
+  const b = t.closest('button'); if (!b) return;
+  if (b.dataset.wsatk) { ws.atk = b.dataset.wsatk; ws.tw = ''; ws.cur = wsBlank(ws.cur.sit); return renderWurf(); }
+  if (b.dataset.wsp) { const v = b.dataset.wsp; ws.cur.pid = v === '?' ? null : Number(v); ws.cur.unknown = v === '?'; return renderWurf(); }
+  if (b.dataset.wssit) { ws.cur.sit = b.dataset.wssit; if (ws.cur.sit === '7m') { ws.cur.x = 100; ws.cur.y = 70; } return renderWurf(); }
+  if (b.dataset.wsart) { ws.cur.art = ws.cur.art === b.dataset.wsart ? '' : b.dataset.wsart; return renderWurf(); }
+  if (b.dataset.wsres) return wsSave(b.dataset.wsres);
+  if (b.dataset.wsdel) { if (window.confirm('Diesen Wurf löschen?')) wsDel(Number(b.dataset.wsdel)).then(renderWurf).catch((x) => { ws.msg = 'Löschen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
+  if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; return renderWurf(); }
+  if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; return renderWurf(); }
+  if (b.id === 'wsPrepPdf') return wsPrepOpen();
+});
+$('#wsBody').addEventListener('change', (e) => {
+  const ws = state.ws, t = e.target;
+  if (t.id === 'wsGame') { ws.game = t.value; ws.atk = 'home'; ws.tw = ''; ws.cur = wsBlank(); }
+  else if (t.id === 'wsAll') { ws.allLeagues = t.checked; }
+  else if (t.id === 'wsTw') ws.tw = t.value;
+  else if (t.id === 'wsAnaId') ws.ana.id = t.value;
+  else if (t.id === 'wsAnaSit') ws.ana.sit = t.value;
+  else if (t.id === 'wsPrep') { ws.prep = t.value; lsSet('scouting.wsprep', ws.prep); }
+  else return;
+  renderWurf();
+});
 
 // Betriebsart: demo, einrichten (keine Konfiguration), anmelden oder verbunden
 function zsMode() { if (state.demo) return 'demo'; if (!state.zs.cfg) return 'einrichten'; if (!state.zs.session) return 'anmelden'; return 'verbunden'; }
@@ -3577,6 +3937,7 @@ let noteTimer;
 
 $('#tabSpieler').onclick = () => setView('spieler');
 $('#tabDaten').onclick = () => setView('daten');
+$('#tabWurf').onclick = () => setView('wurf');
 $('#tabMerk').onclick = () => setView('merk');
 $('#pwOk').onclick = async () => { const pw = $('#pwInput').value; if (!pw) return showPw('Bitte ein Passwort eingeben.'); $('#pwOk').disabled = true; const ok = await openShared(pw); $('#pwOk').disabled = false; if (!ok) showPw('Das Passwort stimmt nicht.'); };
 $('#pwInput').addEventListener('keydown', (e) => { if (e.key === 'Enter') $('#pwOk').click(); });
@@ -3974,7 +4335,7 @@ $('#drawer').addEventListener('click', (e) => {
   if (e.target.closest('#dPrint')) {
     // Der Seitentitel wird zum vorgeschlagenen Dateinamen der PDF
     state.titleBefore = document.title;
-    document.title = state.open.cmp ? 'Spielervergleich ' + new Date().toLocaleDateString('de-CH') : 'Scouting-Bericht ' + (state.open.name || '');
+    document.title = state.open.prep ? 'Torhüter-Vorbereitung ' + state.open.name : state.open.cmp ? 'Spielervergleich ' + new Date().toLocaleDateString('de-CH') : 'Scouting-Bericht ' + (state.open.name || '');
     document.body.classList.add('pprint'); window.print(); return;
   }
   const cdel = e.target.closest('[data-cmpdel]'); if (cdel) { state.cmp = state.cmp.filter((x) => String(x.id) !== cdel.dataset.cmpdel); saveCmp(); return renderDrawer(); }

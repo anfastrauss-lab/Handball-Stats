@@ -13,6 +13,7 @@ Mit dieser Anleitung läuft dein Scouting-Tool als eigene Website. Jeden Montag 
 | `tools/update.mjs`, `tools/crypto.mjs` | Das Programm, das jede Woche die neuen Spiele holt und die Daten verschlüsselt. |
 | `.github/workflows/wochen-update.yml` | Der Wochenplan (jeden Montag). |
 | `daten.enc` | Die verschlüsselten Daten. Entsteht beim ersten Lauf von selbst. |
+| `ANLEITUNG-WURFBILDER.md` | Einmalige Einrichtung der Tabelle für den Reiter «Wurfbilder» im Zentralspeicher. |
 
 ## So funktioniert es
 
