@@ -164,6 +164,10 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
 .zsadd { margin-bottom: 14px; border-color: var(--court); }
+.modebar { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin: 0 0 14px; }
+.modeseg { min-width: min(340px, 100%); }
+.modeseg button { padding: 10px 14px; font-size: 15px; }
+.talctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 18px; align-items: end; padding: 14px 16px; margin-bottom: 12px; }
 tr.totrow td { font-weight: 700; border-top: 2px solid var(--ink-2); background: var(--surface-2); }
 tr.totrow td small { font-weight: 400; color: var(--ink-2); }
 tr.totrow:hover td { background: var(--surface-2); }
@@ -315,7 +319,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
   .results > .mapcard { order: 1; margin: 16px 0 0; }
 }
 @media (max-width: 640px) {
-  .results > .tablewrap, .results > .sortbar, #sortHint, #copyTable, #copyMsg { display: none; }
+  #numView > .tablewrap, #numView > .sortbar, #sortHint, #copyTable, #copyMsg { display: none; }
   .cardlist { display: grid; gap: 8px; }
   .msort { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; }
   .msort label { font-size: 13px; font-weight: 600; color: var(--ink-2); white-space: nowrap; }
@@ -336,7 +340,6 @@ table.plain td { text-align: left; padding: 8px 10px; }
   <button class="themebtn" id="themeBtn"></button>
   <nav class="tabs" role="tablist" aria-label="Ansicht">
     <button class="tab" role="tab" id="tabSpieler" aria-selected="true" aria-controls="viewSpieler">Spieler</button>
-    <button class="tab" role="tab" id="tabTalent" aria-selected="false" aria-controls="viewTalent">Talent-Radar</button>
     <button class="tab" role="tab" id="tabTeams" aria-selected="false" aria-controls="viewTeams">Teams</button>
     <button class="tab" role="tab" id="tabReport" aria-selected="false" aria-controls="viewReport">Wochenreport</button>
     <button class="tab" role="tab" id="tabMerk" aria-selected="false" aria-controls="viewMerk">Merkliste <span class="badge" id="merkCount"></span></button>
@@ -408,6 +411,10 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <button class="btn wide filterdone" id="filterDone">Ergebnisse anzeigen</button>
     </aside>
     <div class="results">
+      <div class="modebar" role="group" aria-label="Ansicht">
+        <div class="seg modeseg"><button id="modeNum" aria-pressed="true">Zahlen</button><button id="modeTal" aria-pressed="false">Talent-Bewertung</button></div>
+        <span class="small muted" id="modeHint"></span>
+      </div>
       <section class="card mapcard" id="mapCard" aria-label="Karte">
         <div class="maphead">
           <h2 style="margin:0;font-size:22px">Karte</h2>
@@ -421,6 +428,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
         </div>
       </section>
       <div class="activef" id="activeFilters" aria-label="Aktive Filter" hidden></div>
+      <div id="numView">
       <div class="toolbar">
         <span id="count" class="muted" aria-live="polite"></span>
         <div class="row">
@@ -448,43 +456,28 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <ul class="small muted">
           <li>Spiele zählen alle Spiele, in denen der Spieler im Spielbericht steht. Bei Torhütern zählen nur Spiele mit mindestens einem Gegenwurf.</li>
           <li>Tore und Würfe enthalten die 7-Meter. Quote heisst Tore geteilt durch Würfe, bei Torhütern Paraden geteilt durch Gegenwürfe. Für Quoten zählen nur Spiele mit voller Statistik. Nicht dazu gehören Spiele, deren Spielbericht nur Tore enthält, und Spiele mit dem <b>Liveticker lite</b>. Der Lite-Ticker erfasst nur Tore: Jedes Tor zählt dann auch als Wurf (100 %), und Torhüter haben 0 Paraden. Das Tool erkennt solche Spiele daran, dass ein Team genau so viele Würfe wie Tore hat oder seine Torhüter keine einzige Parade. Diese Spiele zählen für Tore und Spiele, aber nicht für Quoten. Ein Sternchen (*) an der Quote heisst, dass sie nur aus einem Teil der Spiele stammt.</li>
+          <li>Torhüter werden im Nachwuchs manchmal als Feldspieler gemeldet. Wer in einem Spiel als Torhüter eingetragen ist oder die Position Goalie hat, gilt als Torhüter. Seine Einsätze als «Feldspieler» ohne Tor und ohne Wurf zählen nicht bei den Feldspielern.</li>
           <li>Fehler sind technische Fehler, Strafen sind 2-Minuten-Zeitstrafen. Die Zahlen stammen aus dem digitalen Spielbericht, nicht jedes Spiel hat eine Statistik.</li>
           <li>Jahrgang, Position und Spielhand stammen aus den Kaderlisten von handball.ch. Die Position ist meist nur bei NLA- und NLB-Teams eingetragen. Wer keinen Jahrgang hat, fällt aus der Liste, sobald du einen Jahrgang eingibst.</li>
         </ul>
       </details>
-    </div>
-  </div>
-</section>
-
-<section id="viewTalent" role="tabpanel" aria-labelledby="tabTalent" hidden>
-  <div class="toolbar">
-    <div><h2 style="margin:0">Talent-Radar</h2>
-      <p class="small muted" style="margin:4px 0 0;max-width:760px">Zeigt Spieler, die für ihre Liga und ihren Jahrgang auffallen. Jeder Spieler wird mit dem Schnitt seiner Liga verglichen, und wer jünger ist als der typische Spieler dieser Liga, bekommt einen Bonus.</p></div>
-    <div class="row"><span class="msg" id="talMsg" aria-live="polite"></span><button class="btn secondary" id="talCopy">Tabelle kopieren</button></div>
-  </div>
-  <div class="card empty" id="talEmpty" hidden><h2>Noch keine Daten</h2><p class="muted">Lade zuerst Daten im Reiter «Daten» oder schau dir die Demo an.</p></div>
-  <div id="talMain">
-    <div class="card talfilters">
-      <div class="field wide2"><span class="lbl" id="lblTalRole">Rolle</span><div class="seg" role="group" aria-labelledby="lblTalRole"><button id="talRoleF" aria-pressed="true">Feldspieler</button><button id="talRoleG" aria-pressed="false">Torhüter</button></div></div>
-      <div class="field"><label for="talQ">Name</label><input type="search" id="talQ" placeholder="Name suchen" autocomplete="off"></div>
-      <div class="field"><label for="talLiga">Liga</label><select id="talLiga"></select></div>
-      <div class="field" id="talPosField"><label for="talPos" title="Die Position ist auf handball.ch meist nur bei QHL- und NLB-Teams eingetragen">Position</label><select id="talPos"></select></div>
-      <div class="field"><label for="talYF">Jahrgang ab</label><input type="number" id="talYF" min="1950" max="2030" placeholder="z. B. 2009" inputmode="numeric"></div>
-      <div class="field"><label for="talYT">Jahrgang bis</label><input type="number" id="talYT" min="1950" max="2030" placeholder="z. B. 2011" inputmode="numeric"></div>
-      <div class="field"><label for="talMG">Mindestspiele</label><input type="number" id="talMG" min="1" value="3" inputmode="numeric"></div>
-      <div class="field"><label for="talMS" id="lblTalMS">Mindestwürfe</label><input type="number" id="talMS" min="0" value="15" inputmode="numeric"></div>
-      <div class="field"><label for="talW">Gewicht Alter: <b id="talWVal"></b></label><input type="range" id="talW" min="0" max="1" step="0.1" value="0.5"></div>
-      <div class="field"><label for="talL" title="Wie stark die Stärke der Liga in den Score einfliesst. 0 vergleicht nur innerhalb der Liga.">Gewicht Liga: <b id="talLVal"></b></label><input type="range" id="talL" min="0" max="1" step="0.1" value="0.5"></div>
-      <div class="field"><span class="lbl">Anzeige</span><label class="check" title="Spieler, die in einer höheren Altersklasse spielen als ihr Jahrgang, z. B. ein 2012er in der U17"><input type="checkbox" id="talUp"> Nur Spieler, die hochspielen</label><label class="check" title="Spieler, die in mehreren Ligen spielen, stehen dann je Liga in einer eigenen Zeile"><input type="checkbox" id="talSplit"> Jede Liga einzeln zeigen</label></div>
-      <div class="field" id="talTField"><label for="talT" title="Wie stark technische Fehler die Leistung senken. 0 ignoriert sie.">Gewicht Fehler: <b id="talTVal"></b></label><input type="range" id="talT" min="0" max="1" step="0.1" value="0.3"></div>
-      <div class="field wide2"><span class="lbl">Gebiet</span><div class="small" id="talArea"></div><button class="btn secondary" id="talAreaBtn" style="margin-top:4px">Gebiet ändern</button></div>
-    </div>
-    <p class="small muted" id="talCount" style="margin:10px 0" aria-live="polite"></p>
-    <div class="tablewrap"><table id="talTbl"></table></div>
-    <p class="small muted litenote" id="talLite" hidden><b>*</b> Diese Quote stammt nur aus einem Teil der Spiele. Einige Vereine nutzen den <b>Liveticker lite</b>, der nur Tore erfasst, keine Würfe und Paraden. Solche Spiele zählen hier für Tore pro Spiel, aber nicht für Quoten.</p>
-    <div class="more"><button class="btn secondary" id="talMore" hidden>Mehr anzeigen</button></div>
-    <details class="hint">
-      <summary>So rechnet das Radar</summary>
+      </div>
+      <div id="talView" hidden>
+        <div class="card talctl">
+          <div class="field"><label for="talW">Gewicht Alter: <b id="talWVal"></b></label><input type="range" id="talW" min="0" max="1" step="0.1" value="0.5"></div>
+          <div class="field"><label for="talL" title="Wie stark die Stärke der Liga in den Score einfliesst. 0 vergleicht nur innerhalb der Liga.">Gewicht Liga: <b id="talLVal"></b></label><input type="range" id="talL" min="0" max="1" step="0.1" value="0.5"></div>
+          <div class="field" id="talTField"><label for="talT" title="Wie stark technische Fehler die Leistung senken. 0 ignoriert sie.">Gewicht Fehler: <b id="talTVal"></b></label><input type="range" id="talT" min="0" max="1" step="0.1" value="0.3"></div>
+          <div class="field"><span class="lbl">Anzeige</span><label class="check" title="Spieler, die in mehreren Ligen spielen, stehen dann je Liga in einer eigenen Zeile"><input type="checkbox" id="talSplit"> Jede Liga einzeln zeigen</label></div>
+        </div>
+        <div class="toolbar">
+          <span class="small muted" id="talCount" aria-live="polite"></span>
+          <div class="row"><span class="msg" id="talMsg" aria-live="polite"></span><button class="btn secondary" id="talCopy">Tabelle kopieren</button></div>
+        </div>
+        <div class="tablewrap"><table id="talTbl"></table></div>
+        <p class="small muted litenote" id="talLite" hidden><b>*</b> Diese Quote stammt nur aus einem Teil der Spiele. Einige Vereine nutzen den <b>Liveticker lite</b>, der nur Tore erfasst, keine Würfe und Paraden. Solche Spiele zählen hier für Tore pro Spiel, aber nicht für Quoten.</p>
+        <div class="more"><button class="btn secondary" id="talMore" hidden>Mehr anzeigen</button></div>
+        <details class="hint">
+          <summary>So rechnet die Talent-Bewertung</summary>
       <ul class="small muted">
         <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Verglichen werden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe).</li>
         <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt, +1 deutlich besser, +2 herausragend; ein Wert von +0.7 ist also schon klar überdurchschnittlich). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
@@ -494,12 +487,15 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <li><b>Ligastärke:</b> Die Leistung wird innerhalb der Liga gemessen. Damit ein guter Spieler aus der U17 Elite nicht hinter einem gleich guten aus der Promotion landet, bekommt jede Liga eine Stufe: QHL +2, NLB +1.5, 1. Liga und Elite +1, 2. Liga und Inter +0.5, 3. Liga und Promotion 0, tiefere Ligen −0.5. Die Stufen sind grobe Schätzungen. Mit dem Regler «Gewicht Liga» stellst du ein, wie stark sie zählen. Bei 0 zählt nur der Vergleich innerhalb der Liga.</li>
         <li><b>Spielt hoch:</b> Das gelbe Kennzeichen «↑ U17» heisst, dass ein Spieler in dieser Saison in einer höheren Altersklasse spielt als sein Jahrgang. In der Saison 2026/27 gehören zum Beispiel die Jahrgänge 2010 und 2011 in die U17, ein 2012er dort spielt also hoch. «↑ Aktive» heisst: ein Junior spielt bei den Erwachsenen. Das ist oft ein starkes Talentzeichen, auch wenn die Zahlen dort tiefer sind.</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht plus Ligastufe mal Gewicht. Mit den Reglern stellst du ein, wie wichtig dir Alter und Liga sind: Beim Alter gibt 1 pro Jahr einen ganzen Punkt.</li>
-        <li><b>Saison:</b> Das Radar zeigt immer die aktuelle Saison. Frühere Saisons siehst du im Spielerprofil unter «Entwicklung über die Saisons».</li>
-        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als grauer Hinweis «+ U15 Promotion» daneben. Spielt er in einer davon hoch, steht stattdessen das gelbe «↑ U17 Elite». Die Zahlen dort siehst du beim Darüberfahren. Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Liga siehst du alle Zeilen. Das Radar liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
+        <li><b>Saison:</b> Die Talent-Bewertung zeigt immer die aktuelle Saison. Frühere Saisons siehst du im Spielerprofil unter «Entwicklung über die Saisons».</li>
+        <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als grauer Hinweis «+ U15 Promotion» daneben. Spielt er in einer davon hoch, steht stattdessen das gelbe «↑ U17 Elite». Die Zahlen dort siehst du beim Darüberfahren. Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Gruppe unter «Liga und Gruppe» siehst du alle Zeilen. Die Bewertung liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
       </ul>
     </details>
+      </div>
+    </div>
   </div>
 </section>
+
 
 <section id="viewTeams" role="tabpanel" aria-labelledby="tabTeams" hidden>
   <div class="toolbar"><h2 style="margin:0">Gegner-Scouting</h2></div>
@@ -516,7 +512,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
 <section id="viewReport" role="tabpanel" aria-labelledby="tabReport" hidden>
   <div class="toolbar">
     <div><h2 style="margin:0">Wochenreport</h2>
-      <p class="small muted" style="margin:4px 0 0;max-width:760px">Was ist neu? Nach jedem Update siehst du hier, wer in Form ist, die besten Einzelleistungen, wer neu im Talent-Radar steht und wie deine Merkliste gespielt hat. Quoten zählen nur Spiele mit voller Statistik, also nicht solche mit dem Liveticker lite, der nur Tore erfasst.</p></div>
+      <p class="small muted" style="margin:4px 0 0;max-width:760px">Was ist neu? Nach jedem Update siehst du hier, wer in Form ist, die besten Einzelleistungen, wer in der Talent-Bewertung neu in die Spitze gerückt ist und wie deine Merkliste gespielt hat. Quoten zählen nur Spiele mit voller Statistik, also nicht solche mit dem Liveticker lite, der nur Tore erfasst.</p></div>
     <div class="row"><span class="msg" id="repMsg" aria-live="polite"></span><button class="btn secondary" id="repCopy">Als Text kopieren</button></div>
   </div>
   <div class="card empty" id="repEmpty" hidden><h2>Noch keine Daten</h2><p class="muted">Lade zuerst Daten im Reiter «Daten» oder schau dir die Demo an.</p></div>
@@ -526,7 +522,6 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <div class="field" id="repCustom" hidden><label for="repFrom">Von</label><input type="date" id="repFrom"><label for="repTo" style="margin-top:6px;font-size:13px;font-weight:600;color:var(--ink-2)">Bis</label><input type="date" id="repTo"></div>
       <div class="field"><label for="repLiga">Liga</label><select id="repLiga"></select></div>
       <div class="field"><label for="repN">Spieler pro Liste</label><select id="repN"><option value="10">10</option><option value="25">25</option><option value="50">50</option><option value="100">100</option><option value="0">Alle</option></select></div>
-      <div class="field wide2"><span class="lbl">Gebiet</span><div class="small" id="repArea"></div><button class="btn secondary" id="repAreaBtn" style="margin-top:4px">Gebiet ändern</button></div>
     </div>
     <p class="small muted" id="repInfo" style="margin:10px 0" aria-live="polite"></p>
     <div id="repBody"></div>
@@ -1031,11 +1026,24 @@ function qDef(r, lite) {
   for (const [k, x] of Object.entries(v)) Object.defineProperty(r, k, { value: x, configurable: true, writable: true });
   return r;
 }
+// Torhüter, die im Spielbericht als Feldspieler gemeldet sind (z. B. zweiter Torhüter im Nachwuchs):
+// Wer je als Torhüter eingetragen ist oder die Position Goalie/Torhüter hat, gilt als Torhüter. Seine
+// Feldspieler-Einsätze ohne Tor und ohne Wurf zählen nicht für die Feldspieler-Statistik (skipF).
+function gkPlayers(d, all) {
+  const s = new Set();
+  for (const r of all) if (r.role === 'G') s.add(String(r.playerId));
+  for (const p of Object.values(d.players)) if (p && /goal|torh/i.test(p.position || '')) s.add(String(p.playerId));
+  return s;
+}
 function rows(d) {
   if (d._rows) return d._rows;
-  const all = Object.values(d.stats), lite = liteGames(all);
-  d._lite = lite;
-  return (d._rows = all.map((r) => qDef(r, lite.has(Number(r.gameId)))));
+  const all = Object.values(d.stats), lite = liteGames(all), gk = gkPlayers(d, all);
+  d._lite = lite; d._gk = gk;
+  return (d._rows = all.map((r) => {
+    qDef(r, lite.has(Number(r.gameId)));
+    Object.defineProperty(r, 'skipF', { value: r.role === 'F' && gk.has(String(r.playerId)) && !(r.goals || 0) && !(r.shots || 0), configurable: true, writable: true });
+    return r;
+  }));
 }
 const isLite = (d, gameId) => { rows(d); return d._lite.has(Number(gameId)); };
 function index(d) {
@@ -1273,6 +1281,7 @@ const colText = (c, p) => (c.t ? c.t(p) : String(c.v(p)));
 function aggregate(d, f) {
   const idx = index(d), m = new Map();
   for (const r of rows(d)) {
+    if (r.skipF) continue; // Torhüter, als Feldspieler gemeldet, ohne Aktion
     if (r.role !== f.role) continue;
     const g = d.games[r.gameId];
     if (g && !inSeason(d, g, f.season || '')) continue;
@@ -1336,6 +1345,8 @@ function computeList() {
   state.list = list;
 }
 function renderTable() {
+  syncModeUI();
+  if (isTal()) { computeList(); renderTalent(); renderMap(); renderActiveFilters(); return; } // Karte und Filter-Chips gelten für beide Ansichten
   computeList();
   const f = state.f, cols = colsFor(f.role), list = state.list, shown = list.slice(0, state.limit);
   const level = (k) => state.sort.findIndex((s) => s.key === k);
@@ -1407,8 +1418,9 @@ function activeFilterList() {
   if (f.pos) out.push({ k: 'pos', more: 1, t: f.pos === '__none' ? 'Position unbekannt' : f.pos.startsWith('grp:') ? f.pos.slice(4) + ' (alle)' : f.pos });
   if (f.center) out.push({ k: 'center', more: 1, t: f.radius + ' km um ' + f.center.label });
   if (f.cantons.size) { const sel = [...f.cantons].sort(), reg = Object.keys(GROSSREGIONEN).find((n) => GROSSREGIONEN[n].length === sel.length && GROSSREGIONEN[n].every((c) => f.cantons.has(c))); out.push({ k: 'cantons', more: 1, t: reg && sel.length > 1 ? 'Region ' + reg : (sel.length > 1 ? 'Kantone ' : 'Kanton ') + sel.join(', ') }); }
-  if (f.minGames !== 1) out.push({ k: 'minGames', more: 1, t: 'Mind. ' + f.minGames + ' Spiele' });
-  if (f.minShots > 0) out.push({ k: 'minShots', more: 1, t: 'Mind. ' + f.minShots + (f.role === 'F' ? ' Würfe' : ' Gegenwürfe') });
+  const mv = minVals();
+  if (mv.games !== mv.defG) out.push({ k: 'minGames', more: 1, t: 'Mind. ' + mv.games + ' Spiele' });
+  if (mv.shots !== mv.defS) out.push({ k: 'minShots', more: 1, t: 'Mind. ' + mv.shots + (f.role === 'F' ? ' Würfe' : ' Gegenwürfe') });
   return out;
 }
 function renderActiveFilters() {
@@ -1419,7 +1431,8 @@ function renderActiveFilters() {
   const more = list.filter((x) => x.more).length;
   $('#moreCount').textContent = more || '';
   $('#filterToggle').textContent = 'Filter' + (list.length ? ' (' + list.length + ' aktiv)' : '');
-  $('#filterDone').textContent = state.list.length === 1 ? '1 Spieler anzeigen' : state.list.length + ' Spieler anzeigen';
+  const n = isTal() ? (state.talList || []).length : state.list.length;
+  $('#filterDone').textContent = n === 1 ? '1 Spieler anzeigen' : n + ' Spieler anzeigen';
 }
 function clearFilter(k) {
   const f = state.f, all = k === 'all';
@@ -1432,8 +1445,8 @@ function clearFilter(k) {
   if (all || k === 'pos') f.pos = '';
   if (all || k === 'center') { f.center = null; state.pick = false; }
   if (all || k === 'cantons') f.cantons = new Set();
-  if (all || k === 'minGames') { f.minGames = 1; $('#fGames').value = 1; }
-  if (all || k === 'minShots') { f.minShots = 0; $('#fShots').value = 0; }
+  if (all || k === 'minGames') { if (isTal()) state.t.minGames = 3; else f.minGames = 1; }
+  if (all || k === 'minShots') { if (isTal()) { if (f.role === 'F') state.t.minShots = 15; else state.t.minGK = 30; } else f.minShots = 0; }
   if (!f.center) { state.sort = state.sort.filter((s) => s.key !== 'dist'); if (!state.sort.length) { state.sort = defaultSort(f.role); state.sortDefault = true; } }
   state.limit = 100;
   renderPlayers();
@@ -1469,7 +1482,7 @@ function fillSelects() {
   $('#fTeam').value = f.team;
   fillAreaControls();
 }
-// Positionsfilter (Spielerliste und Talent-Radar): einzelne Position, Gruppe «grp:Rückraum» oder «__none» = unbekannt
+// Positionsfilter (Zahlen und Talent-Bewertung): einzelne Position, Gruppe «grp:Rückraum» oder «__none» = unbekannt
 const posMatch = (pos, sel) => (sel === '__none' ? !pos : sel.startsWith('grp:') ? pos.startsWith(sel.slice(4)) : pos === sel);
 function posOptions(d) {
   const vals = [...new Set(Object.values(d.players).map((p) => p.position).filter(Boolean))].sort((a, b) => a.localeCompare(b, 'de'));
@@ -1805,7 +1818,7 @@ function cmpPlayer(d, id, role) {
   const p = allPlayers(role).get(id) || aggregate(d, { role, group: '', team: '', season: 'all' }).find((x) => x.id === id);
   if (!p) return null;
   const T = buildTalent(d), w = state.t, tal = T[role].filter((a) => a.id === id && a.perf != null).map((a) => ({ a, s: a.perf + w.wAge * (a.ageAdv || 0) + w.wLiga * (a.level || 0) })).sort((x, y) => y.s - x.s)[0];
-  const form = rows(d).filter((r) => r.playerId === id && r.role === role).map((r) => ({ r, g: d.games[r.gameId] })).filter((x) => x.g && inSeason(d, x.g, ''))
+  const form = rows(d).filter((r) => r.playerId === id && r.role === role && !r.skipF).map((r) => ({ r, g: d.games[r.gameId] })).filter((x) => x.g && inSeason(d, x.g, ''))
     .sort((a, b) => String(a.g.date).localeCompare(String(b.g.date))).slice(-10).map((x) => (role === 'F' ? x.r.goals : x.r.lite ? null : x.r.saves));
   return { p, tal, form };
 }
@@ -1849,7 +1862,7 @@ function renderPlayerCompare() {
     h += '<tr><td class="left">' + esc(label) + '</td>' + X.map((e, i) => '<td class="left cmpcell"><span class="v' + (best != null && vals[i] === best ? ' win' : '') + '">' + (html ? show(e) : esc(show(e))) + '</span></td>').join('') + '</tr>';
   }
   h += '<tr><td class="left">' + (F ? 'Tore' : 'Paraden') + ', letzte 10 Spiele</td>' + X.map((e) => '<td class="left cmpcell">' + spark(e.form) + '</td>').join('') + '</tr>';
-  h += '</tbody></table></div><p class="small muted" style="margin-top:10px">Ein Klick auf einen Namen öffnet das Profil. Der Talent-Score stammt aus der besten Liga des Spielers und berücksichtigt die Regler im Talent-Radar.' + (X.some((e) => (F ? e.p.qn : e.p.sn) < e.p.games) ? ' * Quote nur aus einem Teil der Spiele (Liveticker lite).' : '') + '</p>';
+  h += '</tbody></table></div><p class="small muted" style="margin-top:10px">Ein Klick auf einen Namen öffnet das Profil. Der Talent-Score stammt aus der besten Liga des Spielers und berücksichtigt die Regler der Talent-Bewertung im Reiter «Spieler».' + (X.some((e) => (F ? e.p.qn : e.p.sn) < e.p.games) ? ' * Quote nur aus einem Teil der Spiele (Liveticker lite).' : '') + '</p>';
   $('#drawer').innerHTML = h;
 }
 function renderCmpBar() {
@@ -1924,17 +1937,18 @@ async function loadFiles(files) {
 
 /* ---------- Steuerung ---------- */
 function setView(v) {
+  if (v === 'talent') { state.mode = 'talent'; lsSet('scouting.modus', 'talent'); v = 'spieler'; } // früherer Reiter «Talent-Radar»
   state.view = v;
-  $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTalent').hidden = v !== 'talent'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten';
-  for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['talent', 'tabTalent'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten']]) $('#' + id).setAttribute('aria-selected', v === k);
+  $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten';
+  for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten']]) $('#' + id).setAttribute('aria-selected', v === k);
   const at = $('.tab[aria-selected="true"]'), tb = $('.tabs'); // Handy: gewählten Reiter in die wischbare Leiste holen
   if (at && tb.scrollWidth > tb.clientWidth) tb.scrollLeft = at.offsetLeft - tb.offsetLeft - (tb.clientWidth - at.offsetWidth) / 2;
-  if (v === 'daten') renderData(); else if (v === 'merk') renderMerk(); else if (v === 'talent') { syncTalInputs(); renderTalent(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
+  if (v === 'daten') renderData(); else if (v === 'merk') renderMerk(); else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
 }
-function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'talent') renderTalent(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); }
+function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); }
 function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: '', team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); }
 function setRole(r) {
-  state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100;
+  state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100; state.t.sort = { key: 'score', dir: -1 }; state.t.limit = 100;
   $('#roleF').setAttribute('aria-pressed', r === 'F'); $('#roleG').setAttribute('aria-pressed', r === 'G'); renderTable();
 }
 function allPlayers(role) {
@@ -1973,7 +1987,7 @@ function merkSection(role, list) {
   }
   return h + '</tbody></table></div></div>';
 }
-/* ---------- Talent-Radar ---------- */
+/* ---------- Talent-Bewertung ---------- */
 const mean = (a) => a.reduce((s, x) => s + x, 0) / (a.length || 1);
 const sdev = (a) => { if (a.length < 2) return 0; const m = mean(a); return Math.sqrt(a.reduce((s, x) => s + (x - m) ** 2, 0) / (a.length - 1)); };
 const median = (a) => { if (!a.length) return 0; const s = a.slice().sort((x, y) => x - y), h = s.length >> 1; return s.length % 2 ? s[h] : (s[h - 1] + s[h]) / 2; };
@@ -1981,7 +1995,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
-state.t = { role: 'F', q: '', wTF: 0.3, liga: '', yearFrom: 0, yearTo: 0, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, up: false, split: false, pos: '', sort: { key: 'score', dir: -1 }, limit: 100 };
+state.t = { wTF: 0.3, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, split: false, sort: { key: 'score', dir: -1 }, limit: 100 };
 state.team = null; state.team2 = null;
 
 // Ligastufe für den ligaübergreifenden Vergleich: wie viel stärker eine Liga ungefähr ist (in Standardabweichungen)
@@ -2006,12 +2020,14 @@ function buildTalent(d, opt) {
   if (!opt && d._talent && d._talent.ver === (d._ver || 0)) { if (d._talent.wTF !== state.t.wTF) applyPerf(d._talent); return d._talent; }
   const idx = index(d), map = new Map();
   for (const r of rows(d)) {
-    const g = d.games[r.gameId]; if (!g || !inSeason(d, g, '')) continue; // Talent-Radar: nur die aktuelle Saison
+    if (r.skipF) continue; // Torhüter, als Feldspieler gemeldet, ohne Aktion
+    const g = d.games[r.gameId]; if (!g || !inSeason(d, g, '')) continue; // Talent-Bewertung: nur die aktuelle Saison
     if (opt) { const dd = String(g.date).slice(0, 10); if ((opt.before && dd >= opt.before) || (opt.until && dd > opt.until)) continue; }
     const liga = ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId });
     const k = r.role + '|' + liga + '|' + r.playerId;
     let a = map.get(k);
-    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, saves: 0, shotsGK: 0, tf: 0, upCat: 0, upNat: 0, upG: 0 }; map.set(k, a); }
+    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, saves: 0, shotsGK: 0, tf: 0, upCat: 0, upNat: 0, upG: 0, teams: new Set(), groups: new Set() }; map.set(k, a); }
+    a.teams.add(String(r.teamId)); a.groups.add(String(g.groupId)); // für die Filter «Team» und «Liga und Gruppe»
     const u = upOf(d, r); if (u) { a.upCat = Math.max(a.upCat, u.cat); a.upNat = u.nat; a.upG++; }
     if (r.role === 'F' || r.shotsGK > 0) a.games++;
     a.goals += r.goals || 0; a.shots += r.shots || 0; a.qg += r.qg; a.qs += r.qs; a.qn += r.qn; a.sv += r.sv; a.sg += r.sg; a.sn += r.sn; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0; a.tf += r.tf || 0;
@@ -2090,7 +2106,7 @@ function scoreTip(a) {
 }
 function talCols(role) {
   const common = [
-    { k: 'liga', label: 'Liga', left: true, title: 'Mit «Stufe» ist die geschätzte Stärke der Liga gemeint (siehe «So rechnet das Radar»)', v: (a) => a.liga, t: (a) => a.liga, sub: (a) => (state.t.wLiga ? 'Stufe ' + levelTxt(a.level || 0) : '') },
+    { k: 'liga', label: 'Liga', left: true, title: 'Mit «Stufe» ist die geschätzte Stärke der Liga gemeint (siehe «So rechnet die Talent-Bewertung»)', v: (a) => a.liga, t: (a) => a.liga, sub: (a) => (state.t.wLiga ? 'Stufe ' + levelTxt(a.level || 0) : '') },
     { k: 'year', label: 'Jahrgang', v: (a) => a.year || null, t: (a) => (a.year ? String(a.year) : '–') },
     { k: 'age', label: 'Alter', title: 'Jahre jünger (+) oder älter (−) als der mittlere Jahrgang der Liga, höchstens ±3', v: (a) => a.ageAdv, t: (a) => (a.ageAdv == null ? '–' : signed(a.ageAdv)), tip: (a) => (a.ageAdv == null ? '' : 'Jahrgang ' + a.year + ', mittlerer Jahrgang der Liga ' + yr(a.medYear) + ': ' + (a.ageAdv > 0 ? 'jünger' : a.ageAdv < 0 ? 'älter' : 'gleich alt') + ' (zählt höchstens ±3 Jahre)') },
     { k: 'games', label: 'Spiele', title: 'Spiele in dieser Liga', v: (a) => a.games, t: (a) => String(a.games) },
@@ -2113,7 +2129,7 @@ function talCols(role) {
   return [...common.slice(0, 2), ...dist, ...common.slice(2), ...mid, ...tail];
 }
 // Hinweis «+ U17 Elite» auf weitere Ligen des Spielers, mit deren Zahlen beim Darüberfahren
-// Kennzeichen hinter dem Namen im Talent-Radar: «Spielt hoch» und weitere Ligen, ohne Doppelungen.
+// Kennzeichen hinter dem Namen in der Talent-Bewertung: «Spielt hoch» und weitere Ligen, ohne Doppelungen.
 // Ist eine weitere Liga genau die, in der er hochspielt, wird beides zu einem gelben «↑ U17 Elite».
 const shortLiga = (l) => String(l).replace(/^(Junioren|Juniorinnen|Männer|Frauen)\s+/i, '');
 function ligaStats(o) {
@@ -2130,19 +2146,21 @@ function talBadges(a) {
   return h;
 }
 function talentList() {
-  const d = data(), T = buildTalent(d), t = state.t, role = t.role;
+  // Filter kommen aus der gemeinsamen Filterleiste der Spielerseite (state.f), Mindestwerte und Regler aus state.t
+  const d = data(), T = buildTalent(d), t = state.t, f = state.f, role = f.role;
   let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
-  if (t.liga) list = list.filter((a) => a.liga === t.liga);
-  if (t.pos) list = list.filter((a) => posMatch(a.position || '', t.pos));
-  const toks = norm(t.q).split(/\s+/).filter(Boolean);
+  if (f.group) list = list.filter((a) => a.groups.has(String(f.group)));
+  if (f.team) list = list.filter((a) => a.teams.has(String(f.team)));
+  if (f.pos) list = list.filter((a) => posMatch(a.position || '', f.pos));
+  const toks = norm(f.q).split(/\s+/).filter(Boolean);
   if (toks.length) list = list.filter((a) => { const hay = norm(a.name) + ' ' + norm(fullName(a.name)); return toks.every((x) => hay.includes(x)); });
-  if (t.yearFrom) list = list.filter((a) => a.year >= t.yearFrom);
-  if (t.yearTo) list = list.filter((a) => a.year && a.year <= t.yearTo);
+  if (f.yearFrom) list = list.filter((a) => a.year >= f.yearFrom);
+  if (f.yearTo) list = list.filter((a) => a.year && a.year <= f.yearTo);
   attachGeo(list);
   for (const a of list) { a.score = a.perf == null ? null : a.perf + t.wAge * (a.ageAdv || 0) + t.wLiga * (a.level || 0); a.others = []; a.upShow = a.up; }
   // Eine Zeile pro Spieler: die Liga mit dem besten Score (bei Gleichstand die mit mehr Spielen).
-  // Ausnahme: eine Liga ist gewählt oder «Jede Liga einzeln zeigen» ist an.
-  if (!t.liga && !t.split) {
+  // Ausnahme: eine Gruppe ist gewählt oder «Jede Liga einzeln zeigen» ist an.
+  if (!f.group && !t.split) {
     const val = (x) => (x.score == null ? -1e9 : x.score), best = new Map();
     for (const a of list) { const b = best.get(a.id); if (!b || val(a) - val(b) > 0 || (val(a) === val(b) && a.games > b.games)) best.set(a.id, a); }
     for (const a of list) {
@@ -2152,7 +2170,7 @@ function talentList() {
     }
     list = [...best.values()];
   }
-  if (t.up) list = list.filter((a) => a.upShow);
+  if (f.up) list = list.filter((a) => a.upShow);
   const total = list.length;
   list = list.filter(inArea);
   const cols = talCols(role), sk = t.sort, col = cols.find((c) => c.k === sk.key);
@@ -2168,19 +2186,10 @@ function talentList() {
   state.talList = list; state.talTotal = total; return list;
 }
 function renderTalent() {
-  const d = data(), has = rows(d).length > 0;
-  $('#talEmpty').hidden = has; $('#talMain').hidden = !has; if (!has) return;
-  const t = state.t, f = state.f, T = buildTalent(d);
-  const ligas = [...new Set(T[t.role].map((a) => a.liga))].sort((a, b) => a.localeCompare(b, 'de'));
-  if (t.liga && !ligas.includes(t.liga)) t.liga = '';
-  $('#talLiga').innerHTML = '<option value="">Alle Ligen</option>' + ligas.map((l) => '<option value="' + esc(l) + '">' + esc(l) + '</option>').join(''); $('#talLiga').value = t.liga;
-  fillPosSelect('#talPos', t);
-  $('#talRoleF').setAttribute('aria-pressed', t.role === 'F'); $('#talRoleG').setAttribute('aria-pressed', t.role === 'G');
-  $('#lblTalMS').textContent = t.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
-  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talUp').checked = !!t.up; $('#talSplit').checked = !!t.split; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = t.role === 'G';
-  const parts = []; if (f.center) parts.push('Umkreis ' + f.radius + ' km um ' + f.center.label); if (f.cantons.size) parts.push('Kantone ' + [...f.cantons].sort().join(', '));
-  $('#talArea').textContent = parts.length ? parts.join(', ') : 'Kein Gebietsfilter aktiv';
-  const list = talentList(), cols = talCols(t.role), shown = list.slice(0, t.limit), sk = t.sort;
+  const d = data(); if (!rows(d).length) return;
+  const t = state.t, f = state.f;
+  $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talSplit').checked = !!t.split; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = f.role === 'G';
+  const list = talentList(), cols = talCols(f.role), shown = list.slice(0, t.limit), sk = t.sort;
   const arrow = (k) => (sk.key === k ? (sk.dir < 0 ? ' ▼' : ' ▲') : '');
   let h = '<thead><tr><th class="left name"><button class="thbtn" data-tsort="name" style="text-align:left">Spieler' + arrow('name') + '</button></th>';
   for (const c of cols) h += '<th' + (c.left ? ' class="left"' : '') + (c.title ? ' title="' + esc(c.title) + '"' : '') + '><button class="thbtn" data-tsort="' + c.k + '"' + (c.left ? ' style="text-align:left"' : '') + '>' + esc(c.label) + arrow(c.k) + '</button></th>';
@@ -2197,14 +2206,38 @@ function renderTalent() {
     }
     h += '</tr>';
   }
-  if (!shown.length) h += '<tr><td class="left" colspan="' + (cols.length + 1) + '" style="padding:24px;white-space:normal">' + (t.q.trim() ? 'Kein Treffer für «' + esc(t.q.trim()) + '». Der Spieler kann durch die Mindestwerte, die Liga, den Jahrgang oder das Gebiet ausgeblendet sein.' : 'Keine Spieler gefunden. Senke die Mindestwerte oder wähle ein anderes Gebiet.') + '</td></tr>';
+  if (!shown.length) h += '<tr><td class="left" colspan="' + (cols.length + 1) + '" style="padding:24px;white-space:normal">' + (f.q.trim() ? 'Kein Treffer für «' + esc(f.q.trim()) + '». Der Spieler kann durch die Mindestwerte, die Liga, den Jahrgang oder das Gebiet ausgeblendet sein.' : 'Keine Spieler gefunden. Senke die Mindestwerte oder wähle ein anderes Gebiet.') + '</td></tr>';
   $('#talTbl').innerHTML = h + '</tbody>';
-  $('#talLite').hidden = !shown.some((a) => (t.role === 'F' ? a.qn : a.sn) < a.games);
+  $('#talLite').hidden = !shown.some((a) => (f.role === 'F' ? a.qn : a.sn) < a.games);
   const nopf = list.filter((a) => a.perf == null).length;
   $('#talCount').textContent = list.length + ' Spieler' + (list.length > shown.length ? ', die ersten ' + shown.length + ' angezeigt' : '') + (state.talTotal > list.length ? ' (' + (state.talTotal - list.length) + ' ausserhalb des Gebiets)' : '') + (nopf ? '. Bei ' + nopf + ' gibt es keinen Score, weil die Liga zu wenige Vergleichsspieler hat.' : '');
   $('#talMore').hidden = list.length <= shown.length;
 }
-function syncTalInputs() { const t = state.t; $('#talMS').value = t.role === 'F' ? t.minShots : t.minGK; $('#talW').value = t.wAge; $('#talL').value = t.wLiga; $('#talT').value = t.wTF; $('#talMG').value = t.minGames; }
+function syncTalInputs() { const t = state.t; $('#talW').value = t.wAge; $('#talL').value = t.wLiga; $('#talT').value = t.wTF; }
+
+/* ---------- Spielerseite: Ansicht «Zahlen» oder «Talent-Bewertung» ---------- */
+state.mode = lsGet('scouting.modus', 'zahlen') === 'talent' ? 'talent' : 'zahlen';
+const isTal = () => state.mode === 'talent';
+// Mindestwerte gehören zur Ansicht: Zahlen 1 Spiel / 0 Würfe, Talent-Bewertung 3 Spiele / 15 Würfe (Torhüter 30 Gegenwürfe)
+function minVals() {
+  const f = state.f, t = state.t, tal = isTal();
+  return { games: tal ? t.minGames : f.minGames, shots: tal ? (f.role === 'F' ? t.minShots : t.minGK) : f.minShots, defG: tal ? 3 : 1, defS: tal ? (f.role === 'F' ? 15 : 30) : 0 };
+}
+function syncModeUI() {
+  const tal = isTal(), m = minVals();
+  $('#numView').hidden = tal; $('#talView').hidden = !tal;
+  $('#modeNum').setAttribute('aria-pressed', !tal); $('#modeTal').setAttribute('aria-pressed', tal);
+  $('#modeHint').textContent = tal ? 'Jeder Spieler im Vergleich zu seiner Liga, aktuelle Saison. Höher ist besser.' : 'Gezählte Werte aus allen Spielen.';
+  if (tal) $('#seasonField').hidden = true; // die Bewertung gilt immer für die aktuelle Saison
+  if (document.activeElement !== $('#fGames')) $('#fGames').value = m.games;
+  if (document.activeElement !== $('#fShots')) $('#fShots').value = m.shots;
+  $('#lblShots').textContent = state.f.role === 'F' ? 'Mindestwürfe' : 'Mindest-Gegenwürfe';
+}
+function setMode(m) {
+  state.mode = m === 'talent' ? 'talent' : 'zahlen'; lsSet('scouting.modus', state.mode);
+  if (isTal()) state.f.season = ''; // frühere Saisons gibt es nur in der Zahlen-Ansicht
+  state.limit = 100; state.t.limit = 100; renderPlayers();
+}
 // Einordnung im Spielerprofil
 function ligaInsight(d, id, role) {
   const T = buildTalent(d), out = [];
@@ -2459,6 +2492,7 @@ function repCompute(d) {
   const z0 = () => ({ games: 0, goals: 0, shots: 0, qg: 0, qs: 0, sv: 0, sg: 0, saves: 0, shotsGK: 0 });
   const A = new Map(), perf = [];
   for (const row of rows(d)) {
+    if (row.skipF) continue; // Torhüter, als Feldspieler gemeldet, ohne Aktion
     const g = d.games[row.gameId]; if (!g || !inSeason(d, g, '')) continue; // Vergleich «davor» nur innerhalb der aktuellen Saison
     const dd = day(g), inP = dd >= start && dd <= end, bef = dd < start; if (!inP && !bef) continue;
     const liga = ligaOf(g); if (r.liga && liga !== r.liga) continue;
@@ -2477,11 +2511,11 @@ function repCompute(d) {
     else if (a.p.sg >= 20 && a.b.games >= 3 && a.b.sg >= 30) { a.qP = a.p.sv / a.p.sg; a.qB = a.b.sv / a.b.sg; a.z = (a.qP - a.qB) / L.sdS; gkf.push(a); }
   }
   attachGeo(hot); attachGeo(gkf);
-  const hotIn = hot.filter(inArea).sort((x, y) => y.z - x.z), gkIn = gkf.filter(inArea).sort((x, y) => y.z - x.z);
+  const hotIn = hot.slice().sort((x, y) => y.z - x.z), gkIn = gkf.slice().sort((x, y) => y.z - x.z);
   // Einzelleistungen
   for (const x of perf) { x.team = idx.teams[x.teamId] || ''; const home = String(x.teamId) === String(x.g.homeTeamId); x.opp = home ? x.g.awayName : x.g.homeName; x.own = home ? x.g.homeScore : x.g.awayScore; x.oth = home ? x.g.awayScore : x.g.homeScore; x.home = home; }
   attachGeo(perf);
-  const perfIn = perf.filter(inArea);
+  const perfIn = perf;
   const qOf = (x) => (x.row.qs ? x.row.qg / x.row.qs : 0);
   const bestF = perfIn.filter((x) => x.role === 'F' && (x.row.lite ? x.row.goals : x.row.qs) >= 5).sort((x, y) => y.row.goals - x.row.goals || qOf(y) - qOf(x));
   const bestG = perfIn.filter((x) => x.role === 'G' && x.row.sg >= 15).sort((x, y) => y.row.saves / y.row.shotsGK - x.row.saves / x.row.shotsGK || y.row.saves - x.row.saves);
@@ -2494,7 +2528,7 @@ function repCompute(d) {
     newcomers.push({ ...v.a, role: v.a.role, rank: v.rank, of: v.of, score: v.score, rankBefore: bv ? bv.rank : null, ofBefore: bv ? bv.of : null });
   }
   attachGeo(newcomers);
-  const newIn = newcomers.filter(inArea).sort((x, y) => x.rank - y.rank || y.score - x.score);
+  const newIn = newcomers.slice().sort((x, y) => x.rank - y.rank || y.score - x.score);
   // Merkliste
   const merk = [];
   for (const e of state.merk) {
@@ -2521,8 +2555,6 @@ function renderReport() {
   const R = repCompute(d); state.repData = R;
   if (r.liga && !R.ligas.includes(r.liga)) { r.liga = ''; return renderReport(); }
   $('#repLiga').innerHTML = '<option value="">Alle Ligen</option>' + R.ligas.map((l) => '<option value="' + esc(l) + '">' + esc(l) + '</option>').join(''); $('#repLiga').value = r.liga;
-  const f = state.f, parts = []; if (f.center) parts.push('Umkreis ' + f.radius + ' km um ' + f.center.label); if (f.cantons.size) parts.push('Kantone ' + [...f.cantons].sort().join(', '));
-  $('#repArea').textContent = parts.length ? parts.join(', ') : 'Kein Gebietsfilter aktiv';
   $('#repInfo').textContent = rg.label + ': ' + fmtDay(rg.start) + ' bis ' + fmtDay(rg.end) + '. Das letzte Spiel in den Daten war am ' + fmtDay(rg.last) + '. ' + R.games.length + (R.games.length === 1 ? ' Spiel' : ' Spiele') + ', ' + nf(R.players, 0) + ' Spieler im Einsatz, ' + nf(R.goals, 0) + ' Tore.';
   const star = (x) => { const on = state.merk.has(mk(x.id, x.role)); return '<button class="star" data-rstar="' + x.id + '" data-role="' + x.role + '" aria-pressed="' + on + '" aria-label="' + (on ? 'Von der Merkliste entfernen' : 'Auf die Merkliste setzen') + '">' + (on ? '★' : '☆') + '</button>'; };
   const pcell = (x) => { const s = splitName(x.name); return '<td class="name">' + star(x) + '<button class="namebtn" data-player="' + x.id + '" data-role="' + x.role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button><span class="team">' + esc(x.team || '') + (x.club && x.club.canton ? ' (' + esc(x.club.canton) + ')' : '') + (x.year ? ', Jg ' + x.year : '') + '</span></td>'; };
@@ -2556,7 +2588,7 @@ function renderReport() {
   h += '<div class="card repsec"><h3>Torhüter in Form</h3><p class="small muted">Paradenquote im Zeitraum gegenüber davor. Voraussetzung: 20 Gegenwürfe im Zeitraum und 3 Spiele davor.</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Sp') + th('Quote') + th('Plus/Minus') + th('Paraden'), lim(R.gk).map(gkRow).join(''), 'Keine Torhüter mit genug Daten.', 6) + more(R.gk) + '</div>';
   h += '<div class="card repsec"><h3>Beste Einzelleistungen</h3><p class="small muted">Die meisten Tore in einem Spiel (mindestens 5 Würfe, bei Liveticker lite 5 Tore). Ein Klick auf die Zeile öffnet das Spiel.</p>' + wrap(th('Spieler', true) + th('Liga', true) + th('Spiel', true) + th('Tore/Würfe') + th('Quote'), lim(R.bestF).map(bestRow).join(''), 'Keine Spiele mit Statistik im Zeitraum.', 5) + more(R.bestF) +
     '<h3 style="margin-top:16px">Beste Torhüter-Leistungen</h3><p class="small muted">Höchste Paradenquote in einem Spiel (mindestens 15 Gegenwürfe).</p>' + wrap(th('Torhüter', true) + th('Liga', true) + th('Spiel', true) + th('Paraden') + th('Quote'), lim(R.bestG).map(bestGRow).join(''), 'Keine Torhüter mit genug Gegenwürfen.', 5) + more(R.bestG) + '</div>';
-  h += '<div class="card repsec"><h3>Neu im Talent-Radar</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score aus dem Reiter «Talent-Radar» (Gewicht Alter ' + nf(state.t.wAge, 1) + ', Gewicht Fehler ' + nf(state.t.wTF, 1) + ').</p>' +
+  h += '<div class="card repsec"><h3>Neu in der Spitze (Talent-Bewertung)</h3><p class="small muted">Spieler, die durch die Spiele des Zeitraums in die Spitze ihrer Liga gerückt sind (die besten 10 % je Liga, mindestens 3 und höchstens 10 Plätze), mit dem Score der Talent-Bewertung im Reiter «Spieler» (Gewicht Alter ' + nf(state.t.wAge, 1) + ', Gewicht Fehler ' + nf(state.t.wTF, 1) + ').</p>' +
     wrap(th('Spieler', true) + th('Liga', true) + th('Rang jetzt') + th('Rang davor') + th('Score'), lim(R.newcomers).map(newRow).join(''), 'Niemand ist neu in die Spitze gerückt.', 5) + more(R.newcomers) + '</div>';
   h += '<div class="card repsec"><h3>Deine Merkliste im Zeitraum</h3>' + (R.merk.length ? '<p class="small muted">Wie deine gemerkten Spieler zuletzt gespielt haben, mit dem Vergleich zu ihrem Schnitt davor.</p>' + wrap(th('Spieler', true) + th('Sp') + th('Zahlen', true) + th('Trend', true), R.merk.map(merkRow).join(''), '', 4) : '<p class="small muted" style="margin:0">Noch niemand auf der Merkliste. Merke Spieler mit dem Stern, dann siehst du hier, wie sie gespielt haben.</p>') + '</div>';
   h += '<div class="card repsec"><h3>Spiele mit den höchsten Resultaten</h3><p class="small muted">Die deutlichsten Resultate des Zeitraums.</p><div class="tablewrap"><table><thead><tr>' + th('Datum', true).replace('left name', 'left') + th('Liga', true).replace('left name', 'left') + th('Heim', true).replace('left name', 'left') + th('Resultat') + th('Gast', true).replace('left name', 'left') + '</tr></thead><tbody>' + (lim(R.top).map(topRow).join('') || '<tr><td class="left" colspan="5" style="padding:18px">Keine Spiele im Zeitraum.</td></tr>') + '</tbody></table></div>' + more(R.top) + '</div>';
@@ -2570,7 +2602,7 @@ function repText() {
   sec('In Hochform', R.hot.filter((a) => a.z > 0).slice(0, k), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): ' + nf(a.gP, 1) + ' Tore/Sp, davor ' + nf(a.gB, 1));
   sec('Beste Einzelleistungen', R.bestF.slice(0, k), (x) => nm(x) + ' (' + x.team + '): ' + x.row.goals + '/' + x.row.shots + ' Tore gegen ' + x.opp + ' (' + x.own + ':' + x.oth + ')');
   sec('Torhüter in Form', R.gk.slice(0, k), (a) => nm(a) + ' (' + a.team + '): ' + Math.round(a.qP * 100) + ' % Paraden, davor ' + Math.round(a.qB * 100) + ' %');
-  sec('Neu im Talent-Radar', R.newcomers.slice(0, k), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): Rang ' + a.rank + ' von ' + a.of + (a.rankBefore ? ', davor ' + a.rankBefore : ', neu'));
+  sec('Neu in der Spitze (Talent-Bewertung)', R.newcomers.slice(0, k), (a) => nm(a) + ' (' + a.team + ', ' + a.liga + '): Rang ' + a.rank + ' von ' + a.of + (a.rankBefore ? ', davor ' + a.rankBefore : ', neu'));
   sec('Merkliste', R.merk.filter((x) => x.p.games), (x) => nm(x) + ' (' + x.team + '): ' + (x.role === 'F' ? x.p.goals + '/' + x.p.shots + ' Tore/Würfe in ' + x.p.games + ' Spielen' : x.p.saves + '/' + x.p.shotsGK + ' Paraden in ' + x.p.games + ' Spielen'));
   return L.join('\n').trim();
 }
@@ -3182,7 +3214,7 @@ function toggleMerk(id, role) {
   if (state.merk.has(k)) state.merk.delete(k); else state.merk.add(k);
   lsSet('scouting.merkliste', [...state.merk]);
   $('#merkCount').textContent = state.merk.size || '';
-  if (state.view === 'merk') renderMerk(); else if (state.view === 'talent') renderTalent(); else if (state.view === 'report') renderReport(); else if (state.view === 'spieler') renderTable();
+  if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'spieler') renderTable();
   renderDrawer();
 }
 let noteTimer;
@@ -3291,14 +3323,12 @@ akteEl.addEventListener('change', (e) => {
   else if (e.target.id === 'akf-talent_card') { o.form.talent_card = e.target.value; akDirty(); }
 });
 state.api = { exportData: zsExportData, buildXlsx, SB, startPoll: zsStartPoll, stopPoll: zsStopPoll, load: zsLoad };
-$('#tabTalent').onclick = () => setView('talent');
 $('#tabReport').onclick = () => setView('report');
 $('#repPer').onchange = (e) => { state.rep.per = e.target.value; renderReport(); };
 $('#repFrom').onchange = (e) => { state.rep.from = e.target.value; renderReport(); };
 $('#repTo').onchange = (e) => { state.rep.to = e.target.value; renderReport(); };
 $('#repLiga').onchange = (e) => { state.rep.liga = e.target.value; renderReport(); };
 $('#repN').onchange = (e) => { state.rep.n = Number(e.target.value) || 0; lsSet('scouting.repN', state.rep.n); renderReport(); };
-$('#repAreaBtn').onclick = () => setView('spieler');
 $('#repCopy').onclick = async () => { const ok = await kopieren(repText()); flash($('#repMsg'), ok ? 'Kopiert, jetzt in eine Nachricht einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err'); };
 $('#repBody').addEventListener('click', (e) => {
   const st = e.target.closest('[data-rstar]'); if (st) return toggleMerk(Number(st.dataset.rstar), st.dataset.role);
@@ -3308,21 +3338,10 @@ $('#repBody').addEventListener('click', (e) => {
 });
 $('#repBody').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches && e.target.matches('tr[data-tgame]')) openGameDirect(Number(e.target.dataset.tgame)); });
 $('#tabTeams').onclick = () => setView('teams');
-$('#talRoleF').onclick = () => { state.t.role = 'F'; state.t.sort = { key: 'score', dir: -1 }; state.t.limit = 100; syncTalInputs(); renderTalent(); };
-$('#talRoleG').onclick = () => { state.t.role = 'G'; state.t.sort = { key: 'score', dir: -1 }; state.t.limit = 100; syncTalInputs(); renderTalent(); };
-$('#talQ').oninput = (e) => { state.t.q = e.target.value; state.t.limit = 100; renderTalent(); };
-$('#talLiga').onchange = (e) => { state.t.liga = e.target.value; state.t.limit = 100; renderTalent(); };
-$('#talYF').oninput = (e) => { state.t.yearFrom = parseInt(e.target.value, 10) || 0; state.t.limit = 100; renderTalent(); };
-$('#talYT').oninput = (e) => { state.t.yearTo = parseInt(e.target.value, 10) || 0; state.t.limit = 100; renderTalent(); };
-$('#talMG').oninput = (e) => { state.t.minGames = Math.max(1, parseInt(e.target.value, 10) || 1); state.t.limit = 100; renderTalent(); };
-$('#talMS').oninput = (e) => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (state.t.role === 'F') state.t.minShots = v; else state.t.minGK = v; state.t.limit = 100; renderTalent(); };
 $('#talW').oninput = (e) => { state.t.wAge = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talL').oninput = (e) => { state.t.wLiga = parseFloat(e.target.value) || 0; renderTalent(); };
-$('#talUp').onchange = (e) => { state.t.up = e.target.checked; state.t.limit = 100; renderTalent(); };
-$('#talPos').onchange = (e) => { state.t.pos = e.target.value; state.t.limit = 100; renderTalent(); };
 $('#talSplit').onchange = (e) => { state.t.split = e.target.checked; state.t.limit = 100; renderTalent(); };
 $('#talT').oninput = (e) => { state.t.wTF = parseFloat(e.target.value) || 0; renderTalent(); };
-$('#talAreaBtn').onclick = () => setView('spieler');
 $('#talMore').onclick = () => { state.t.limit += 100; renderTalent(); };
 $('#talTbl').addEventListener('click', (e) => {
   const sb = e.target.closest('[data-tsort]');
@@ -3331,7 +3350,7 @@ $('#talTbl').addEventListener('click', (e) => {
   const tr = e.target.closest('tr[data-id]'); if (tr) openDetail(Number(tr.dataset.id), tr.dataset.role);
 });
 $('#talCopy').onclick = async () => {
-  const cols = talCols(state.t.role), lines = [['Name', 'Team', 'Kanton', 'Position', ...cols.map((c) => c.label)].join('\t')];
+  const cols = talCols(state.f.role), lines = [['Name', 'Team', 'Kanton', 'Position', ...cols.map((c) => c.label)].join('\t')];
   for (const a of state.talList || []) lines.push([fullName(a.name), a.team, a.club ? a.club.canton : '', a.position, ...cols.map((c) => c.t(a))].join('\t'));
   const ok = await kopieren(lines.join('\n')); flash($('#talMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
@@ -3380,8 +3399,11 @@ $('#fUp').onchange = (e) => { state.f.up = e.target.checked; state.limit = 100; 
 $('#fGroup').onchange = (e) => { state.f.group = e.target.value; state.limit = 100; fillSelects(); renderTable(); };
 $('#fTeam').onchange = (e) => { state.f.team = e.target.value; state.limit = 100; renderTable(); };
 $('#fName').oninput = (e) => { state.f.q = e.target.value; state.limit = 100; renderTable(); };
-$('#fGames').oninput = (e) => { state.f.minGames = Math.max(0, parseInt(e.target.value, 10) || 0); state.limit = 100; renderTable(); };
-$('#fShots').oninput = (e) => { state.f.minShots = Math.max(0, parseInt(e.target.value, 10) || 0); state.limit = 100; renderTable(); };
+// Mindestwerte schreiben in die gerade aktive Ansicht (Zahlen oder Talent-Bewertung)
+$('#fGames').oninput = (e) => { const v = parseInt(e.target.value, 10) || 0; if (isTal()) state.t.minGames = Math.max(1, v); else state.f.minGames = Math.max(0, v); state.limit = 100; state.t.limit = 100; renderTable(); };
+$('#fShots').oninput = (e) => { const v = Math.max(0, parseInt(e.target.value, 10) || 0); if (isTal()) { if (state.f.role === 'F') state.t.minShots = v; else state.t.minGK = v; } else state.f.minShots = v; state.limit = 100; state.t.limit = 100; renderTable(); };
+$('#modeNum').onclick = () => setMode('zahlen');
+$('#modeTal').onclick = () => setMode('talent');
 $('#fYearFrom').oninput = (e) => { state.f.yearFrom = parseInt(e.target.value, 10) || 0; state.limit = 100; renderTable(); };
 $('#fYearTo').oninput = (e) => { state.f.yearTo = parseInt(e.target.value, 10) || 0; state.limit = 100; renderTable(); };
 $('#fPos').onchange = (e) => { state.f.pos = e.target.value; state.limit = 100; renderTable(); };
