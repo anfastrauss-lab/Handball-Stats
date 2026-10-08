@@ -3215,7 +3215,25 @@ function wsCaptureHTML(d) {
   const A = sum(g.homeTeamId), B = sum(g.awayTeamId);
   h += '<div class="card"><h3>Würfe in diesem Spiel</h3><p class="small muted" style="margin:0 0 8px">' + esc(g.homeName) + ': ' + A.n + ' Würfe, ' + A.tor + ' Tore · ' + esc(g.awayName) + ': ' + B.n + ' Würfe, ' + B.tor + ' Tore' + (inGame.length ? ' · Der neuste Wurf steht oben, ✕ löscht ihn.' : '') + '</p>' +
     (inGame.length ? '<div style="overflow-x:auto"><table class="dtable"><tbody>' + inGame.slice(0, 40).map((s) => '<tr><td class="left">' + esc(s.angriff_team) + '</td><td class="left">' + (s.nr ? s.nr + ' · ' : '') + esc(s.spieler ? fullName(s.spieler) : 'unbekannt') + '</td><td class="left">' + esc(WS_ZONES[s.zone] || '') + (s.situation === 'gegenstoss' ? ' (Gegenstoss)' : '') + '</td><td class="left">' + esc(wsZoneTxt(s.tor_zone) || '–') + '</td><td class="left"><span class="lg ' + wsDotCls(s) + '"></span> ' + esc(wsResTxt(s.ergebnis)) + '</td><td><button class="linkbtn" data-wsdel="' + s.id + '" aria-label="Wurf löschen">✕</button></td></tr>').join('') + '</tbody></table></div>' : '<p class="small muted" style="margin:0">Noch keine Würfe erfasst.</p>') + '</div>';
+  h += wsTeamStats(d, g, inGame);
   return h;
+}
+// Torschützen beider Teams (aktuelle Saison), dazu was in diesem Spiel erfasst wurde
+function wsTeamStats(d, g, inGame) {
+  const one = (tid, name) => {
+    const ros = new Map(wsRoster(d, tid, '').map((p) => [p.id, p]));
+    const F = aggregate(d, { role: 'F', group: [], team: String(tid) }).sort((a, b) => b.goals - a.goals || b.games - a.games);
+    const G = aggregate(d, { role: 'G', group: [], team: String(tid) }).filter((p) => p.shotsGK > 0).sort((a, b) => b.shotsGK - a.shotsGK);
+    const today = (pid, key) => { const L = inGame.filter((s) => String(s[key]) === String(pid)); return L; };
+    const rowsF = F.map((p) => {
+      const L = today(p.id, 'player_id'), t = L.filter((s) => s.ergebnis === 'tor').length, nr = (ros.get(p.id) || {}).nr;
+      return '<tr><td>' + (nr || '') + '</td><td class="left"><button class="linkbtn" data-wsplayer="' + p.id + '" data-role="F">' + esc(fullName(p.name)) + '</button><span class="team" style="margin-left:0">' + esc(p.position || '') + '</span></td><td>' + p.games + '</td><td><b>' + p.goals + '</b></td><td>' + nf(p.games ? p.goals / p.games : 0, 1) + '</td><td>' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + '</td><td>' + pctTxt(rate(p.qg, p.qs)) + '</td><td>' + (L.length ? t + '/' + L.length : '') + '</td></tr>';
+    }).join('');
+    const gk = G.map((p) => { const L = today(p.id, 'tw_id'), sm = wsSum(L); return '<button class="linkbtn" data-wsplayer="' + p.id + '" data-role="G">' + esc(fullName(p.name)) + '</button> ' + pctTxt(rate(p.sv, p.sg)) + (sm.quote != null ? ' (heute ' + sm.quote + ' %)' : ''); }).join(' · ');
+    return '<div><h3 style="margin-bottom:4px">' + esc(name) + '</h3>' + (F.length ? '<div style="overflow-x:auto"><table class="dtable"><thead><tr><th>Nr</th><th class="left">Spieler</th><th title="Spiele">Sp</th><th>Tore</th><th title="Tore pro Spiel">T/Sp</th><th title="7-Meter Tore/Versuche">7m</th><th title="Wurfquote">Quote</th><th title="In diesem Spiel erfasst: Tore/Würfe">Heute</th></tr></thead><tbody>' + rowsF + '</tbody></table></div>' : '<p class="small muted">Für dieses Team sind in dieser Saison noch keine Statistiken vorhanden.</p>') +
+      (gk ? '<p class="small" style="margin:8px 0 0"><b>Torhüter</b> (Paradenquote): ' + gk + '</p>' : '') + '</div>';
+  };
+  return '<div class="card"><h3>Torschützen dieser Saison</h3><p class="small muted" style="margin:0 0 8px">Sortiert nach Toren. «Heute» zeigt die in diesem Spiel erfassten Tore/Würfe.</p><div class="wsana">' + one(g.homeTeamId, g.homeName) + one(g.awayTeamId, g.awayName) + '</div></div>';
 }
 // Speichern beim Tippen auf ein Ergebnis
 async function wsSave(res) {
@@ -3304,6 +3322,7 @@ $('#wsBody').addEventListener('click', (e) => {
   if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; return renderWurf(); }
   if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; return renderWurf(); }
   if (b.id === 'wsPrepPdf') return wsPrepOpen();
+  if (b.dataset.wsplayer) return openDetail(Number(b.dataset.wsplayer), b.dataset.role);
 });
 $('#wsBody').addEventListener('input', (e) => {
   if (e.target.id !== 'wsQ') return;
