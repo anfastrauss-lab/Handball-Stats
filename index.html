@@ -3048,7 +3048,7 @@ const wsZoneTxt = (z) => (z ? (z[0] === 'm' && z[1] === 'm' ? 'Mitte' : WS_ROW[z
 const wsResTxt = (r) => (WS_RES.find((x) => x[0] === r) || [r, r])[1];
 const WS_LOCAL = 'scouting.wuerfe';
 function wsBlank(sit) { return { pid: null, nr: null, name: '', unknown: false, x: null, y: null, gx: null, gy: null, sit: sit || 'position', art: '' }; }
-state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', tws: { home: '', away: '' }, pick: false, store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: lsGet('scouting.wspersp', 'werfer'), ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
+state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', tws: { home: '', away: '' }, pick: false, store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: lsGet('scouting.wspersp', 'werfer'), ana: { kind: 'werfer', team: '', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
 const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL/i.test(ligaKey(d.groups[gid] || { name: '' }));
 
 // ---- Speicher: Zentralspeicher (Tabelle «wuerfe») oder dieser Browser ----
@@ -3330,27 +3330,34 @@ function wsQuoteTable(L, kind) {
 }
 function wsAnalysisHTML(d) {
   const ws = state.ws, a = ws.ana, S = ws.shots;
-  const groups = { werfer: new Map(), tw: new Map(), team: new Map() };
-  for (const s of S) {
-    if (s.player_id) { const k = String(s.player_id), o = groups.werfer.get(k) || { id: k, label: fullName(s.spieler) + ' (' + s.angriff_team + ')', n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.werfer.set(k, o); }
-    if (s.tw_id) { const k = String(s.tw_id), o = groups.tw.get(k) || { id: k, label: fullName(s.tw_name) + ' (' + s.tw_team + ')', n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.tw.set(k, o); }
-    if (s.angriff_team_id) { const k = String(s.angriff_team_id), o = groups.team.get(k) || { id: k, label: s.angriff_team + (s.liga ? ' (' + s.liga + ')' : ''), n: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor = (o.tor || 0) + 1; groups.team.set(k, o); }
-  }
-  const list = [...groups[a.kind].values()].sort((x, y) => y.n - x.n || x.label.localeCompare(y.label, 'de'));
-  if (!list.some((x) => x.id === a.id)) a.id = list[0] ? list[0].id : '';
-  let h = '<div class="card"><div class="row" style="align-items:end"><div class="field"><span class="lbl">Auswerten</span><div class="seg seg3"><button data-wskind="werfer" aria-pressed="' + (a.kind === 'werfer') + '">Werfer</button><button data-wskind="tw" aria-pressed="' + (a.kind === 'tw') + '">Torhüter</button><button data-wskind="team" aria-pressed="' + (a.kind === 'team') + '">Team</button></div></div>' +
-    '<div class="field" style="flex:1 1 260px"><label for="wsAnaId">' + (a.kind === 'werfer' ? 'Werfer' : a.kind === 'tw' ? 'Torhüter' : 'Team (Würfe dieses Teams)') + '</label><select id="wsAnaId">' + (list.length ? list.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === a.id ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe' + (a.kind === 'tw' ? '' : ', Quote ' + Math.round(((x.tor || 0) / x.n) * 100) + ' %') + '</option>').join('') : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
+  if (a.kind === 'team') { a.kind = 'werfer'; a.id = ''; } // frühere Auswahl «Team»
+  const tw = a.kind === 'tw', pkey = tw ? 'tw_id' : 'player_id';
+  // zuerst das Team (Werfer: Team des Werfers, Torhüter: Team des Torhüters), dann die Person
+  const teamKey = (s) => (tw ? s.tw_team + '|' + (s.liga || '') : String(s.angriff_team_id || ''));
+  const teamLabel = (s) => (tw ? s.tw_team : s.angriff_team) + (s.liga ? ' (' + s.liga + ')' : '');
+  const add = (m, k, label, s) => { const o = m.get(k) || { id: k, label, n: 0, tor: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor++; m.set(k, o); };
+  const teams = new Map(); for (const s of S) if (teamKey(s) && teamKey(s) !== '|') add(teams, teamKey(s), teamLabel(s), s);
+  const tList = [...teams.values()].sort((x, y) => x.label.localeCompare(y.label, 'de'));
+  if (!teams.has(a.team)) a.team = tList.length ? [...teams.values()].sort((x, y) => y.n - x.n)[0].id : '';
+  const inTeam = S.filter((s) => teamKey(s) === a.team), people = new Map();
+  for (const s of inTeam) if (s[pkey]) add(people, String(s[pkey]), (s[tw ? 'tw_name' : 'spieler'] ? fullName(s[tw ? 'tw_name' : 'spieler']) : '') + (!tw && s.nr ? ' (' + s.nr + ')' : ''), s);
+  const pList = [...people.values()].sort((x, y) => y.n - x.n || x.label.localeCompare(y.label, 'de'));
+  if (a.id && !people.has(a.id)) a.id = '';
+  const q = (x) => (tw ? '' : ', Quote ' + Math.round((x.tor / x.n) * 100) + ' %'), sel = (L, cur) => L.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === cur ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe' + q(x) + '</option>').join('');
+  let h = '<div class="card"><div class="row" style="align-items:end"><div class="field"><span class="lbl">Auswerten</span><div class="seg"><button data-wskind="werfer" aria-pressed="' + !tw + '">Werfer</button><button data-wskind="tw" aria-pressed="' + tw + '">Torhüter</button></div></div>' +
+    '<div class="field" style="flex:1 1 220px"><label for="wsAnaTeam">1. Team</label><select id="wsAnaTeam">' + (tList.length ? sel(tList, a.team) : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
+    '<div class="field" style="flex:1 1 220px"><label for="wsAnaId">2. ' + (tw ? 'Torhüter' : 'Werfer') + '</label><select id="wsAnaId"><option value="">' + (tw ? 'alle Torhüter des Teams' : 'ganzes Team') + '</option>' + sel(pList, a.id) + '</select></div>' +
     '<div class="field"><label for="wsAnaSit">Situation</label><select id="wsAnaSit"><option value="">alle</option>' + WS_SIT.map(([k, l]) => '<option value="' + k + '"' + (a.sit === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
     '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button></div></div></div></div>';
-  if (!a.id) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
-  const key = a.kind === 'werfer' ? 'player_id' : a.kind === 'tw' ? 'tw_id' : 'angriff_team_id';
-  const mine = S.filter((s) => String(s[key]) === a.id && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), tw = a.kind === 'tw', mir = ws.persp === 'tw';
+  if (!a.team) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
+  const mine = inTeam.filter((s) => (!a.id || String(s[pkey]) === a.id) && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), mir = ws.persp === 'tw';
+  const tableKind = tw ? 'tw' : a.id ? 'werfer' : 'team';
   const front = mine.filter((s) => !wsWing(s)), wing = mine.filter(wsWing);
   const tend = wsTendencies(mine, tw, mir);
   h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore' + (tw ? ', ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') : ' (Wurfquote <b>' + (sm.n ? Math.round((sm.tor / sm.n) * 100) : 0) + ' %</b>)') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + WS_LEGEND + '</div>' : '') +
     (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + '</p>' + goalSVG(wing, { wing: wsWingSide(wing), tw }) + WS_LEGEND + '</div>' : '') +
     '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe und Wurfquote pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
-    wsQuoteTable(mine, a.kind) +
+    wsQuoteTable(mine, tableKind) +
     '<div class="card"><h3>Tendenzen</h3>' + (tend.length ? '<ul class="insights">' + tend.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted" style="margin:0">Für Tendenzen braucht es mindestens 5 erfasste Würfe.</p>') + '</div>';
   return h;
 }
@@ -3400,7 +3407,7 @@ $('#wsBody').addEventListener('click', (e) => {
   if (b.dataset.wsart) { ws.cur.art = ws.cur.art === b.dataset.wsart ? '' : b.dataset.wsart; return renderWurf(); }
   if (b.dataset.wsres) return wsSave(b.dataset.wsres);
   if (b.dataset.wsdel) { if (window.confirm('Diesen Wurf löschen?')) wsDel(Number(b.dataset.wsdel)).then(renderWurf).catch((x) => { ws.msg = 'Löschen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
-  if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; return renderWurf(); }
+  if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; ws.ana.team = ''; return renderWurf(); }
   if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; lsSet('scouting.wspersp', ws.persp); return renderWurf(); }
   if (b.id === 'wsPrepPdf') return wsPrepOpen();
   if (b.dataset.wsplayer) return openDetail(Number(b.dataset.wsplayer), b.dataset.role);
@@ -3414,6 +3421,7 @@ $('#wsBody').addEventListener('change', (e) => {
   if (t.id === 'wsGame') { ws.game = t.value; ws.atk = 'home'; ws.tws = { home: '', away: '' }; ws.cur = wsBlank(); ws.pick = false; ws.scrollCap = true; }
   else if (t.id === 'wsAll') { ws.allLeagues = t.checked; }
   else if (t.id === 'wsTw') ws.tws[ws.atk] = t.value;
+  else if (t.id === 'wsAnaTeam') { ws.ana.team = t.value; ws.ana.id = ''; }
   else if (t.id === 'wsAnaId') ws.ana.id = t.value;
   else if (t.id === 'wsAnaSit') ws.ana.sit = t.value;
   else if (t.id === 'wsPrep') { ws.prep = t.value; lsSet('scouting.wsprep', ws.prep); }
