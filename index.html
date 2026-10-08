@@ -51,7 +51,7 @@ button, input, select, textarea { font: inherit; color: inherit; }
 .tab[aria-selected="true"] { background: var(--ink); color: var(--bg); }
 .banner { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; padding: 10px 20px; background: var(--signal); color: #1a1405; font-weight: 600; }
 .banner .btn { border-color: #1a1405; background: transparent; color: #1a1405; }
-main { padding: 20px; max-width: 1400px; margin: 0 auto; }
+main { padding: 20px; max-width: 1600px; margin: 0 auto; }
 h2 { font: 700 26px/1.1 var(--font-head); margin: 0 0 12px; }
 h3 { font: 700 20px/1.1 var(--font-head); margin: 0 0 8px; }
 p { margin: 0 0 10px; }
@@ -164,6 +164,36 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
 .zsadd { margin-bottom: 14px; border-color: var(--court); }
+/* Talent-Tabelle kompakt: weniger Innenabstand, Ligaschnitt und Stufe klein unter dem Wert */
+#talTbl td { padding: 7px 8px; }
+#talTbl th .thbtn { padding: 9px 8px; }
+#talTbl td small { display: block; margin-left: 0; font-size: 11.5px; line-height: 1.2; }
+#talTbl td.name { min-width: 180px; white-space: normal; }
+#talTbl td.name .namebtn { white-space: nowrap; }
+/* Schnellsuche in der Kopfzeile */
+.qs { position: relative; flex: 0 1 260px; min-width: 180px; }
+.qs input { width: 100%; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
+.qsres { position: absolute; top: calc(100% + 4px); left: 0; width: max(100%, 340px); max-width: calc(100vw - 28px); z-index: 50; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; box-shadow: 0 10px 30px rgba(0, 0, 0, .25); padding: 4px; max-height: 70vh; overflow: auto; }
+.qsres button { display: block; width: 100%; text-align: left; border: 0; background: none; padding: 7px 10px; border-radius: 6px; cursor: pointer; }
+.qsres button:hover, .qsres button.act { background: var(--surface-2); }
+.qsres small { display: block; color: var(--ink-2); font-size: 12.5px; }
+.qsres .none { padding: 8px 10px; color: var(--ink-2); font-size: 14px; }
+@media (max-width: 860px) { .qs { order: 1; flex: 1 1 100%; } .tabs { order: 2; } }
+/* «Neu seit deinem letzten Besuch» */
+.newbox { margin-bottom: 16px; border-left: 4px solid var(--signal); }
+.newbox ul { margin: 6px 0 0; padding-left: 20px; } .newbox li { margin: 3px 0; }
+.newbox h3 { margin-bottom: 2px; }
+/* Gemeinsame Merkliste */
+.smrow { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin: 10px 0 0; font-size: 14px; }
+.smrow select { width: auto; min-height: 34px; }
+.rating { display: inline-flex; gap: 1px; } .rating button { border: 0; background: none; font-size: 20px; line-height: 1; padding: 0 1px; cursor: pointer; color: var(--line); } .rating button.on { color: var(--signal); }
+.smpanel { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.smmembers { display: flex; flex-wrap: wrap; gap: 6px 18px; }
+.smempf { margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--line); }
+.smempf ul { margin: 6px 0 0; padding-left: 20px; } .smempf li { margin: 6px 0; } .smempf .btn { padding: 4px 10px; margin-top: 4px; font-size: 13.5px; }
+.smsend { margin-top: 10px; padding: 12px 14px; }
+.stbadge { display: inline-block; padding: 0 7px; border-radius: 999px; font-size: 12px; font-weight: 700; background: var(--surface-2); border: 1px solid var(--line); white-space: nowrap; }
+.stbadge.s-live { background: var(--bar); } .stbadge.s-kontakt, .stbadge.s-probe { background: var(--court); color: #fff; border-color: var(--court); } .stbadge.s-nein { opacity: .6; }
 .modebar { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin: 0 0 14px; }
 .modeseg { min-width: min(340px, 100%); }
 .modeseg button { padding: 10px 14px; font-size: 15px; }
@@ -337,6 +367,11 @@ table.plain td { text-align: left; padding: 8px 10px; }
 <header class="topbar">
   <span class="brand">Handball Scouting</span>
   <span class="status" id="status"></span>
+  <div class="qs" role="search">
+    <label for="qsIn" class="vh">Spieler suchen</label>
+    <input type="search" id="qsIn" placeholder="Spieler suchen …" autocomplete="off" aria-controls="qsRes" aria-expanded="false">
+    <div class="qsres" id="qsRes" role="listbox" hidden></div>
+  </div>
   <button class="themebtn" id="themeBtn"></button>
   <nav class="tabs" role="tablist" aria-label="Ansicht">
     <button class="tab" role="tab" id="tabSpieler" aria-selected="true" aria-controls="viewSpieler">Spieler</button>
@@ -353,6 +388,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
 </div>
 
 <main>
+<div class="card newbox" id="newBox" hidden></div>
 <section id="viewSpieler" role="tabpanel" aria-labelledby="tabSpieler">
   <div class="card empty welcome" id="emptyState" hidden>
     <div id="esLoading" hidden><p class="muted">Daten werden geladen …</p></div>
@@ -473,13 +509,14 @@ table.plain td { text-align: left; padding: 8px 10px; }
           <span class="small muted" id="talCount" aria-live="polite"></span>
           <div class="row"><span class="msg" id="talMsg" aria-live="polite"></span><button class="btn secondary" id="talCopy">Tabelle kopieren</button></div>
         </div>
+        <p class="small muted" id="talSortHint" style="margin:0 0 8px"></p>
         <div class="tablewrap"><table id="talTbl"></table></div>
         <p class="small muted litenote" id="talLite" hidden><b>*</b> Diese Quote stammt nur aus einem Teil der Spiele. Einige Vereine nutzen den <b>Liveticker lite</b>, der nur Tore erfasst, keine Würfe und Paraden. Solche Spiele zählen hier für Tore pro Spiel, aber nicht für Quoten.</p>
         <div class="more"><button class="btn secondary" id="talMore" hidden>Mehr anzeigen</button></div>
         <details class="hint">
           <summary>So rechnet die Talent-Bewertung</summary>
       <ul class="small muted">
-        <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Verglichen werden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe).</li>
+        <li><b>Vergleich in der Liga:</b> Als Liga gelten alle Gruppen derselben Stufe, zum Beispiel «U17 Elite». Den Ligaschnitt bilden Spieler mit mindestens 3 Spielen und 15 Würfen (Torhüter: 30 Gegenwürfe). Angezeigt werden standardmässig alle ab 1 Spiel. Wer wenige Spiele hat, bekommt trotzdem einen Score, der aber stark zum Ligaschnitt hin gedämpft ist. Mit «Mindestspiele» und «Mindestwürfe» blendest du solche Spieler aus.</li>
         <li><b>Leistung:</b> Bei Feldspielern zählen Tore pro Spiel (60 %) und Wurfquote (40 %), davon werden die <b>technischen Fehler</b> pro Spiel abgezogen (Regler «Gewicht Fehler», Standard 0.3, bei 0 zählen sie nicht). Bei Torhütern zählt die Paradenquote. Gemessen wird immer, wie weit ein Spieler über oder unter dem Ligaschnitt liegt (in Standardabweichungen, 0 ist Durchschnitt, +1 deutlich besser, +2 herausragend; ein Wert von +0.7 ist also schon klar überdurchschnittlich). Kleine Stichproben werden zum Ligaschnitt hin gedämpft, damit ein einzelnes starkes Spiel nicht täuscht. Wer viel am Ball ist, etwa ein Spielmacher, macht zwangsläufig mehr Fehler. Die Daten kennen weder Position noch Assists, deshalb zählt der Fehler nur mässig.</li>
         <li><b>Liveticker lite:</b> Einige Vereine erfassen ihre Spiele mit dem Liveticker lite. Er zählt nur Tore, keine Würfe und Paraden, und würde sonst 100 % Wurfquote und 0 % Paraden ergeben. Solche Spiele zählen für Tore pro Spiel, aber nicht für die Quoten. Ein Sternchen (*) an der Quote heisst, dass sie nur aus einem Teil der Spiele stammt. Torhüter brauchen 30 Gegenwürfe aus Spielen mit voller Statistik.</li>
         <li><b>Alter:</b> Der mittlere Jahrgang der Liga (Median) ist der Massstab. Ein Spieler, der 2 Jahre jünger ist, bekommt «+2», einer, der älter ist, einen Abzug (höchstens ±3 Jahre zählen). Beispiel: Ein 2009er in der NLB, deren mittlerer Jahrgang etwa 2000 ist, bekommt das Maximum +3.</li>
@@ -595,6 +632,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       <button class="btn secondary warn" id="merkClear">Liste leeren</button>
     </div>
   </div>
+  <div class="notice smnote" id="smNote" hidden></div>
   <div class="card empty" id="merkEmpty" hidden>
     <h2>Noch niemand auf der Merkliste</h2>
     <p class="muted">Klicke in der Spielertabelle auf den Stern ☆ neben einem Namen oder im Spielerprofil auf «Auf die Merkliste». Deine Notizen aus dem Profil erscheinen hier auch.</p>
@@ -1285,7 +1323,7 @@ function aggregate(d, f) {
     if (r.role !== f.role) continue;
     const g = d.games[r.gameId];
     if (g && !inSeason(d, g, f.season || '')) continue;
-    if (f.group && (!g || String(g.groupId) !== f.group)) continue;
+    if (f.group && (!g || !groupMatch(d, g.groupId, f.group))) continue;
     if (f.team && String(r.teamId) !== f.team) continue;
     let p = m.get(r.playerId);
     if (!p) { p = { id: r.playerId, role: r.role, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, warn: 0, dq: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 }; m.set(r.playerId, p); }
@@ -1412,7 +1450,7 @@ function activeFilterList() {
   if (f.season) out.push({ k: 'season', t: f.season === 'all' ? 'Alle Saisons' : 'Saison ' + f.season });
   if (f.q.trim()) out.push({ k: 'q', t: 'Name: «' + f.q.trim() + '»' });
   if (f.up) out.push({ k: 'up', more: 1, t: 'Spielt hoch' });
-  if (f.group) { const g = Object.values(d.groups).find((x) => String(x.groupId) === f.group); out.push({ k: 'group', t: g ? groupLabel(g) : 'Gruppe ' + f.group }); }
+  if (f.group) { const g = Object.values(d.groups).find((x) => String(x.groupId) === f.group); out.push({ k: 'group', t: f.group.startsWith('liga:') ? f.group.slice(5) + ' (alle Gruppen)' : g ? groupLabel(g) : 'Gruppe ' + f.group }); }
   if (f.team) out.push({ k: 'team', t: index(d).teams[f.team] || 'Team' });
   if (f.yearFrom || f.yearTo) out.push({ k: 'year', t: 'Jahrgang ' + (f.yearFrom && f.yearTo ? (f.yearFrom === f.yearTo ? f.yearFrom : f.yearFrom + '–' + f.yearTo) : f.yearFrom ? 'ab ' + f.yearFrom : 'bis ' + f.yearTo) });
   if (f.pos) out.push({ k: 'pos', more: 1, t: f.pos === '__none' ? 'Position unbekannt' : f.pos.startsWith('grp:') ? f.pos.slice(4) + ' (alle)' : f.pos });
@@ -1445,8 +1483,8 @@ function clearFilter(k) {
   if (all || k === 'pos') f.pos = '';
   if (all || k === 'center') { f.center = null; state.pick = false; }
   if (all || k === 'cantons') f.cantons = new Set();
-  if (all || k === 'minGames') { if (isTal()) state.t.minGames = 3; else f.minGames = 1; }
-  if (all || k === 'minShots') { if (isTal()) { if (f.role === 'F') state.t.minShots = 15; else state.t.minGK = 30; } else f.minShots = 0; }
+  if (all || k === 'minGames') { if (isTal()) state.t.minGames = 1; else f.minGames = 1; }
+  if (all || k === 'minShots') { if (isTal()) { if (f.role === 'F') state.t.minShots = 0; else state.t.minGK = 0; } else f.minShots = 0; }
   if (!f.center) { state.sort = state.sort.filter((s) => s.key !== 'dist'); if (!state.sort.length) { state.sort = defaultSort(f.role); state.sortDefault = true; } }
   state.limit = 100;
   renderPlayers();
@@ -1462,6 +1500,8 @@ function renderSortBar() {
     ? 'Die erste Spalte zählt am meisten, die nächste entscheidet bei Gleichstand.'
     : 'Klicke auf eine Spaltenüberschrift, um danach zu sortieren. Ein zweiter Klick dreht die Reihenfolge um. Tipp: Mit gedrückter Shift-Taste kommt eine weitere Spalte dazu.';
 }
+// Filter «Liga und Gruppe»: eine einzelne Gruppe (Nummer) oder eine ganze Liga («liga:Junioren U17 Inter»)
+const groupMatch = (d, gid, sel) => (!sel ? true : sel.startsWith('liga:') ? ligaKey(d.groups[gid] || { name: '' }) === sel.slice(5) : String(gid) === sel);
 function fillSelects() {
   const d = data(), f = state.f, idx = index(d);
   // Saison: nur sichtbar, wenn mehrere geladen sind. Gruppen und Teams passen sich der gewählten Saison an.
@@ -1472,11 +1512,16 @@ function fillSelects() {
   const want = f.season === 'all' ? '' : f.season || seasons[0] || '';
   const gs = Object.values(d.groups).filter((g) => !multi || !want || idx.groupSeason[g.groupId] === want).sort((a, b) => groupLabel(a).localeCompare(groupLabel(b), 'de'));
   $('#fUp').checked = !!f.up;
-  $('#fGroup').innerHTML = '<option value="">Alle Gruppen</option>' + gs.map((g) => '<option value="' + g.groupId + '">' + esc(groupLabel(g)) + '</option>').join('');
-  if (!gs.some((g) => String(g.groupId) === f.group)) f.group = '';
+  // Ganze Ligen (z. B. «U17 Inter, alle Gruppen») zuerst, dann die einzelnen Gruppen
+  const byLiga = new Map(); for (const g of gs) { const k = ligaKey(g); byLiga.set(k, (byLiga.get(k) || 0) + 1); }
+  const ligaOpts = [...byLiga].filter(([, n]) => n > 1).map(([k]) => k).sort((a, b) => a.localeCompare(b, 'de'));
+  $('#fGroup').innerHTML = '<option value="">Alle Ligen und Gruppen</option>' +
+    (ligaOpts.length ? '<optgroup label="Ganze Liga">' + ligaOpts.map((k) => '<option value="liga:' + esc(k) + '">' + esc(k) + ' (alle ' + byLiga.get(k) + ' Gruppen)</option>').join('') + '</optgroup><optgroup label="Einzelne Gruppe">' : '') +
+    gs.map((g) => '<option value="' + g.groupId + '">' + esc(groupLabel(g)) + '</option>').join('') + (ligaOpts.length ? '</optgroup>' : '');
+  if (f.group && !(f.group.startsWith('liga:') ? ligaOpts.includes(f.group.slice(5)) : gs.some((g) => String(g.groupId) === f.group))) f.group = '';
   $('#fGroup').value = f.group;
   const gsIds = new Set(gs.map((g) => String(g.groupId)));
-  const ts = Object.keys(idx.teams).filter((id) => (f.group ? idx.teamGroups[id] && idx.teamGroups[id].has(f.group) : !multi || (idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => gsIds.has(x))))).map((id) => [id, idx.teams[id]]).sort((a, b) => a[1].localeCompare(b[1], 'de'));
+  const ts = Object.keys(idx.teams).filter((id) => (f.group ? idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => groupMatch(d, x, f.group)) : !multi || (idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => gsIds.has(x))))).map((id) => [id, idx.teams[id]]).sort((a, b) => a[1].localeCompare(b[1], 'de'));
   $('#fTeam').innerHTML = '<option value="">Alle Teams</option>' + ts.map(([id, n]) => '<option value="' + id + '">' + esc(n) + '</option>').join('');
   if (!ts.some(([id]) => id === f.team)) f.team = '';
   $('#fTeam').value = f.team;
@@ -1588,7 +1633,16 @@ function mapClick(e) {
 function renderStatus() {
   const d = data(), r = rows(d);
   const players = new Set(r.map((x) => x.playerId)).size, games = Object.values(d.games).filter((g) => g.hasStats).length;
-  $('#status').textContent = r.length ? nf(players, 0) + ' Spieler aus ' + nf(games, 0) + ' Spielen' : 'Keine Daten geladen';
+  // Datenstand: bei den gemeinsamen Daten der Zeitpunkt des Wochenlaufs, sonst das letzte Spiel
+  let stand = '', standTip = '';
+  if (r.length && state.demo) stand = 'Demo-Daten';
+  else if (r.length && state.shared && state.shared.status === 'ok' && state.shared.stand) {
+    const t = new Date(state.shared.stand);
+    if (!isNaN(t)) { stand = 'Stand ' + t.toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }) + ', ' + t.toLocaleTimeString('de-CH', { hour: '2-digit', minute: '2-digit' }); standTip = 'Die Daten wurden zuletzt am ' + fmtStand(state.shared.stand) + ' von handball.ch geholt. Das nächste Update kommt am Montagmorgen.'; }
+  }
+  if (r.length && !stand) { const last = Object.values(d.games).filter((g) => g.hasStats).map((g) => String(g.date)).sort().pop(); if (last) { stand = 'letztes Spiel ' + fmtDate(last); standTip = 'Das neuste Spiel in den geladenen Daten.'; } }
+  $('#status').textContent = r.length ? nf(players, 0) + ' Spieler aus ' + nf(games, 0) + ' Spielen' + (stand ? ' · ' + stand : '') : 'Keine Daten geladen';
+  $('#status').title = standTip;
   $('#demoBanner').hidden = !state.demo;
   const empty = !r.length, sh = state.shared ? state.shared.status : 'none';
   $('#emptyState').hidden = !empty; $('#players').hidden = empty;
@@ -1786,9 +1840,11 @@ function renderDrawer() {
     '<div class="dhead"><div><h2 class="dname" id="dTitle"><b>' + esc(s.sur) + '</b> <span>' + esc(s.first) + '</span></h2>' +
     '<p class="muted" style="margin-top:6px"><button class="linkbtn" data-team="' + last.r.teamId + '" title="Team im Gegner-Scouting ansehen">' + esc(team) + '</button>' + (role === 'G' ? ', Torhüter' : '') + (info ? '<br>' + esc(info) : '') + '<br><span class="small">' + esc(groups) + '</span></p></div>' +
     '<button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div>' +
-    '<div class="row noprint"><button class="btn' + (on ? ' secondary' : '') + '" id="dStar" aria-pressed="' + on + '">' + (on ? '★ Auf der Merkliste' : '☆ Auf die Merkliste') + '</button>' +
+    '<div class="row noprint"><button class="btn' + (on ? ' secondary' : '') + '" id="dStar" aria-pressed="' + on + '">' + (state.sm.active ? (on ? '★ Auf «' : '☆ Auf «') + esc(smListName(smList(state.sm.cur))) + '»' : on ? '★ Auf der Merkliste' : '☆ Auf die Merkliste') + '</button>' +
     '<button class="btn secondary" id="dCmp" aria-pressed="' + inCmp + '">' + (inCmp ? '✓ Im Vergleich' : '⇄ Zum Vergleich') + '</button>' +
+    (state.sm.active ? '<button class="btn secondary" id="dSend" aria-expanded="' + !!(state.open && state.open.send) + '">✉ An Person schicken</button>' : '') +
     '<button class="btn secondary" id="dPrint" title="Druckansicht öffnen. Im Druckfenster «Als PDF speichern» wählen.">⎙ Als PDF / Drucken</button></div>' +
+    smProfileRow(id, role) + smSendPanel(id, role) +
     (up ? '<p class="upline"><span class="upbadge">↑ ' + esc(catLabel(up.cat)) + '</span> ' + esc(upText(up)) + '. Jahrgang ' + esc(pi.year) + ' gehört eigentlich in die ' + esc(catLabel(up.nat)) + '.</p>' : '') +
     '<div class="kpis">' + kpis + '</div>' +
     '<p class="small muted">' + esc(profSummary(p, role, sumLabel)) + '</p>' +
@@ -1797,7 +1853,7 @@ function renderDrawer() {
     seasonTable(d, allMine, role) +
     '<h3 style="margin-top:18px">' + (role === 'F' ? 'Tore pro Spiel' : 'Paraden pro Spiel') + '</h3><div class="bars">' + bars + '</div>' +
     '<h3 style="margin-top:14px">Spiel für Spiel</h3><p class="small muted" style="margin:0 0 6px">Klicke auf ein Spiel für die Statistik beider Teams. Der Pfeil führt zur Seite auf handball.ch.</p><div style="overflow-x:auto"><table class="dtable"><thead><tr><th class="left">Datum</th><th class="left">Liga</th><th class="left">Gegner</th><th>Resultat</th>' + head + '<th></th></tr></thead><tbody>' + trs + '</tbody></table></div>' +
-    '<div class="field" style="margin-top:18px"><label for="dNote">Notiz</label><textarea id="dNote" placeholder="Eigene Beobachtungen">' + esc(state.notes[id] || '') + '</textarea></div>' +
+    '<div class="field" style="margin-top:18px"><label for="dNote">' + (state.sm.active ? 'Notiz (gemeinsam, alle Angemeldeten sehen sie)' : 'Notiz (nur in diesem Browser)') + '</label><textarea id="dNote" placeholder="Eigene Beobachtungen">' + esc(state.notes[id] || '') + '</textarea></div>' +
     '<div class="printnote">' + (String(state.notes[id] || '').trim() ? '<h3>Notiz</h3><p>' + esc(state.notes[id]) + '</p>' : '') + '<p class="small muted">Erstellt am ' + esc(new Date().toLocaleDateString('de-CH')) + ' mit Handball Scouting. Daten: handball.ch' + (multi ? ', Kennzahlen Saison ' + esc(gameSeason(d, mine[0].g)) : '') + '.</p></div>';
 }
 
@@ -1943,12 +1999,12 @@ function setView(v) {
   for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten']]) $('#' + id).setAttribute('aria-selected', v === k);
   const at = $('.tab[aria-selected="true"]'), tb = $('.tabs'); // Handy: gewählten Reiter in die wischbare Leiste holen
   if (at && tb.scrollWidth > tb.clientWidth) tb.scrollLeft = at.offsetLeft - tb.offsetLeft - (tb.clientWidth - at.offsetWidth) / 2;
-  if (v === 'daten') renderData(); else if (v === 'merk') renderMerk(); else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
+  if (v === 'daten') renderData(); else if (v === 'merk') { renderMerk(); if (zsMode() === 'demo' || zsMode() === 'verbunden') smLoad(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
 }
-function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); }
-function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: '', team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); }
+function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); renderNewBox(); }
+function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: '', team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); smLoad(); }
 function setRole(r) {
-  state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100; state.t.sort = { key: 'score', dir: -1 }; state.t.limit = 100;
+  state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100; state.t.sort = [{ key: 'score', dir: -1 }]; state.t.limit = 100;
   $('#roleF').setAttribute('aria-pressed', r === 'F'); $('#roleG').setAttribute('aria-pressed', r === 'G'); renderTable();
 }
 function allPlayers(role) {
@@ -1976,14 +2032,18 @@ function merkSection(role, list) {
   const cols = MERK_COLS[role].map((k) => COLS[role].find((c) => c.k === k)), sk = state.merkSort;
   const arrow = (k) => (sk.key === k ? (sk.dir < 0 ? ' ▼' : ' ▲') : '');
   let h = '<div class="merkgroup"><h3>' + (role === 'F' ? 'Feldspieler' : 'Torhüter') + ' <span class="muted">' + list.length + '</span></h3><div class="tablewrap"><table><thead><tr><th class="left name"><button class="thbtn" data-msort="name" style="text-align:left">Spieler' + arrow('name') + '</button></th>';
+  const sm = state.sm.active, sth = (t) => '<th class="left"><span class="thbtn" style="cursor:default;text-align:left;display:block">' + t + '</span></th>';
+  if (sm) h += sth('Status') + sth('Bewertung');
   for (const c of cols) h += '<th title="' + esc(c.title) + '"><button class="thbtn" data-msort="' + c.k + '">' + esc(c.label) + arrow(c.k) + '</button></th>';
   h += '<th class="left"><span class="thbtn" style="cursor:default;text-align:left;display:block">Notiz</span></th></tr></thead><tbody>';
   for (const p of merkSorted(role, list)) {
     const s = splitName(p.name);
     h += '<tr data-id="' + p.id + '" data-role="' + role + '"><td class="name"><button class="star" data-mstar="' + p.id + '" aria-pressed="true" aria-label="Von der Merkliste entfernen">★</button><button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' +
       '<span class="team">' + esc(p.team) + (p.club && p.club.canton ? ' (' + esc(p.club.canton) + ')' : '') + (p.position ? ', ' + esc(p.position) : '') + '</span></td>';
+    const sr = sm && smCurRows()[mk(p.id, role)];
+    if (sm) h += '<td class="left">' + (sr ? smStatusBadge(sr.status) : '') + '</td><td class="left" style="color:var(--signal)">' + (sr && sr.bewertung ? '★'.repeat(sr.bewertung) : '<span class="muted">–</span>') + '</td>';
     for (const c of cols) h += '<td>' + esc(colText(c, p)) + '</td>';
-    h += '<td class="note">' + esc(noteOf(p.id)) + '</td></tr>';
+    h += '<td class="note">' + esc(noteOf(p.id)) + (sr && sr.geaendert_von ? '<br><span class="small">' + esc(sr.geaendert_von) + ', ' + esc(fmtDT(sr.geaendert_am)) + '</span>' : '') + '</td></tr>';
   }
   return h + '</tbody></table></div></div>';
 }
@@ -1995,7 +2055,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
-state.t = { wTF: 0.3, minGames: 3, minShots: 15, minGK: 30, wAge: 0.5, wLiga: 0.5, split: false, sort: { key: 'score', dir: -1 }, limit: 100 };
+state.t = { wTF: 0.3, minGames: 1, minShots: 0, minGK: 0, wAge: 0.5, wLiga: 0.5, split: false, sort: [{ key: 'score', dir: -1 }], limit: 100 };
 state.team = null; state.team2 = null;
 
 // Ligastufe für den ligaübergreifenden Vergleich: wie viel stärker eine Liga ungefähr ist (in Standardabweichungen)
@@ -2126,7 +2186,8 @@ function talCols(role) {
       { k: 'spct', label: 'Quote', title: 'Paradenquote, nur aus Spielen mit voller Statistik (* = nur ein Teil der Spiele)', v: (a) => a.spct, t: (a) => (a.spct == null ? '–' : Math.round(a.spct * 100) + '%' + partMark(a.sn, a.games)), sub: (a) => (a.muS == null ? '' : 'Ø ' + Math.round(a.muS * 100) + '%') },
     ];
   const dist = state.f.center ? [{ k: 'dist', label: 'km', title: 'Luftlinie zum gewählten Mittelpunkt', v: (a) => (a.dist == null ? null : a.dist), t: (a) => (a.dist == null ? '–' : nf(a.dist, 0)) }] : [];
-  return [...common.slice(0, 2), ...dist, ...common.slice(2), ...mid, ...tail];
+  // Score und Leistung direkt hinter dem Namen, damit sie ohne seitliches Scrollen sichtbar sind
+  return [tail[1], tail[0], ...common.slice(0, 2), ...dist, ...common.slice(2), ...mid];
 }
 // Hinweis «+ U17 Elite» auf weitere Ligen des Spielers, mit deren Zahlen beim Darüberfahren
 // Kennzeichen hinter dem Namen in der Talent-Bewertung: «Spielt hoch» und weitere Ligen, ohne Doppelungen.
@@ -2149,7 +2210,7 @@ function talentList() {
   // Filter kommen aus der gemeinsamen Filterleiste der Spielerseite (state.f), Mindestwerte und Regler aus state.t
   const d = data(), T = buildTalent(d), t = state.t, f = state.f, role = f.role;
   let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
-  if (f.group) list = list.filter((a) => a.groups.has(String(f.group)));
+  if (f.group) list = list.filter((a) => [...a.groups].some((gid) => groupMatch(d, gid, f.group)));
   if (f.team) list = list.filter((a) => a.teams.has(String(f.team)));
   if (f.pos) list = list.filter((a) => posMatch(a.position || '', f.pos));
   const toks = norm(f.q).split(/\s+/).filter(Boolean);
@@ -2173,15 +2234,19 @@ function talentList() {
   if (f.up) list = list.filter((a) => a.upShow);
   const total = list.length;
   list = list.filter(inArea);
-  const cols = talCols(role), sk = t.sort, col = cols.find((c) => c.k === sk.key);
-  const byName = (x, y) => fullName(x.name).localeCompare(fullName(y.name), 'de');
+  // Mehrfach-Sortierung: die erste Spalte zählt am meisten, die nächste entscheidet bei Gleichstand (wie angezeigt gerundet)
+  const cols = talCols(role), byName = (x, y) => fullName(x.name).localeCompare(fullName(y.name), 'de');
+  const levels = t.sort.map((s) => ({ s, col: cols.find((c) => c.k === s.key) })).filter((x) => x.s.key === 'name' || x.col);
+  const shownVal = (col, a) => { const v = col.v(a); return typeof v === 'number' ? Math.round(v * 10) / 10 : v; };
   list.sort((x, y) => {
-    if (sk.key === 'name') return byName(x, y) * sk.dir;
-    if (!col) return byName(x, y);
-    const a = col.v(x), b = col.v(y);
-    if (a == null && b == null) return byName(x, y); if (a == null) return 1; if (b == null) return -1;
-    if (typeof a === 'string') return a.localeCompare(b, 'de') * sk.dir || byName(x, y);
-    return (a - b) * sk.dir || byName(x, y);
+    for (const { s, col } of levels) {
+      if (s.key === 'name') { const r = byName(x, y) * s.dir; if (r) return r; continue; }
+      const a = shownVal(col, x), b = shownVal(col, y);
+      if (a == null && b == null) continue; if (a == null) return 1; if (b == null) return -1;
+      const r = typeof a === 'string' ? a.localeCompare(b, 'de') * s.dir : (a - b) * s.dir;
+      if (r) return r;
+    }
+    return byName(x, y);
   });
   state.talList = list; state.talTotal = total; return list;
 }
@@ -2189,8 +2254,12 @@ function renderTalent() {
   const d = data(); if (!rows(d).length) return;
   const t = state.t, f = state.f;
   $('#talWVal').textContent = nf(t.wAge, 1) + ' je Jahr'; $('#talLVal').textContent = nf(t.wLiga, 1); $('#talSplit').checked = !!t.split; $('#talTVal').textContent = nf(t.wTF, 1); $('#talTField').hidden = f.role === 'G';
-  const list = talentList(), cols = talCols(f.role), shown = list.slice(0, t.limit), sk = t.sort;
-  const arrow = (k) => (sk.key === k ? (sk.dir < 0 ? ' ▼' : ' ▲') : '');
+  const list = talentList(), cols = talCols(f.role), shown = list.slice(0, t.limit);
+  const arrow = (k) => { const i = t.sort.findIndex((s) => s.key === k); return i < 0 ? '' : (t.sort[i].dir < 0 ? ' ▼' : ' ▲') + (t.sort.length > 1 ? '<sup>' + (i + 1) + '</sup>' : ''); };
+  const lab = (k) => (k === 'name' ? 'Spieler' : (cols.find((c) => c.k === k) || { label: k }).label);
+  $('#talSortHint').innerHTML = t.sort.length > 1
+    ? 'Sortiert nach ' + t.sort.map((s, i) => (i + 1) + '. ' + esc(lab(s.key)) + (s.dir < 0 ? ' ▼' : ' ▲')).join(', ') + '. <button class="linkbtn" id="talSortReset">Nur nach Score</button>'
+    : 'Klick auf eine Spalte sortiert danach, ein zweiter Klick dreht die Reihenfolge um. Mit gedrückter Shift-Taste kommt eine weitere Spalte dazu.';
   let h = '<thead><tr><th class="left name"><button class="thbtn" data-tsort="name" style="text-align:left">Spieler' + arrow('name') + '</button></th>';
   for (const c of cols) h += '<th' + (c.left ? ' class="left"' : '') + (c.title ? ' title="' + esc(c.title) + '"' : '') + '><button class="thbtn" data-tsort="' + c.k + '"' + (c.left ? ' style="text-align:left"' : '') + '>' + esc(c.label) + arrow(c.k) + '</button></th>';
   h += '</tr></thead><tbody>';
@@ -2218,10 +2287,10 @@ function syncTalInputs() { const t = state.t; $('#talW').value = t.wAge; $('#tal
 /* ---------- Spielerseite: Ansicht «Zahlen» oder «Talent-Bewertung» ---------- */
 state.mode = lsGet('scouting.modus', 'zahlen') === 'talent' ? 'talent' : 'zahlen';
 const isTal = () => state.mode === 'talent';
-// Mindestwerte gehören zur Ansicht: Zahlen 1 Spiel / 0 Würfe, Talent-Bewertung 3 Spiele / 15 Würfe (Torhüter 30 Gegenwürfe)
+// Mindestwerte gehören zur Ansicht (Standard in beiden: 1 Spiel, 0 Würfe), damit Wechseln die eigene Einstellung nicht verliert
 function minVals() {
   const f = state.f, t = state.t, tal = isTal();
-  return { games: tal ? t.minGames : f.minGames, shots: tal ? (f.role === 'F' ? t.minShots : t.minGK) : f.minShots, defG: tal ? 3 : 1, defS: tal ? (f.role === 'F' ? 15 : 30) : 0 };
+  return { games: tal ? t.minGames : f.minGames, shots: tal ? (f.role === 'F' ? t.minShots : t.minGK) : f.minShots, defG: 1, defS: 0 };
 }
 function syncModeUI() {
   const tal = isTal(), m = minVals();
@@ -2724,6 +2793,22 @@ const SB = {
   save: async (pid, name, version, felder) => sbJson(await SB.req('rpc/akte_speichern', { method: 'POST', body: { p_player_id: pid, p_name: name, p_version: version, p_felder: felder } })),
   addTest: async (pid, t) => (await sbJson(await SB.req('techniktests', { method: 'POST', headers: { Prefer: 'return=representation' }, body: { player_id: pid, datum: t.datum, test: t.test, ergebnis: t.ergebnis, bemerkung: t.bemerkung } })))[0],
   delTest: async (id) => (await sbJson(await SB.req('techniktests?id=eq.' + eq(id), { method: 'PATCH', headers: { Prefer: 'return=representation' }, body: { geloescht: true } })))[0],
+  // Merklisten (Einrichtung siehe ANLEITUNG-MERKLISTE.md). Die Zugriffsregeln im Zentralspeicher sorgen dafür,
+  // dass jede Person nur ihre eigenen und die Listen sieht, in denen sie Mitglied ist.
+  listsAll: async () => SB.getAll('merklisten?select=*&order=id'),
+  membersAll: async () => SB.getAll('merklisten_mitglieder?select=*'),
+  merkAll: async () => SB.getAll('merkliste?select=*&order=player_id'),
+  empfAll: async () => SB.getAll('empfehlungen?select=*&order=erstellt_am.desc'),
+  personen: async () => sbJson(await SB.req('rpc/personen_namen', { method: 'POST', body: {} })),
+  listCreate: async (l) => (await sbJson(await SB.req('merklisten', { method: 'POST', headers: { Prefer: 'return=representation' }, body: l })))[0],
+  listRename: async (id, name) => sbJson(await SB.req('merklisten?id=eq.' + eq(id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: { name } })),
+  listDelete: async (id) => sbJson(await SB.req('merklisten?id=eq.' + eq(id), { method: 'DELETE', headers: { Prefer: 'return=minimal' } })),
+  memberAdd: async (id, email) => sbJson(await SB.req('merklisten_mitglieder?on_conflict=liste_id,email', { method: 'POST', headers: { Prefer: 'resolution=ignore-duplicates,return=minimal' }, body: { liste_id: id, email } })),
+  memberDel: async (id, email) => sbJson(await SB.req('merklisten_mitglieder?liste_id=eq.' + eq(id) + '&email=eq.' + eq(email), { method: 'DELETE', headers: { Prefer: 'return=minimal' } })),
+  merkPut: async (row) => (await sbJson(await SB.req('merkliste?on_conflict=liste_id,player_id,rolle', { method: 'POST', headers: { Prefer: 'resolution=merge-duplicates,return=representation' }, body: row })))[0],
+  merkDel: async (lid, pid, rolle) => sbJson(await SB.req('merkliste?liste_id=eq.' + eq(lid) + '&player_id=eq.' + eq(pid) + '&rolle=eq.' + eq(rolle), { method: 'DELETE', headers: { Prefer: 'return=minimal' } })),
+  empfAdd: async (e) => (await sbJson(await SB.req('empfehlungen', { method: 'POST', headers: { Prefer: 'return=representation' }, body: e })))[0],
+  empfDone: async (id) => sbJson(await SB.req('empfehlungen?id=eq.' + eq(id), { method: 'PATCH', headers: { Prefer: 'return=minimal' }, body: { erledigt: true } })),
   verlauf: async (pid) => sbJson(await SB.req('verlauf?select=*&player_id=eq.' + eq(pid) + '&order=zeit.desc,id.desc&limit=100')),
   verlaufAll: async () => SB.getAll('verlauf?select=*&order=id.desc'),
   async restore(daten) {
@@ -2765,6 +2850,22 @@ const MEM = {
   async verlauf(pid) { return MEM.init().verlauf.filter((v) => v.player_id === pid).slice().reverse(); },
   async verlaufAll() { return MEM.init().verlauf.slice().reverse(); },
   async restore() { throw new Error('Im Demo-Modus nicht verfügbar'); },
+  // Merklisten in der Demo: drei erfundene Personen, damit sich Team-Listen und «Spieler schicken» ausprobieren lassen
+  sm() { const m = MEM.init(); if (!m.sm) m.sm = { lists: [{ id: 1, name: 'Junioren-Trainer', art: 'team', besitzer: 'trainer.a@example.ch', erstellt_am: new Date().toISOString() }], members: [{ liste_id: 1, email: 'trainer.a@example.ch' }, { liste_id: 1, email: 'demo@example.ch' }], merk: {}, empf: [{ id: 1, an_email: 'demo@example.ch', von_email: 'trainer.a@example.ch', von_name: 'Trainer A', player_id: 0, rolle: 'F', name: '', nachricht: 'Schau dir den mal an, stark im Rückraum.', erstellt_am: new Date().toISOString(), erledigt: false }], nextL: 2, nextE: 2 }; return m.sm; },
+  async listsAll() { const s = MEM.sm(); return s.lists.filter((l) => l.besitzer === 'demo@example.ch' || s.members.some((x) => x.liste_id === l.id && x.email === 'demo@example.ch')).map((l) => ({ ...l })); },
+  async membersAll() { return MEM.sm().members.map((x) => ({ ...x })); },
+  async merkAll() { return Object.values(MEM.sm().merk).map((r) => ({ ...r })); },
+  async empfAll() { const s = MEM.sm(); if (!s.empf[0].player_id) { const r = Object.values(state.demo ? state.demo.stats : {}).find((x) => x.role === 'F' && x.goals > 5); if (r) { s.empf[0].player_id = r.playerId; s.empf[0].name = r.name; } } return s.empf.filter((e) => e.player_id).map((e) => ({ ...e })); },
+  async personen() { return [{ name: 'Demo-Nutzer', email: 'demo@example.ch' }, { name: 'Trainer A', email: 'trainer.a@example.ch' }, { name: 'Trainer B', email: 'trainer.b@example.ch' }]; },
+  async listCreate(l) { const s = MEM.sm(), r = { ...l, id: s.nextL++, erstellt_am: new Date().toISOString() }; s.lists.push(r); return { ...r }; },
+  async listRename(id, name) { const l = MEM.sm().lists.find((x) => x.id === id); if (l) l.name = name; },
+  async listDelete(id) { const s = MEM.sm(); s.lists = s.lists.filter((x) => x.id !== id); s.members = s.members.filter((x) => x.liste_id !== id); for (const k of Object.keys(s.merk)) if (s.merk[k].liste_id === id) delete s.merk[k]; },
+  async memberAdd(id, email) { const s = MEM.sm(); if (!s.members.some((x) => x.liste_id === id && x.email === email)) s.members.push({ liste_id: id, email }); },
+  async memberDel(id, email) { const s = MEM.sm(); s.members = s.members.filter((x) => !(x.liste_id === id && x.email === email)); },
+  async merkPut(row) { const r = { ...row }; MEM.sm().merk[row.liste_id + ':' + row.player_id + ':' + row.rolle] = r; return { ...r }; },
+  async merkDel(lid, pid, rolle) { delete MEM.sm().merk[lid + ':' + pid + ':' + rolle]; },
+  async empfAdd(e) { const s = MEM.sm(), r = { ...e, id: s.nextE++, erstellt_am: new Date().toISOString(), erledigt: false }; s.empf.push(r); return { ...r }; },
+  async empfDone(id) { const e = MEM.sm().empf.find((x) => x.id === id); if (e) e.erledigt = true; },
 };
 const zsStore = () => (state.demo ? MEM : SB);
 
@@ -2791,6 +2892,7 @@ async function loadAppConfig() {
   } catch (e) { z.cfg = null; }
 }
 function zsLogout(abgelaufen) {
+  smOff(); // Merkliste wieder aus diesem Browser
   state.zs.session = null; lsSet('scouting.sb', null); state.zs.me = null; state.zs.akten = {}; state.zs.tests = []; state.zs.loaded = false; state.zs.open = null; zsStopPoll();
   $('#akteDrawer').hidden = true; if (!abgelaufen || state.view === 'staefa') { renderStaefa(); if (abgelaufen) { $('#zsLoginMsg').className = 'msg err'; $('#zsLoginMsg').textContent = 'Die Anmeldung ist abgelaufen. Bitte melde dich neu an.'; } }
 }
@@ -2799,7 +2901,7 @@ async function zsLoad(silent) {
   if (z.loading) return; z.loading = true; if (!silent) { z.error = ''; renderStaefa(); }
   try {
     const store = zsStore(); z.me = await store.me();
-    const r = await store.loadAll(); z.akten = r.akten; z.tests = r.tests; z.loaded = true; z.lastSync = new Date(); z.error = '';
+    const r = await store.loadAll(); z.akten = r.akten; z.tests = r.tests; z.loaded = true; z.lastSync = new Date(); z.error = ''; smLoad(); // gemeinsame Merkliste mitladen
     if (z.open && !z.open.dirty) {
       const a = z.akten[z.open.pid] || null, bv = z.open.base ? z.open.base.version : 0, nv = a ? a.version : 0;
       if (nv !== bv) { z.open.base = a; z.open.form = akteForm(a); z.open.info = 'Aktualisiert: ' + (a && a.geaendert_von ? a.geaendert_von : 'jemand') + ' hat diese Akte inzwischen geändert.'; renderAkteFields(); }
@@ -3179,15 +3281,68 @@ function migrateMerk() {
   }
   if (changed) lsSet('scouting.merkliste', [...state.merk]);
 }
+// Hinweis oben auf der Merkliste: gemeinsam oder nur im Browser, plus Statusfilter und Übernahme der lokalen Liste
+// Kopf der Merkliste: Liste wählen und verwalten, Statusfilter, Empfehlungen; ohne Anmeldung ein Hinweis
+state.smFilter = '';
+function smListPanel() {
+  const sm = state.sm, editId = sm.panel === 'verwalten' ? sm.cur : null, l = editId ? smList(editId) : null;
+  const members = new Set(editId ? sm.members[editId] || [] : []), others = sm.personen.filter((p) => p.email !== smMe());
+  return '<div class="smpanel"><div class="field" style="max-width:360px"><label for="smName">Name der Liste</label><input type="text" id="smName" value="' + esc(l ? l.name : '') + '" placeholder="z. B. QHL Trainerteam" autocomplete="off"></div>' +
+    '<p class="small muted" style="margin:10px 0 4px">Mitglieder (sehen und bearbeiten die Liste). Du bist automatisch dabei.</p>' +
+    (others.length ? '<div class="smmembers">' + others.map((p) => '<label class="check"><input type="checkbox" data-member="' + esc(p.email) + '"' + (members.has(p.email) ? ' checked' : '') + '> ' + esc(p.name) + '</label>').join('') + '</div>' : '<p class="small muted">Es sind keine weiteren Personen freigeschaltet.</p>') +
+    '<div class="row" style="margin-top:10px"><button class="btn" id="smSaveList">' + (l ? 'Speichern' : 'Liste anlegen') + '</button><button class="btn secondary" id="smCancel">Abbrechen</button>' +
+    (l ? '<button class="btn secondary warn" id="smDelList">Liste löschen</button>' : '') + '</div></div>';
+}
+function renderSmNote() {
+  const box = $('#smNote'), sm = state.sm, mode = zsMode();
+  let h = '', cls = 'notice smnote';
+  if (sm.active) {
+    const cur = smList(sm.cur), extra = lsGet('scouting.merkliste', []).filter((e) => /^\d+:[FG]$/.test(String(e)) && !smCurRows()[e]).length;
+    const mem = (sm.members[sm.cur] || []).filter((e) => e !== smMe()).map(smPersonName);
+    h = '<div class="row"><label style="display:flex;gap:6px;align-items:center;font-weight:700">Liste <select id="smList" style="width:auto">' + sm.lists.map((l) => '<option value="' + l.id + '"' + (l.id === sm.cur ? ' selected' : '') + '>' + esc(smListName(l)) + '</option>').join('') + '</select></label>' +
+      '<button class="btn secondary" id="smNew">+ Neue Liste</button>' + (cur && cur.art === 'team' && smIsOwner(cur) ? '<button class="btn secondary" id="smManage">Liste verwalten</button>' : '') +
+      '<label class="small" style="display:flex;gap:6px;align-items:center">Status <select id="smFilter" style="width:auto"><option value="">Alle</option>' + SM_STATUS.map((s) => '<option value="' + s[0] + '"' + (state.smFilter === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>').join('') + '</select></label>' +
+      (extra ? '<button class="btn secondary" id="smImport">Merkliste aus diesem Browser übernehmen (' + extra + ')</button>' : '') + '<button class="btn secondary" id="smReload">Aktualisieren</button></div>' +
+      '<p class="small muted" style="margin:6px 0 0">' + (cur && cur.art === 'privat' ? 'Nur du siehst diese Liste.' : cur ? 'Team-Liste von ' + esc(smPersonName(cur.besitzer)) + (mem.length ? '. Mitglieder: ' + esc(mem.join(', ')) : '. Noch keine weiteren Mitglieder') + '. Alle Mitglieder sehen und bearbeiten sie.' : '') + ' Der Stern ☆ setzt Spieler auf die hier gewählte Liste.</p>' +
+      (sm.panel ? smListPanel() : '') + (sm.msg ? '<p class="msg err" style="margin:6px 0 0">' + esc(sm.msg) + '</p>' : '');
+    const open = smOpenEmpf();
+    if (open.length) h += '<div class="smempf"><b>Für dich empfohlen (' + open.length + ')</b><ul>' + open.map((e) => { const s = splitName(e.name || smPlayerName(e.player_id, e.rolle)); return '<li><button class="linkbtn" data-player="' + e.player_id + '" data-role="' + e.rolle + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button> <span class="muted small">von ' + esc(e.von_name || smPersonName(e.von_email)) + ', ' + esc(fmtDT(e.erstellt_am)) + '</span>' + (e.nachricht ? '<br><span class="small">«' + esc(e.nachricht) + '»</span>' : '') + '<br><button class="btn secondary" data-empfadd="' + e.id + '">Auf «' + esc(smListName(cur)) + '» setzen</button> <button class="btn secondary" data-empfdone="' + e.id + '">Erledigt</button></li>'; }).join('') + '</ul></div>';
+  } else if (sm.state === 'laedt') h = 'Die Merklisten werden geladen …';
+  else if (sm.state === 'fehlt') { h = '<b>Die Merklisten im Zentralspeicher sind noch nicht eingerichtet.</b> Die Anleitung steht in der Datei ANLEITUNG-MERKLISTE.md im Projekt (einmalig etwa zwei Minuten in Supabase). Bis dahin gilt diese Merkliste nur in diesem Browser.'; cls += ' warn'; }
+  else if (sm.state === 'fehler') { h = 'Die Merklisten sind gerade nicht erreichbar (' + esc(sm.msg) + '). Angezeigt wird die Merkliste dieses Browsers. <button class="btn secondary" id="smReload">Nochmals versuchen</button>'; cls += ' warn'; }
+  else if (mode === 'anmelden') h = 'Diese Merkliste gilt nur in diesem Browser. Melde dich im Reiter «Spielerübersicht Stäfa» an, dann hast du eine private Merkliste auf allen Geräten, kannst Team-Listen anlegen und Spieler an andere schicken.';
+  box.className = cls; box.innerHTML = h; box.hidden = !h;
+}
+$('#smNote').addEventListener('click', (e) => {
+  const sm = state.sm, t = e.target;
+  if (t.closest('#smImport')) return smImport();
+  if (t.closest('#smReload')) return smLoad();
+  if (t.closest('#smNew')) { sm.panel = sm.panel === 'neu' ? '' : 'neu'; return renderSmNote(); }
+  if (t.closest('#smManage')) { sm.panel = sm.panel === 'verwalten' ? '' : 'verwalten'; return renderSmNote(); }
+  if (t.closest('#smCancel')) { sm.panel = ''; return renderSmNote(); }
+  if (t.closest('#smSaveList')) {
+    const name = $('#smName').value.trim(); if (!name) { sm.msg = 'Bitte einen Namen für die Liste eingeben.'; return renderSmNote(); }
+    return smSaveList(sm.panel === 'verwalten' ? sm.cur : null, name, [...document.querySelectorAll('#smNote [data-member]:checked')].map((x) => x.dataset.member));
+  }
+  if (t.closest('#smDelList')) { const l = smList(sm.cur); if (l && window.confirm('Die Liste «' + l.name + '» mit allen Einträgen für alle Mitglieder löschen?')) smDeleteList(l.id); return; }
+  const add = t.closest('[data-empfadd]'); if (add) { const em = sm.empf.find((x) => x.id === Number(add.dataset.empfadd)); if (em) { if (!smCurRows()[mk(em.player_id, em.rolle)]) smSave({ player_id: em.player_id, rolle: em.rolle, name: em.name, notiz: em.nachricht ? 'Empfohlen von ' + (em.von_name || em.von_email) + ': ' + em.nachricht : 'Empfohlen von ' + (em.von_name || em.von_email) }); smEmpfDone(em.id); } return; }
+  const done = t.closest('[data-empfdone]'); if (done) return smEmpfDone(Number(done.dataset.empfdone));
+  const pl = t.closest('[data-player]'); if (pl) openDetail(Number(pl.dataset.player), pl.dataset.role);
+});
+$('#smNote').addEventListener('change', (e) => {
+  if (e.target.id === 'smFilter') { state.smFilter = e.target.value; renderMerk(); }
+  else if (e.target.id === 'smList') smSetCur(Number(e.target.value));
+});
 function renderMerk() {
   const ids = { F: [], G: [] }; let legacy = 0;
   for (const e of state.merk) { const m = /^(\d+):([FG])$/.exec(String(e)); if (m) ids[m[2]].push(Number(m[1])); else legacy++; }
   const total = state.merk.size;
   $('#merkCount').textContent = total || '';
-  $('#merkEmpty').hidden = total > 0; $('#merkTools').hidden = !total;
+  renderSmNote();
+  $('#merkEmpty').hidden = total > 0; $('#merkTools').hidden = !total; $('#merkClear').hidden = state.sm.active; // gemeinsame Liste nicht mit einem Klick für alle leeren
   if (!total) { $('#merkBody').innerHTML = ''; return; }
-  const F = allPlayers('F'), G = allPlayers('G');
-  const fl = ids.F.map((id) => F.get(id)).filter(Boolean), gl = ids.G.map((id) => G.get(id)).filter(Boolean);
+  const F = allPlayers('F'), G = allPlayers('G'), stOk = (id, role) => !state.sm.active || !state.smFilter || ((smCurRows()[mk(id, role)] || {}).status || 'beobachten') === state.smFilter;
+  const fl = ids.F.filter((id) => stOk(id, 'F')).map((id) => F.get(id)).filter(Boolean), gl = ids.G.filter((id) => stOk(id, 'G')).map((id) => G.get(id)).filter(Boolean);
   const missing = ids.F.filter((id) => !F.has(id)).length + ids.G.filter((id) => !G.has(id)).length + legacy;
   state.merkLists = { F: fl, G: gl };
   $('#merkBody').innerHTML = merkNext([...fl, ...gl]) + merkSection('F', fl) + merkSection('G', gl) +
@@ -3209,7 +3364,128 @@ function merkNext(players) {
   return head + '<div style="overflow-x:auto;margin-top:8px"><table class="dtable"><thead><tr><th class="left">Wann</th><th class="left">Liga</th><th class="left">Spiel und deine Spieler</th><th></th></tr></thead><tbody>' + fx.map((f) => fixtureRow(d, f, who(f))).join('') + '</tbody></table></div>' +
     '<p class="small muted" style="margin:6px 0 0">Halle und Adresse findest du über den Pfeil auf handball.ch. Der Spielplan wird jeden Montag aktualisiert. Verschiebungen unter der Woche sieht man dort zuerst.</p></div>';
 }
+/* ---------- Merklisten im Zentralspeicher: «Meine Merkliste» (privat), Team-Listen, Empfehlungen ----------
+   Aktiv, wenn man angemeldet ist (oder in der Demo) und die Tabellen eingerichtet sind (ANLEITUNG-MERKLISTE.md).
+   Dann zeigt die Merkliste die gerade gewählte Liste (state.sm.cur); ohne Anmeldung gilt die Liste im Browser. */
+const SM_STATUS = [['beobachten', 'Beobachten', ''], ['live', 'Live gesehen', 's-live'], ['kontakt', 'Kontaktiert', 's-kontakt'], ['probe', 'Probetraining', 's-probe'], ['nein', 'Kein Interesse', 's-nein']];
+const smStatusLabel = (k) => (SM_STATUS.find((s) => s[0] === k) || SM_STATUS[0])[1];
+const smStatusBadge = (k) => { const s = SM_STATUS.find((x) => x[0] === k) || SM_STATUS[0]; return '<span class="stbadge ' + s[2] + '">' + esc(s[1]) + '</span>'; };
+const smFresh = () => ({ active: false, state: 'aus', lists: [], members: {}, rows: {}, empf: [], personen: [], cur: lsGet('scouting.liste', null), msg: '', panel: '' });
+state.sm = smFresh(); // state: aus | laedt | bereit | fehlt | fehler
+const smMe = () => (state.demo ? 'demo@example.ch' : String((state.zs.session && state.zs.session.email) || state.zs.email || '').toLowerCase());
+const smCurRows = () => state.sm.rows[state.sm.cur] || {};
+const smList = (id) => state.sm.lists.find((l) => l.id === id);
+const smListName = (l) => (l ? (l.art === 'privat' ? 'Meine Merkliste (privat)' : l.name) : '');
+const smPersonName = (email) => { const p = state.sm.personen.find((x) => x.email === email); return p ? p.name : email; };
+const smIsOwner = (l) => !!l && l.besitzer === smMe();
+const smOpenEmpf = () => state.sm.empf.filter((e) => !e.erledigt && e.an_email === smMe());
+function smPlayerName(id, role) { const p = allPlayers(role).get(id); if (p) return p.name; const r = rows(data()).find((x) => x.playerId === id); return r ? r.name : ''; }
+// Im Spielerprofil: Status, Bewertung und wer zuletzt geändert hat (nur wenn er auf der gewählten Liste ist)
+function smProfileRow(id, role) {
+  const r = state.sm.active && smCurRows()[mk(id, role)]; if (!r) return '';
+  return '<div class="smrow noprint"><label>Status <select id="dStatus">' + SM_STATUS.map((s) => '<option value="' + s[0] + '"' + (r.status === s[0] ? ' selected' : '') + '>' + esc(s[1]) + '</option>').join('') + '</select></label>' +
+    '<span>Bewertung <span class="rating" role="group" aria-label="Bewertung">' + [1, 2, 3, 4, 5].map((n) => '<button data-rate="' + n + '" class="' + (r.bewertung >= n ? 'on' : '') + '" aria-label="' + n + ' von 5" title="' + n + ' von 5' + (r.bewertung === n ? ' (nochmals klicken zum Löschen)' : '') + '">★</button>').join('') + '</span></span>' +
+    '<span class="small muted">' + (r.geaendert_von ? 'zuletzt ' + esc(r.geaendert_von) + ', ' : '') + esc(fmtDT(r.geaendert_am)) + '</span></div>';
+}
+// «An Person schicken» im Spielerprofil
+function smSendPanel(id, role) {
+  if (!state.sm.active || !state.open || !state.open.send) return '';
+  const others = state.sm.personen.filter((p) => p.email !== smMe());
+  if (!others.length) return '<div class="card smsend noprint"><p class="small muted" style="margin:0">Es sind keine weiteren Personen freigeschaltet.</p></div>';
+  return '<div class="card smsend noprint"><div class="field"><label for="dSendTo">An</label><select id="dSendTo">' + others.map((p) => '<option value="' + esc(p.email) + '">' + esc(p.name) + '</option>').join('') + '</select></div>' +
+    '<div class="field" style="margin-top:8px"><label for="dSendMsg">Nachricht (freiwillig)</label><textarea id="dSendMsg" rows="2" placeholder="z. B. Schau dir den mal an"></textarea></div>' +
+    '<div class="row" style="margin-top:8px"><button class="btn" id="dSendGo">Schicken</button><button class="btn secondary" id="dSendCancel">Abbrechen</button><span class="msg" id="dSendMsgOut" aria-live="polite"></span></div></div>';
+}
+function smApply() {
+  const list = Object.values(smCurRows()), n = {};
+  state.merk = new Set(list.map((r) => mk(r.player_id, r.rolle)));
+  for (const r of list) if (String(r.notiz || '').trim() && !n[r.player_id]) n[r.player_id] = r.notiz;
+  state.notes = n; state.newBoxVer = null;
+}
+function smLocal() { state.merk = new Set(lsGet('scouting.merkliste', [])); state.notes = lsGet('scouting.notizen', {}); state.newBoxVer = null; }
+function smRerender(quiet) {
+  $('#merkCount').textContent = state.merk.size || '';
+  if (state.view === 'merk') renderMerk(); else if (state.view === 'spieler') renderTable(); else if (state.view === 'report') renderReport();
+  if (!quiet) renderDrawer();
+  renderNewBox();
+}
+function smOff() { const was = state.sm.active; state.sm = smFresh(); if (was) { smLocal(); smRerender(); } else if (state.view === 'merk') renderMerk(); }
+async function smLoad() {
+  const mode = zsMode(); if (mode !== 'demo' && mode !== 'verbunden') return smOff();
+  if (!state.sm.active) state.sm.state = 'laedt';
+  try {
+    const st = zsStore(); if (!state.zs.me) state.zs.me = await st.me();
+    const [lists, mem, entries, empf, pers] = await Promise.all([st.listsAll(), st.membersAll(), st.merkAll(), st.empfAll(), st.personen().catch(() => [])]);
+    const me = smMe();
+    if (!lists.some((l) => l.art === 'privat' && l.besitzer === me)) { // eigene private Liste beim ersten Mal anlegen
+      const l = await st.listCreate({ name: 'Meine Merkliste', art: 'privat', besitzer: me });
+      await st.memberAdd(l.id, me); lists.push(l); mem.push({ liste_id: l.id, email: me });
+    }
+    const members = {}, rws = {};
+    for (const x of mem) (members[x.liste_id] ||= []).push(x.email);
+    for (const r of entries) (rws[r.liste_id] ||= {})[mk(r.player_id, r.rolle)] = r;
+    lists.sort((a, b) => (a.art === 'privat' ? 0 : 1) - (b.art === 'privat' ? 0 : 1) || String(a.name).localeCompare(String(b.name), 'de'));
+    Object.assign(state.sm, { lists, members, rows: rws, empf, personen: pers || [], active: true, state: 'bereit', msg: '' });
+    if (!smList(state.sm.cur)) state.sm.cur = lists[0].id; // Standard: die private Liste
+    smApply();
+  } catch (e) {
+    if (e.status === 401) return;
+    const fehlt = e.status === 404 || /merkliste|empfehlung|personen_namen|relation|schema cache|does not exist|not find/i.test(e.message || '');
+    Object.assign(state.sm, { active: false, state: fehlt ? 'fehlt' : 'fehler', msg: e.message || '' }); smLocal();
+  }
+  smRerender();
+}
+function smSetCur(id) { state.sm.cur = id; state.sm.panel = ''; lsSet('scouting.liste', id); smApply(); smRerender(); }
+// Speichern mit sofortiger Anzeige; schlägt es fehl, wird der alte Stand wiederhergestellt
+async function smSave(row, quiet) {
+  const lid = row.liste_id || state.sm.cur, map = (state.sm.rows[lid] ||= {}), k = mk(row.player_id, row.rolle), before = map[k];
+  const full = { name: '', status: 'beobachten', bewertung: null, notiz: '', ...(before || {}), ...row, liste_id: lid, geaendert_von: (state.zs.me && state.zs.me.name) || '', geaendert_am: new Date().toISOString() };
+  const send = { liste_id: lid, player_id: full.player_id, rolle: full.rolle, name: full.name || '', status: full.status, bewertung: full.bewertung, notiz: full.notiz || '', geaendert_von: full.geaendert_von, geaendert_am: full.geaendert_am };
+  map[k] = send; smApply(); smRerender(quiet);
+  try { const r = await zsStore().merkPut(send); if (r) { map[k] = r; smApply(); } state.sm.msg = ''; }
+  catch (e) { if (before) map[k] = before; else delete map[k]; smApply(); state.sm.msg = 'Speichern nicht möglich: ' + (e.message || 'keine Verbindung'); smRerender(); }
+}
+async function smDelete(pid, rolle, lid) {
+  lid = lid || state.sm.cur; const map = state.sm.rows[lid] || {}, k = mk(pid, rolle), before = map[k]; if (!before) return;
+  delete map[k]; smApply(); smRerender();
+  try { await zsStore().merkDel(lid, pid, rolle); state.sm.msg = ''; }
+  catch (e) { map[k] = before; smApply(); state.sm.msg = 'Entfernen nicht möglich: ' + (e.message || 'keine Verbindung'); smRerender(); }
+}
+// Einträge aus der Merkliste dieses Browsers in die gewählte Liste übernehmen
+async function smImport() {
+  const local = lsGet('scouting.merkliste', []).filter((e) => /^\d+:[FG]$/.test(String(e)) && !smCurRows()[e]), notes = lsGet('scouting.notizen', {});
+  for (const e of local) { const [id, role] = String(e).split(':'); await smSave({ player_id: Number(id), rolle: role, name: smPlayerName(Number(id), role), notiz: notes[id] || '' }, true); }
+  smRerender();
+}
+// Listen verwalten (nur wer sie angelegt hat)
+async function smSaveList(id, name, emails) {
+  const st = zsStore(), me = smMe(), want = new Set([me, ...emails]);
+  try {
+    if (!id) { const l = await st.listCreate({ name, art: 'team', besitzer: me }); for (const e of want) await st.memberAdd(l.id, e); state.sm.cur = l.id; lsSet('scouting.liste', l.id); }
+    else {
+      const l = smList(id); if (l && l.name !== name) await st.listRename(id, name);
+      const cur = new Set(state.sm.members[id] || []);
+      for (const e of want) if (!cur.has(e)) await st.memberAdd(id, e);
+      for (const e of cur) if (!want.has(e)) await st.memberDel(id, e);
+    }
+    state.sm.panel = '';
+  } catch (e) { state.sm.msg = 'Die Liste konnte nicht gespeichert werden: ' + (e.message || 'keine Verbindung'); }
+  await smLoad();
+}
+async function smDeleteList(id) {
+  try { await zsStore().listDelete(id); state.sm.cur = null; state.sm.panel = ''; } catch (e) { state.sm.msg = 'Die Liste konnte nicht gelöscht werden: ' + (e.message || 'keine Verbindung'); }
+  await smLoad();
+}
+// Empfehlungen («Spieler schicken»)
+async function smSend(email, id, role, text) {
+  await zsStore().empfAdd({ an_email: email, von_email: smMe(), von_name: (state.zs.me && state.zs.me.name) || '', player_id: id, rolle: role, name: smPlayerName(id, role), nachricht: text || '' });
+}
+async function smEmpfDone(id) {
+  const e = state.sm.empf.find((x) => x.id === id); if (e) e.erledigt = true; smRerender();
+  try { await zsStore().empfDone(id); } catch (x) { if (e) e.erledigt = false; state.sm.msg = 'Nicht möglich: ' + (x.message || 'keine Verbindung'); smRerender(); }
+}
 function toggleMerk(id, role) {
+  if (state.sm.active) { if (smCurRows()[mk(id, role)]) smDelete(id, role); else smSave({ player_id: id, rolle: role, name: smPlayerName(id, role), notiz: state.notes[id] || '' }); return; }
   const k = mk(id, role);
   if (state.merk.has(k)) state.merk.delete(k); else state.merk.add(k);
   lsSet('scouting.merkliste', [...state.merk]);
@@ -3343,9 +3619,16 @@ $('#talL').oninput = (e) => { state.t.wLiga = parseFloat(e.target.value) || 0; r
 $('#talSplit').onchange = (e) => { state.t.split = e.target.checked; state.t.limit = 100; renderTalent(); };
 $('#talT').oninput = (e) => { state.t.wTF = parseFloat(e.target.value) || 0; renderTalent(); };
 $('#talMore').onclick = () => { state.t.limit += 100; renderTalent(); };
+$('#talSortHint').addEventListener('click', (e) => { if (e.target.closest('#talSortReset')) { state.t.sort = [{ key: 'score', dir: -1 }]; renderTalent(); } });
 $('#talTbl').addEventListener('click', (e) => {
   const sb = e.target.closest('[data-tsort]');
-  if (sb) { const k = sb.dataset.tsort, s = state.t.sort; state.t.sort = s.key === k ? { key: k, dir: -s.dir } : { key: k, dir: k === 'name' || k === 'liga' || k === 'dist' || k === 'tfpg' ? 1 : -1 }; return renderTalent(); }
+  if (sb) {
+    // Klick: nur diese Spalte (nochmals: Richtung umkehren). Shift-Klick: Spalte hinzufügen bzw. deren Richtung umkehren.
+    const k = sb.dataset.tsort, first = k === 'name' || k === 'liga' || k === 'dist' || k === 'tfpg' ? 1 : -1, srt = state.t.sort, i = srt.findIndex((s) => s.key === k);
+    if (e.shiftKey) { if (i >= 0) srt[i].dir *= -1; else srt.push({ key: k, dir: first }); }
+    else state.t.sort = srt.length === 1 && i === 0 ? [{ key: k, dir: -srt[0].dir }] : [{ key: k, dir: first }];
+    return renderTalent();
+  }
   const st = e.target.closest('[data-tstar]'); if (st) return toggleMerk(Number(st.dataset.tstar), st.dataset.role);
   const tr = e.target.closest('tr[data-id]'); if (tr) openDetail(Number(tr.dataset.id), tr.dataset.role);
 });
@@ -3377,10 +3660,10 @@ $('#merkBody').addEventListener('click', (e) => {
   const tr = e.target.closest('tr[data-id]'); if (tr) openDetail(Number(tr.dataset.id), tr.dataset.role);
 });
 $('#merkCopy').onclick = async () => {
-  const lines = [['Name', 'Team', 'Kanton', 'Jahrgang', 'Position', 'Rolle', 'Spiele', 'Tore bzw. Paraden', 'Würfe bzw. Gegenwürfe', 'Quote', 'Notiz'].join('\t')];
+  const lines = [['Name', 'Team', 'Kanton', 'Jahrgang', 'Position', 'Rolle', 'Spiele', 'Tore bzw. Paraden', 'Würfe bzw. Gegenwürfe', 'Quote', 'Status', 'Bewertung', 'Notiz'].join('\t')];
   for (const role of ['F', 'G']) for (const p of merkSorted(role, (state.merkLists && state.merkLists[role]) || [])) {
     const f = role === 'F';
-    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.sv, p.sg)), String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
+    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.sv, p.sg)), (state.sm.active && smCurRows()[mk(p.id, role)]) ? smStatusLabel(smCurRows()[mk(p.id, role)].status) : '', (state.sm.active && smCurRows()[mk(p.id, role)] && smCurRows()[mk(p.id, role)].bewertung) || '', String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
   }
   const ok = await kopieren(lines.join('\n')); flash($('#merkMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
@@ -3392,7 +3675,7 @@ $('#merkClear').onclick = (e) => {
 };
 $('#goDaten').onclick = () => setView('daten');
 $('#demoStart1').onclick = startDemo; $('#demoStart2').onclick = startDemo;
-$('#demoEnd').onclick = () => { zsReset(); state.demo = null; state.f.group = ''; state.f.team = ''; closeDetail(); renderAll(); };
+$('#demoEnd').onclick = () => { zsReset(); state.demo = null; smOff(); state.f.group = ''; state.f.team = ''; closeDetail(); renderAll(); };
 $('#roleF').onclick = () => setRole('F'); $('#roleG').onclick = () => setRole('G');
 $('#fSeason').onchange = (e) => { state.f.season = e.target.value; state.f.group = ''; state.f.team = ''; state.limit = 100; fillSelects(); renderTable(); };
 $('#fUp').onchange = (e) => { state.f.up = e.target.checked; state.limit = 100; renderTable(); };
@@ -3465,6 +3748,90 @@ $('#copyTable').onclick = async () => {
   const ok = await kopieren(lines.join('\n'));
   flash($('#copyMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
+/* ---------- «Neu seit deinem letzten Besuch» ---------- */
+// Beim Klick auf «Gesehen» merkt sich der Browser den Datenstand (neustes Spiel, Spitze der Talent-Bewertung).
+// Beim nächsten Öffnen zeigt der Kasten, was seither dazugekommen ist. Beim allerersten Besuch erscheint nichts.
+const visitKey = () => (state.demo ? 'scouting.besuch.demo' : 'scouting.besuch');
+function topKeys(d) { const out = []; for (const [k, v] of scoreRanks(buildTalent(d), state.t.wAge)) if (v.rank <= topN(v.of)) out.push(k); return out; }
+function visitSnap(d) { return { maxDate: Object.values(d.games).filter((g) => g.hasStats).map((g) => String(g.date)).sort().pop() || '', top: topKeys(d), at: new Date().toISOString() }; }
+function renderNewBox(force) {
+  const d = data(), box = $('#newBox'); if (!rows(d).length) { box.hidden = true; return; }
+  const emp = state.sm.active ? smOpenEmpf().length : 0, ver = (state.demo ? 'd' : 'r') + (d._ver || 0) + '|' + state.merk.size + '|' + emp + '|' + state.sm.cur;
+  if (!force && state.newBoxVer === ver) return; state.newBoxVer = ver;
+  const snap = lsGet(visitKey(), null);
+  if (!snap || !snap.maxDate) { lsSet(visitKey(), visitSnap(d)); box.hidden = true; return; }
+  const newGames = Object.values(d.games).filter((g) => g.hasStats && String(g.date) > snap.maxDate), ng = new Set(newGames.map((g) => g.gameId));
+  const ranks = scoreRanks(buildTalent(d), state.t.wAge), old = new Set(snap.top || []);
+  const newTop = snap.top ? [...ranks].filter(([k, v]) => v.rank <= topN(v.of) && !old.has(k)).map(([, v]) => v).sort((a, b) => a.rank - b.rank || b.score - a.score) : [];
+  const merk = new Map();
+  for (const r of rows(d)) {
+    if (!ng.has(r.gameId) || r.skipF || !state.merk.has(mk(r.playerId, r.role))) continue;
+    const k = mk(r.playerId, r.role); let m = merk.get(k);
+    if (!m) merk.set(k, (m = { id: r.playerId, role: r.role, name: r.name, games: 0, goals: 0, sv: 0, sg: 0 }));
+    m.games++; m.goals += r.goals || 0; m.sv += r.sv || 0; m.sg += r.sg || 0;
+  }
+  if (!newGames.length && !newTop.length && !emp) { box.hidden = true; return; }
+  const pb = (id, role, name) => { const s = splitName(name); return '<button class="linkbtn" data-nbp="' + id + '" data-role="' + role + '"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>'; };
+  const seit = snap.at ? new Date(snap.at).toLocaleDateString('de-CH', { weekday: 'short', day: '2-digit', month: '2-digit' }) : '';
+  box.innerHTML = '<div class="toolbar" style="margin:0"><h3 style="margin:0">Neu seit deinem letzten Besuch</h3><button class="btn secondary" id="nbSeen">Gesehen</button></div>' +
+    '<p class="small muted" style="margin:2px 0 0">' + (seit ? 'Zuletzt angeschaut: ' + esc(seit) + ' · ' : '') + (newGames.length ? newGames.length + (newGames.length === 1 ? ' neues Spiel' : ' neue Spiele') + ' mit Statistik.' : 'Keine neuen Spiele.') + '</p>' +
+    (emp ? '<p style="margin:8px 0 0"><b>Für dich empfohlen:</b> ' + emp + (emp === 1 ? ' Spieler' : ' Spieler') + '. <button class="linkbtn" id="nbEmpf">Zur Merkliste</button></p>' : '') +
+    (merk.size ? '<p style="margin:8px 0 0"><b>Deine Merkliste</b></p><ul>' + [...merk.values()].sort((a, b) => fullName(a.name).localeCompare(fullName(b.name), 'de')).map((m) => '<li>' + pb(m.id, m.role, m.name) + ': ' + m.games + (m.games === 1 ? ' Spiel' : ' Spiele') + ', ' + (m.role === 'F' ? m.goals + (m.goals === 1 ? ' Tor' : ' Tore') : m.sg ? m.sv + ' Paraden (' + Math.round((m.sv / m.sg) * 100) + '%)' : 'Paraden nicht erfasst') + '</li>').join('') + '</ul>' : '') +
+    (newTop.length ? '<p style="margin:8px 0 0"><b>Neu in der Spitze</b> <span class="small muted">(beste 10 % ihrer Liga in der Talent-Bewertung)</span></p><ul>' + newTop.slice(0, 8).map((v) => '<li>' + pb(v.a.id, v.a.role, v.a.name) + ' <span class="muted">' + esc(v.a.liga) + ', Rang ' + v.rank + ' von ' + v.of + (v.a.role === 'G' ? ', Torhüter' : '') + '</span></li>').join('') + '</ul>' + (newTop.length > 8 ? '<p class="small muted" style="margin:2px 0 0">und ' + (newTop.length - 8) + ' weitere</p>' : '') : '');
+  box.hidden = false;
+}
+$('#newBox').addEventListener('click', (e) => {
+  if (e.target.closest('#nbEmpf')) return setView('merk');
+  if (e.target.closest('#nbSeen')) { lsSet(visitKey(), visitSnap(data())); $('#newBox').hidden = true; return; }
+  const p = e.target.closest('[data-nbp]'); if (p) openDetail(Number(p.dataset.nbp), p.dataset.role);
+});
+
+/* ---------- Schnellsuche in der Kopfzeile: Name eintippen, Profil öffnen ---------- */
+function quickIndex(d) {
+  if (d._qs && d._qs.v === (d._ver || 0)) return d._qs.m;
+  const m = new Map(), idx = index(d);
+  for (const r of rows(d)) {
+    if (r.skipF) continue;
+    const g = d.games[r.gameId]; if (!g) continue;
+    let p = m.get(r.playerId);
+    if (!p) m.set(r.playerId, (p = { id: r.playerId, name: r.name, team: '', last: '', F: 0, G: 0, ligas: new Set(), cur: false }));
+    if (r.role === 'G') p.G++; else p.F++;
+    if (inSeason(d, g, '')) { p.cur = true; p.ligas.add(ligaKey(d.groups[g.groupId] || { name: '' })); }
+    if (String(g.date) >= p.last) { p.last = String(g.date); p.name = r.name; p.team = idx.teams[r.teamId] || ''; }
+  }
+  d._qs = { v: d._ver || 0, m }; return m;
+}
+state.qsHits = []; state.qsAct = 0;
+function qsRender() {
+  const box = $('#qsRes'), toks = norm($('#qsIn').value).split(/\s+/).filter(Boolean);
+  if (toks.join('').length < 2 || !rows(data()).length) { box.hidden = true; $('#qsIn').setAttribute('aria-expanded', 'false'); return; }
+  const d = data();
+  state.qsHits = [...quickIndex(d).values()].filter((p) => { const hay = norm(p.name) + ' ' + norm(fullName(p.name)); return toks.every((x) => hay.includes(x)); })
+    .sort((a, b) => (b.cur - a.cur) || fullName(a.name).localeCompare(fullName(b.name), 'de')).slice(0, 8);
+  state.qsAct = 0;
+  box.innerHTML = state.qsHits.length ? state.qsHits.map((p, i) => {
+    const s = splitName(p.name), year = (d.players[p.id] || {}).year, gk = p.G > p.F;
+    return '<button role="option" data-qs="' + i + '"' + (i === 0 ? ' class="act"' : '') + '><b>' + esc(s.sur) + '</b> ' + esc(s.first) + (year ? ' <span class="muted">' + year + '</span>' : '') + (gk ? ' <span class="muted">· Torhüter</span>' : '') +
+      '<small>' + esc(p.team) + (p.ligas.size ? ' · ' + esc([...p.ligas].join(', ')) : p.cur ? '' : ' · frühere Saison') + '</small></button>';
+  }).join('') : '<div class="none">Kein Spieler mit diesem Namen in den geladenen Daten.</div>';
+  box.hidden = false; $('#qsIn').setAttribute('aria-expanded', 'true');
+}
+function qsOpen(i) {
+  const p = state.qsHits[i]; if (!p) return;
+  $('#qsRes').hidden = true; $('#qsIn').value = ''; $('#qsIn').blur();
+  openDetail(p.id, p.G > p.F ? 'G' : 'F');
+}
+$('#qsIn').addEventListener('input', qsRender);
+$('#qsIn').addEventListener('focus', qsRender);
+$('#qsIn').addEventListener('keydown', (e) => {
+  const n = state.qsHits.length, mark = () => $('#qsRes').querySelectorAll('[data-qs]').forEach((b, i) => b.classList.toggle('act', i === state.qsAct));
+  if (e.key === 'ArrowDown' && n) { e.preventDefault(); state.qsAct = (state.qsAct + 1) % n; mark(); }
+  else if (e.key === 'ArrowUp' && n) { e.preventDefault(); state.qsAct = (state.qsAct - 1 + n) % n; mark(); }
+  else if (e.key === 'Enter') { e.preventDefault(); qsOpen(state.qsAct); }
+  else if (e.key === 'Escape') { $('#qsRes').hidden = true; e.stopPropagation(); }
+});
+$('#qsRes').addEventListener('mousedown', (e) => { const b = e.target.closest('[data-qs]'); if (b) { e.preventDefault(); qsOpen(Number(b.dataset.qs)); } });
+document.addEventListener('click', (e) => { if (!e.target.closest('.qs')) $('#qsRes').hidden = true; });
 window.addEventListener('afterprint', () => { document.body.classList.remove('pprint'); if (state.titleBefore) { document.title = state.titleBefore; state.titleBefore = ''; } });
 $('#cmpGo').onclick = openCompare;
 $('#cmpClear').onclick = () => { state.cmp = []; saveCmp(); if (state.open && state.open.cmp) closeDetail(); else if (state.open) renderDrawer(); };
@@ -3473,6 +3840,17 @@ $('#drawer').addEventListener('click', (e) => {
   if (e.target.closest('#dClose')) return closeDetail();
   if (e.target.closest('#dStar')) return toggleMerk(state.open.id, state.open.role);
   if (e.target.closest('#dCmp')) { toggleCmp(state.open.id, state.open.role); return renderDrawer(); }
+  if (e.target.closest('#dSend')) { state.open.send = !state.open.send; return renderDrawer(); }
+  if (e.target.closest('#dSendCancel')) { state.open.send = false; return renderDrawer(); }
+  if (e.target.closest('#dSendGo')) {
+    const to = $('#dSendTo').value, text = $('#dSendMsg').value.trim(), out = $('#dSendMsgOut'), btn = $('#dSendGo'), o = state.open;
+    btn.disabled = true; out.className = 'msg'; out.textContent = 'Wird geschickt …';
+    smSend(to, o.id, o.role, text).then(() => { out.className = 'msg ok'; out.textContent = 'Geschickt an ' + smPersonName(to) + '.'; $('#dSendMsg').value = ''; btn.disabled = false; })
+      .catch((x) => { out.className = 'msg err'; out.textContent = 'Nicht möglich: ' + (x.message || 'keine Verbindung'); btn.disabled = false; });
+    return;
+  }
+  const rate = e.target.closest('[data-rate]');
+  if (rate && state.sm.active) { const r = smCurRows()[mk(state.open.id, state.open.role)], n = Number(rate.dataset.rate); if (r) smSave({ player_id: r.player_id, rolle: r.rolle, bewertung: r.bewertung === n ? null : n }); return; }
   if (e.target.closest('#dPrint')) {
     // Der Seitentitel wird zum vorgeschlagenen Dateinamen der PDF
     state.titleBefore = document.title;
@@ -3487,9 +3865,22 @@ $('#drawer').addEventListener('click', (e) => {
   const tr = e.target.closest('tr[data-game]'); if (tr) showGame(Number(tr.dataset.game));
 });
 $('#drawer').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches && e.target.matches('tr[data-game]')) showGame(Number(e.target.dataset.game)); });
+$('#drawer').addEventListener('change', (e) => {
+  if (e.target.id !== 'dStatus' || !state.open || !state.sm.active) return;
+  const r = smCurRows()[mk(state.open.id, state.open.role)]; if (r) smSave({ player_id: r.player_id, rolle: r.rolle, status: e.target.value });
+});
 $('#drawer').addEventListener('input', (e) => {
   if (e.target.id !== 'dNote' || !state.open) return;
   const id = state.open.id, v = e.target.value; clearTimeout(noteTimer);
+  if (state.sm.active) { // gemeinsam: Notiz in die Merkliste-Einträge dieses Spielers (setzt ihn bei Bedarf auf die Liste)
+    const role = state.open.role;
+    noteTimer = setTimeout(() => {
+      const keys = ['F', 'G'].filter((r) => smCurRows()[mk(id, r)]);
+      if (!keys.length && !v.trim()) return;
+      for (const r of keys.length ? keys : [role]) smSave({ player_id: id, rolle: r, name: smPlayerName(id, r), notiz: v }, true);
+    }, 700);
+    return;
+  }
   noteTimer = setTimeout(() => { if (v.trim()) state.notes[id] = v; else delete state.notes[id]; lsSet('scouting.notizen', state.notes); }, 400);
 });
 document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') return; if (state.pick) { state.pick = false; renderMap(); fillAreaControls(); } else if (state.zs.open) closeAkte(); else if (state.open) closeDetail(); });
@@ -3521,7 +3912,7 @@ $('#wipe').onclick = async (e) => {
   renderAll();
   window.__scout = state; // für Tests
   loadShared();
-  loadAppConfig().then(() => { if (state.view === 'staefa') renderStaefa(); });
+  loadAppConfig().then(() => { if (state.view === 'staefa') renderStaefa(); else if (zsMode() === 'verbunden') zsLoad(true); }); // angemeldet: Zentralspeicher und gemeinsame Merkliste gleich laden
 })();
 })();
 </script>
