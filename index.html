@@ -3041,7 +3041,7 @@ const wsZoneTxt = (z) => (z ? (z[0] === 'm' && z[1] === 'm' ? 'Mitte' : WS_ROW[z
 const wsResTxt = (r) => (WS_RES.find((x) => x[0] === r) || [r, r])[1];
 const WS_LOCAL = 'scouting.wuerfe';
 function wsBlank(sit) { return { pid: null, nr: null, name: '', unknown: false, x: null, y: null, gx: null, gy: null, sit: sit || 'position', art: '' }; }
-state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: 'tw', ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
+state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: 'tw', ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
 const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL/i.test(ligaKey(d.groups[gid] || { name: '' }));
 
 // ---- Speicher: Zentralspeicher (Tabelle «wuerfe») oder dieser Browser ----
@@ -3146,9 +3146,10 @@ const WS_LEGEND = '<p class="small muted wslegend"><span class="lg g"></span> To
 
 // ---- Spiele, Kader ----
 function wsGames(d) {
-  const all = state.ws.allLeagues, now = refNow(), out = [];
-  for (const f of Object.values(d.fixtures || {})) { const t = new Date(f.date).getTime(); if (t > now - 864e5 && t < now + 14 * 864e5 && (all || wsTopLeague(d, f.groupId))) out.push({ ...f, kommend: true }); }
-  for (const g of Object.values(d.games)) { const t = new Date(g.date).getTime(); if (t <= now + 864e5 && t > now - 60 * 864e5 && inSeason(d, g, '') && (all || wsTopLeague(d, g.groupId))) out.push({ ...g, kommend: false }); }
+  const all = state.ws.allLeagues, now = refNow(), out = [], terms = norm(state.ws.q).split(/\s+/).filter(Boolean);
+  const hit = (x) => { const s = norm(x.homeName + ' ' + x.awayName + ' ' + ligaKey(d.groups[x.groupId] || { name: '' }) + ' ' + fmtWhen(x.date) + ' ' + new Date(x.date).toLocaleDateString('de-CH')); return terms.every((t) => s.includes(t)); };
+  for (const f of Object.values(d.fixtures || {})) { const t = new Date(f.date).getTime(); if (terms.length ? t > now - 864e5 && hit(f) : t > now - 864e5 && t < now + 14 * 864e5 && (all || wsTopLeague(d, f.groupId))) out.push({ ...f, kommend: true }); }
+  for (const g of Object.values(d.games)) { const t = new Date(g.date).getTime(); if (t <= now + 864e5 && inSeason(d, g, '') && (terms.length ? hit(g) : t > now - 60 * 864e5 && (all || wsTopLeague(d, g.groupId)))) out.push({ ...g, kommend: false }); }
   return out.sort((a, b) => (a.kommend !== b.kommend ? (a.kommend ? -1 : 1) : a.kommend ? String(a.date).localeCompare(String(b.date)) : String(b.date).localeCompare(String(a.date))));
 }
 function wsRoster(d, teamId, role) {
@@ -3181,14 +3182,21 @@ function renderWurf() {
   if (!rows(d).length) { $('#wsBody').innerHTML = '<div class="card empty"><p class="muted">Lade zuerst Daten oder schau dir die Demo an.</p></div>'; return; }
   $('#wsBody').innerHTML = ws.sub === 'auswertung' ? wsAnalysisHTML(d) : ws.sub === 'vorbereitung' ? wsPrepHTML(d) : wsCaptureHTML(d);
 }
-function wsCaptureHTML(d) {
-  const ws = state.ws, games = wsGames(d), g = wsGameObj(d), c = ws.cur;
+// Auswahlliste der Spiele (bei einer Suche alle passenden Spiele der Saison, sonst nur die nächsten und letzten)
+function wsGameOptions(d) {
+  const ws = state.ws, g = wsGameObj(d); let games = wsGames(d); const more = games.length > 150; games = games.slice(0, 150);
+  if (g && !games.some((x) => String(x.gameId) === String(g.gameId))) games.unshift({ ...g, kommend: ws.game[0] === 'f' });
   const opt = (x) => '<option value="' + (x.kommend ? 'f:' : 'g:') + x.gameId + '"' + ((x.kommend ? 'f:' : 'g:') + x.gameId === ws.game ? ' selected' : '') + '>' + esc(fmtWhen(x.date) + ' · ' + x.homeName + ' – ' + x.awayName) + '</option>';
-  let h = '<div class="card wscap"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 320px"><label for="wsGame">Spiel</label><select id="wsGame"><option value="">Spiel wählen …</option>' +
+  return '<option value="">' + (ws.q && !games.length ? 'Kein Spiel gefunden' : ws.q ? games.length + (more ? '+' : '') + ' Spiele gefunden, wählen …' : 'Spiel wählen …') + '</option>' +
     (games.some((x) => x.kommend) ? '<optgroup label="Kommende Spiele (live erfassen)">' + games.filter((x) => x.kommend).map(opt).join('') + '</optgroup>' : '') +
-    (games.some((x) => !x.kommend) ? '<optgroup label="Gespielte Spiele (am Video)">' + games.filter((x) => !x.kommend).map(opt).join('') + '</optgroup>' : '') + '</select></div>' +
+    (games.some((x) => !x.kommend) ? '<optgroup label="Gespielte Spiele (am Video)">' + games.filter((x) => !x.kommend).map(opt).join('') + '</optgroup>' : '');
+}
+function wsCaptureHTML(d) {
+  const ws = state.ws, g = wsGameObj(d), c = ws.cur;
+  let h = '<div class="card wscap"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 220px"><label for="wsQ">Spiel suchen</label><input type="search" id="wsQ" value="' + esc(ws.q) + '" placeholder="Team, Liga oder Datum, z. B. Pfadi 18.10." autocomplete="off"></div>' +
+    '<div class="field" style="flex:2 1 320px"><label for="wsGame">Spiel</label><select id="wsGame">' + wsGameOptions(d) + '</select></div>' +
     '<label class="check"><input type="checkbox" id="wsAll"' + (ws.allLeagues ? ' checked' : '') + '> alle Ligen statt nur QHL/NLB</label></div>';
-  if (!g) return h + '<p class="small muted" style="margin:8px 0 0">Wähle ein Spiel. Kommende Spiele (aus dem Spielplan) eignen sich für die Erfassung an der Linie, gespielte für die Analyse am Video.</p></div>';
+  if (!g) return h + '<p class="small muted" style="margin:8px 0 0">Wähle ein Spiel oder such danach (die Suche findet alle Spiele der Saison, auch ausserhalb von QHL/NLB). Kommende Spiele (aus dem Spielplan) eignen sich für die Erfassung an der Linie, gespielte für die Analyse am Video.</p></div>';
   const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, defId = atkHome ? g.awayTeamId : g.homeTeamId, atkName = atkHome ? g.homeName : g.awayName, defName = atkHome ? g.awayName : g.homeName;
   const shooters = wsRoster(d, atkId, 'F'), gks = wsRoster(d, defId, 'G');
   h += '<div class="row" style="margin-top:10px;align-items:end"><div class="field"><span class="lbl">Wer wirft?</span><div class="seg"><button data-wsatk="home" aria-pressed="' + atkHome + '">' + esc(g.homeName) + '</button><button data-wsatk="away" aria-pressed="' + !atkHome + '">' + esc(g.awayName) + '</button></div></div>' +
@@ -3296,6 +3304,10 @@ $('#wsBody').addEventListener('click', (e) => {
   if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; return renderWurf(); }
   if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; return renderWurf(); }
   if (b.id === 'wsPrepPdf') return wsPrepOpen();
+});
+$('#wsBody').addEventListener('input', (e) => {
+  if (e.target.id !== 'wsQ') return;
+  state.ws.q = e.target.value; const sel = $('#wsGame'); if (sel) sel.innerHTML = wsGameOptions(data());
 });
 $('#wsBody').addEventListener('change', (e) => {
   const ws = state.ws, t = e.target;
