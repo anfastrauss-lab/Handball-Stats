@@ -1,5 +1,5 @@
-// Sicherung der Spielerübersicht: liest alle Akten, Techniktests und den Änderungsverlauf aus dem Zentralspeicher
-// und legt sie verschlüsselt in den Ordner «sicherung» (eine Datei pro Tag). Läuft wöchentlich über GitHub.
+// Sicherung der Spielerübersicht und der Merklisten: liest Akten, Techniktests, Änderungsverlauf und (falls eingerichtet)
+// die Merklisten aus dem Zentralspeicher und legt sie verschlüsselt in den Ordner «sicherung» (eine Datei pro Tag). Läuft wöchentlich über GitHub.
 import fs from 'node:fs';
 import path from 'node:path';
 import { encrypt } from './crypto.mjs';
@@ -26,6 +26,12 @@ async function alle(token, pfad) {
   }
   return out;
 }
+// Merklisten: nur sichern, wenn die Tabellen eingerichtet sind und der Zugang sie lesen darf (Rolle «Sicherung»)
+async function optional(token, pfad) {
+  const r = await fetch(URL_ + '/rest/v1/' + pfad + (pfad.includes('?') ? '&' : '?') + 'limit=1', { headers: { apikey: KEY, Authorization: 'Bearer ' + token } });
+  if (!r.ok) { console.log('Hinweis: «' + pfad.split('?')[0] + '» wird nicht gesichert (' + r.status + ', noch nicht eingerichtet?).'); return null; }
+  return alle(token, pfad);
+}
 const token = await login();
 const personen = await alle(token, 'personen?select=*&order=email');
 if (!personen.length) fail('Der Sicherungs-Zugang sieht keine Personen. Ist er in der Tabelle «personen» eingetragen und aktiv?');
@@ -34,10 +40,15 @@ const daten = {
   spieler_akten: await alle(token, 'spieler_akten?select=*&order=player_id'),
   techniktests: await alle(token, 'techniktests?select=*&order=id'),
   verlauf: await alle(token, 'verlauf?select=*&order=id'),
+  merklisten: await optional(token, 'merklisten?select=*&order=id'),
+  merklisten_mitglieder: await optional(token, 'merklisten_mitglieder?select=*&order=liste_id'),
+  merkliste: await optional(token, 'merkliste?select=*&order=liste_id,player_id'),
+  empfehlungen: await optional(token, 'empfehlungen?select=*&order=id'),
 };
+if (daten.merklisten && !daten.merklisten.length) console.log('Hinweis: Keine Merklisten gefunden. Hat der Sicherungs-Zugang in der Tabelle «personen» die Rolle «Sicherung»? Sonst sieht er nur eigene Listen.');
 fs.mkdirSync(DIR, { recursive: true });
 const tag = new Date().toISOString().slice(0, 10), datei = path.join(DIR, 'sicherung-' + tag + '.enc');
 fs.writeFileSync(datei + '.tmp', encrypt(JSON.stringify(daten), SCOUT)); fs.renameSync(datei + '.tmp', datei);
 const alt = fs.readdirSync(DIR).filter((f) => /^sicherung-\d{4}-\d{2}-\d{2}\.enc$/.test(f)).sort();
 for (const f of alt.slice(0, Math.max(0, alt.length - BEHALTEN))) fs.unlinkSync(path.join(DIR, f));
-console.log('Sicherung geschrieben: ' + datei + ' (' + daten.spieler_akten.length + ' Akten, ' + daten.techniktests.length + ' Techniktests, ' + daten.verlauf.length + ' Verlaufseinträge, ' + personen.length + ' Personen).');
+console.log('Sicherung geschrieben: ' + datei + ' (' + daten.spieler_akten.length + ' Akten, ' + daten.techniktests.length + ' Techniktests, ' + daten.verlauf.length + ' Verlaufseinträge, ' + personen.length + ' Personen' + (daten.merklisten ? ', ' + daten.merklisten.length + ' Merklisten mit ' + (daten.merkliste || []).length + ' Einträgen' : '') + ').');

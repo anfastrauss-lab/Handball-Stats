@@ -128,7 +128,30 @@ create policy "empfehlungen lesen"     on public.empfehlungen for select to auth
 create policy "empfehlungen schicken"  on public.empfehlungen for insert to authenticated with check (von_email = public.ich() and public.ist_person());
 create policy "empfehlungen erledigen" on public.empfehlungen for update to authenticated using (an_email = public.ich()) with check (an_email = public.ich());
 create policy "empfehlungen loeschen"  on public.empfehlungen for delete to authenticated using (an_email = public.ich() or von_email = public.ich());
+
+-- Wöchentliche Sicherung: Ein Zugang mit der Rolle «Sicherung» darf alles lesen (nicht ändern)
+create or replace function public.ist_sicherung() returns boolean language sql stable security definer set search_path = public as $$
+  select exists (select 1 from personen p where lower(p.email) = public.ich() and lower(coalesce(p.rolle, '')) = 'sicherung')
+$$;
+grant execute on function public.ist_sicherung() to authenticated;
+drop policy if exists "sicherung listen" on public.merklisten;
+drop policy if exists "sicherung mitglieder" on public.merklisten_mitglieder;
+drop policy if exists "sicherung eintraege" on public.merkliste;
+drop policy if exists "sicherung empfehlungen" on public.empfehlungen;
+create policy "sicherung listen"       on public.merklisten for select to authenticated using (public.ist_sicherung());
+create policy "sicherung mitglieder"   on public.merklisten_mitglieder for select to authenticated using (public.ist_sicherung());
+create policy "sicherung eintraege"    on public.merkliste for select to authenticated using (public.ist_sicherung());
+create policy "sicherung empfehlungen" on public.empfehlungen for select to authenticated using (public.ist_sicherung());
 ```
+
+## Sicherung
+
+Die wöchentliche Sicherung (sonntags) nimmt die Merklisten mit, sobald die Tabellen eingerichtet sind. Damit sie **alle** Listen sieht und nicht nur eigene, braucht der Sicherungs-Zugang in der Tabelle **«personen»** bei **«rolle»** den Wert **«Sicherung»**:
+
+1. In Supabase links auf **«Table Editor»**, dann auf die Tabelle **«personen»**.
+2. In der Zeile des Sicherungs-Zugangs (die E-Mail, die im GitHub-Secret `SICHERUNG_EMAIL` steht) bei **rolle** «Sicherung» eintragen und speichern.
+
+Der Sicherungs-Zugang kann die Merklisten damit nur lesen, nicht ändern. Im Protokoll des Sicherungslaufs steht danach z. B. «… 4 Merklisten mit 37 Einträgen». Das Zurückspielen der Merklisten aus einer Sicherung ist im Tool noch nicht eingebaut. Im Notfall lässt sich das von Hand erledigen.
 
 ## Gut zu wissen
 
@@ -136,5 +159,5 @@ create policy "empfehlungen loeschen"  on public.empfehlungen for delete to auth
 - **Private Liste:** wird beim ersten Öffnen der Merkliste automatisch angelegt und kann nicht gelöscht werden.
 - **Team-Listen:** Nur wer eine Liste angelegt hat, kann sie umbenennen, löschen und Mitglieder bestimmen. Alle Mitglieder können Spieler hinzufügen, entfernen und Notizen, Status und Bewertung ändern.
 - **Ohne Anmeldung** gibt es wie bisher eine Merkliste nur im eigenen Browser.
-- **Sicherung:** Die wöchentliche Sicherung erfasst diese Tabellen noch nicht. Sag Bescheid, falls sie dazukommen sollen.
+- **Sicherung:** siehe Abschnitt «Sicherung» oben.
 - Der Text lässt sich gefahrlos ein zweites Mal ausführen, bestehende Einträge bleiben erhalten.

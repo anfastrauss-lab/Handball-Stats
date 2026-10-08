@@ -170,6 +170,29 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 #talTbl td small { display: block; margin-left: 0; font-size: 11.5px; line-height: 1.2; }
 #talTbl td.name { min-width: 180px; white-space: normal; }
 #talTbl td.name .namebtn { white-space: nowrap; }
+/* Einführung */
+.tour { position: fixed; right: 20px; bottom: calc(env(safe-area-inset-bottom, 0px) + 20px); z-index: 45; width: min(380px, calc(100vw - 28px)); background: var(--surface); border: 2px solid var(--signal); border-radius: 12px; box-shadow: 0 14px 40px rgba(0, 0, 0, .35); padding: 14px 16px 12px; }
+.tour h3 { margin: 2px 0 6px; } .tour p { font-size: 15px; } .tourstep { margin: 0; }
+.tourhl { outline: 3px solid var(--signal) !important; outline-offset: 4px; border-radius: 8px; position: relative; z-index: 1; }
+@media (max-width: 520px) { .tour { right: 14px; left: 14px; width: auto; } }
+@media print { .tour { display: none !important; } }
+/* Leistungsprofil im Spielerprofil */
+.ppbox { display: grid; gap: 6px; }
+.pp { display: grid; grid-template-columns: 150px minmax(60px, 1fr) 150px; gap: 10px; align-items: center; font-size: 14px; }
+.ppbar { height: 10px; background: var(--surface-2); border-radius: 5px; overflow: hidden; }
+.ppbar i { display: block; height: 100%; background: var(--court); border-radius: 5px; }
+.ppbar i.hi { background: var(--good); } .ppbar i.lo { background: var(--bad); }
+.ppval small { color: var(--ink-2); }
+@media (max-width: 520px) { .pp { grid-template-columns: 1fr 110px; } .pplab { grid-column: 1 / -1; font-weight: 600; } }
+/* Mehrfachauswahl «Liga und Gruppe» */
+.msel { position: relative; }
+.mselbtn { width: 100%; min-height: 38px; padding: 6px 30px 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); text-align: left; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; position: relative; }
+.mselbtn::after { content: '▾'; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--ink-2); }
+.mselpanel { margin-top: 6px; max-height: 320px; overflow: auto; background: var(--surface); border: 1px solid var(--court); border-radius: 8px; padding: 6px 10px 10px; }
+.mselpanel .check { display: flex; font-weight: 400; font-size: 14.5px; padding: 3px 0; }
+.mselhead { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 2px 0 4px; }
+.mselsec { margin: 8px 0 2px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; color: var(--ink-2); }
+.mselfoot { position: sticky; bottom: -10px; background: var(--surface); padding: 8px 0 0; margin-top: 6px; border-top: 1px solid var(--line); }
 /* Schnellsuche in der Kopfzeile */
 .qs { position: relative; flex: 0 1 260px; min-width: 180px; }
 .qs input { width: 100%; min-height: 36px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); }
@@ -372,6 +395,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
     <input type="search" id="qsIn" placeholder="Spieler suchen …" autocomplete="off" aria-controls="qsRes" aria-expanded="false">
     <div class="qsres" id="qsRes" role="listbox" hidden></div>
   </div>
+  <button class="themebtn" id="helpBtn" title="Kurze Einführung in das Tool" aria-label="Einführung anzeigen">?</button>
   <button class="themebtn" id="themeBtn"></button>
   <nav class="tabs" role="tablist" aria-label="Ansicht">
     <button class="tab" role="tab" id="tabSpieler" aria-selected="true" aria-controls="viewSpieler">Spieler</button>
@@ -426,7 +450,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
       </div>
       <div class="field wide"><label for="fName">Name</label><input type="search" id="fName" placeholder="Name suchen" autocomplete="off"></div>
       <div class="field wide" id="seasonField" hidden><label for="fSeason">Saison</label><select id="fSeason"></select></div>
-      <div class="field wide"><label for="fGroup">Liga und Gruppe</label><select id="fGroup"></select></div>
+      <div class="field wide msel"><span class="lbl" id="lblGroup">Liga und Gruppe</span><button type="button" class="mselbtn" id="fGroupBtn" aria-haspopup="true" aria-expanded="false" aria-labelledby="lblGroup"></button><div class="mselpanel" id="fGroupPanel" hidden></div></div>
       <div class="field wide"><label for="fTeam">Team</label><select id="fTeam"></select></div>
       <div class="field"><label for="fYearFrom">Jahrgang ab</label><input type="number" id="fYearFrom" min="1950" max="2030" placeholder="z. B. 2008" inputmode="numeric"></div>
       <div class="field"><label for="fYearTo">Jahrgang bis</label><input type="number" id="fYearTo" min="1950" max="2030" placeholder="z. B. 2010" inputmode="numeric"></div>
@@ -761,6 +785,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
 <div class="backdrop" id="backdrop" hidden></div>
 <aside class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="dTitle" hidden></aside>
 <aside class="drawer" id="akteDrawer" role="dialog" aria-modal="true" aria-labelledby="akTitle" hidden></aside>
+<div class="tour" id="tour" role="dialog" aria-modal="false" aria-labelledby="tourTitle" hidden></div>
 <div class="cmpbar" id="cmpBar" role="region" aria-label="Spielervergleich" hidden>
   <span id="cmpNames" aria-live="polite"></span>
   <button class="btn" id="cmpGo">Vergleichen</button>
@@ -1035,7 +1060,7 @@ function flash(el, text, cls) { el.textContent = text; el.className = 'msg ' + (
 const emptyData = () => ({ groups: {}, games: {}, stats: {}, players: {}, clubs: {}, teams: {}, fixtures: {} });
 const state = {
   view: 'spieler', real: emptyData(), demo: null, storeOk: null,
-  f: { role: 'F', season: '', group: '', team: '', q: '', minGames: 1, minShots: 0, yearFrom: 0, yearTo: 0, pos: '', up: false, center: null, radius: 40, cantons: new Set() },
+  f: { role: 'F', season: '', group: [], team: '', q: '', minGames: 1, minShots: 0, yearFrom: 0, yearTo: 0, pos: '', up: false, center: null, radius: 40, cantons: new Set() },
   mapOpen: lsGet('scouting.map', true) !== false, pick: false, listBase: [], noGeo: 0,
   sort: [{ key: 'goals', dir: -1 }], sortDefault: true, limit: 100, list: [], open: null, lastFocus: null,
   merk: new Set(lsGet('scouting.merkliste', [])), notes: lsGet('scouting.notizen', {}),
@@ -1317,13 +1342,13 @@ function inArea(p) {
 const colText = (c, p) => (c.t ? c.t(p) : String(c.v(p)));
 
 function aggregate(d, f) {
-  const idx = index(d), m = new Map();
+  const idx = index(d), m = new Map(), gSel = gsel(f);
   for (const r of rows(d)) {
     if (r.skipF) continue; // Torhüter, als Feldspieler gemeldet, ohne Aktion
     if (r.role !== f.role) continue;
     const g = d.games[r.gameId];
     if (g && !inSeason(d, g, f.season || '')) continue;
-    if (f.group && (!g || !groupMatch(d, g.groupId, f.group))) continue;
+    if (gSel.length && (!g || !gSel.some((s) => groupMatch(d, g.groupId, s)))) continue;
     if (f.team && String(r.teamId) !== f.team) continue;
     let p = m.get(r.playerId);
     if (!p) { p = { id: r.playerId, role: r.role, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, goals7: 0, shots7: 0, tf: 0, min2: 0, warn: 0, dq: 0, saves: 0, shotsGK: 0, saves7: 0, shots7GK: 0 }; m.set(r.playerId, p); }
@@ -1341,7 +1366,7 @@ function computeList() {
   const d = data(), f = state.f, cols = colsFor(f.role);
   const q = norm(f.q);
   // Alles ausser dem Gebiet wird zwischengespeichert, damit der Radius-Regler flüssig bleibt.
-  const key = [state.demo ? 'd' : 'r', d._ver || 0, f.role, f.season, f.group, f.team, f.q, f.minGames, f.minShots, f.yearFrom, f.yearTo, f.pos, f.up].join('|');
+  const key = [state.demo ? 'd' : 'r', d._ver || 0, f.role, f.season, gsel(f).join(','), f.team, f.q, f.minGames, f.minShots, f.yearFrom, f.yearTo, f.pos, f.up].join('|');
   let list;
   if (state.baseCache && state.baseCache.key === key) list = state.baseCache.list;
   else {
@@ -1450,7 +1475,7 @@ function activeFilterList() {
   if (f.season) out.push({ k: 'season', t: f.season === 'all' ? 'Alle Saisons' : 'Saison ' + f.season });
   if (f.q.trim()) out.push({ k: 'q', t: 'Name: «' + f.q.trim() + '»' });
   if (f.up) out.push({ k: 'up', more: 1, t: 'Spielt hoch' });
-  if (f.group) { const g = Object.values(d.groups).find((x) => String(x.groupId) === f.group); out.push({ k: 'group', t: f.group.startsWith('liga:') ? f.group.slice(5) + ' (alle Gruppen)' : g ? groupLabel(g) : 'Gruppe ' + f.group }); }
+  for (const s of gsel(f)) { const g = Object.values(d.groups).find((x) => String(x.groupId) === s); out.push({ k: 'g|' + s, t: s.startsWith('liga:') ? s.slice(5) + ' (alle Gruppen)' : g ? groupLabel(g) : 'Gruppe ' + s }); }
   if (f.team) out.push({ k: 'team', t: index(d).teams[f.team] || 'Team' });
   if (f.yearFrom || f.yearTo) out.push({ k: 'year', t: 'Jahrgang ' + (f.yearFrom && f.yearTo ? (f.yearFrom === f.yearTo ? f.yearFrom : f.yearFrom + '–' + f.yearTo) : f.yearFrom ? 'ab ' + f.yearFrom : 'bis ' + f.yearTo) });
   if (f.pos) out.push({ k: 'pos', more: 1, t: f.pos === '__none' ? 'Position unbekannt' : f.pos.startsWith('grp:') ? f.pos.slice(4) + ' (alle)' : f.pos });
@@ -1477,7 +1502,7 @@ function clearFilter(k) {
   if (all || k === 'q') { f.q = ''; $('#fName').value = ''; }
   if (all || k === 'season') f.season = '';
   if (all || k === 'up') f.up = false;
-  if (all || k === 'group') f.group = '';
+  if (all) f.group = []; else if (k.startsWith('g|')) f.group = gsel(f).filter((s) => s !== k.slice(2));
   if (all || k === 'team') f.team = '';
   if (all || k === 'year') { f.yearFrom = 0; f.yearTo = 0; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; }
   if (all || k === 'pos') f.pos = '';
@@ -1501,6 +1526,8 @@ function renderSortBar() {
     : 'Klicke auf eine Spaltenüberschrift, um danach zu sortieren. Ein zweiter Klick dreht die Reihenfolge um. Tipp: Mit gedrückter Shift-Taste kommt eine weitere Spalte dazu.';
 }
 // Filter «Liga und Gruppe»: eine einzelne Gruppe (Nummer) oder eine ganze Liga («liga:Junioren U17 Inter»)
+// Auswahl als Liste (früher ein einzelner Wert)
+const gsel = (f) => (Array.isArray(f.group) ? f.group : f.group ? [f.group] : []);
 const groupMatch = (d, gid, sel) => (!sel ? true : sel.startsWith('liga:') ? ligaKey(d.groups[gid] || { name: '' }) === sel.slice(5) : String(gid) === sel);
 function fillSelects() {
   const d = data(), f = state.f, idx = index(d);
@@ -1512,16 +1539,21 @@ function fillSelects() {
   const want = f.season === 'all' ? '' : f.season || seasons[0] || '';
   const gs = Object.values(d.groups).filter((g) => !multi || !want || idx.groupSeason[g.groupId] === want).sort((a, b) => groupLabel(a).localeCompare(groupLabel(b), 'de'));
   $('#fUp').checked = !!f.up;
-  // Ganze Ligen (z. B. «U17 Inter, alle Gruppen») zuerst, dann die einzelnen Gruppen
+  // Mehrfachauswahl «Liga und Gruppe»: ganze Ligen (alle Gruppen) und einzelne Gruppen, beliebig kombinierbar
   const byLiga = new Map(); for (const g of gs) { const k = ligaKey(g); byLiga.set(k, (byLiga.get(k) || 0) + 1); }
-  const ligaOpts = [...byLiga].filter(([, n]) => n > 1).map(([k]) => k).sort((a, b) => a.localeCompare(b, 'de'));
-  $('#fGroup').innerHTML = '<option value="">Alle Ligen und Gruppen</option>' +
-    (ligaOpts.length ? '<optgroup label="Ganze Liga">' + ligaOpts.map((k) => '<option value="liga:' + esc(k) + '">' + esc(k) + ' (alle ' + byLiga.get(k) + ' Gruppen)</option>').join('') + '</optgroup><optgroup label="Einzelne Gruppe">' : '') +
-    gs.map((g) => '<option value="' + g.groupId + '">' + esc(groupLabel(g)) + '</option>').join('') + (ligaOpts.length ? '</optgroup>' : '');
-  if (f.group && !(f.group.startsWith('liga:') ? ligaOpts.includes(f.group.slice(5)) : gs.some((g) => String(g.groupId) === f.group))) f.group = '';
-  $('#fGroup').value = f.group;
+  const ligaKeys = [...byLiga.keys()].sort((a, b) => a.localeCompare(b, 'de'));
+  const valid = new Set([...ligaKeys.map((k) => 'liga:' + k), ...gs.map((g) => String(g.groupId))]);
+  f.group = gsel(f).filter((s) => valid.has(s));
+  const sel = new Set(f.group), box = (v, label, extra) => '<label class="check"><input type="checkbox" data-gsel="' + esc(v) + '"' + (sel.has(v) ? ' checked' : '') + '> ' + esc(label) + (extra ? ' <span class="muted small">' + esc(extra) + '</span>' : '') + '</label>';
+  $('#fGroupPanel').innerHTML = '<div class="mselhead"><span class="small muted">' + (sel.size ? sel.size + ' ausgewählt' : 'Nichts gewählt = alle') + '</span><button type="button" class="linkbtn small" id="fGroupNone"' + (sel.size ? '' : ' hidden') + '>Alle abwählen</button></div>' +
+    '<div class="mselsec">Ganze Liga</div>' + ligaKeys.map((k) => box('liga:' + k, k, byLiga.get(k) > 1 ? 'alle ' + byLiga.get(k) + ' Gruppen' : '')).join('') +
+    '<div class="mselsec">Einzelne Gruppe</div>' + gs.map((g) => box(String(g.groupId), groupLabel(g))).join('') +
+    '<div class="mselfoot"><button type="button" class="btn" id="fGroupDone">Fertig</button></div>';
+  const names = f.group.map((s) => (s.startsWith('liga:') ? s.slice(5) : groupLabel(d.groups[s] || { name: 'Gruppe ' + s })));
+  $('#fGroupBtn').textContent = !names.length ? 'Alle Ligen und Gruppen' : names.length <= 2 ? names.join(', ') : names.length + ' ausgewählt';
+  $('#fGroupBtn').title = names.join(', ');
   const gsIds = new Set(gs.map((g) => String(g.groupId)));
-  const ts = Object.keys(idx.teams).filter((id) => (f.group ? idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => groupMatch(d, x, f.group)) : !multi || (idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => gsIds.has(x))))).map((id) => [id, idx.teams[id]]).sort((a, b) => a[1].localeCompare(b[1], 'de'));
+  const ts = Object.keys(idx.teams).filter((id) => (f.group.length ? idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => f.group.some((s) => groupMatch(d, x, s))) : !multi || (idx.teamGroups[id] && [...idx.teamGroups[id]].some((x) => gsIds.has(x))))).map((id) => [id, idx.teams[id]]).sort((a, b) => a[1].localeCompare(b[1], 'de'));
   $('#fTeam').innerHTML = '<option value="">Alle Teams</option>' + ts.map(([id, n]) => '<option value="' + id + '">' + esc(n) + '</option>').join('');
   if (!ts.some(([id]) => id === f.team)) f.team = '';
   $('#fTeam').value = f.team;
@@ -1849,6 +1881,7 @@ function renderDrawer() {
     '<div class="kpis">' + kpis + '</div>' +
     '<p class="small muted">' + esc(profSummary(p, role, sumLabel)) + '</p>' +
     ligaInsight(d, id, role) +
+    perfProfile(d, id, role) +
     nextBlock +
     seasonTable(d, allMine, role) +
     '<h3 style="margin-top:18px">' + (role === 'F' ? 'Tore pro Spiel' : 'Paraden pro Spiel') + '</h3><div class="bars">' + bars + '</div>' +
@@ -2001,8 +2034,8 @@ function setView(v) {
   if (at && tb.scrollWidth > tb.clientWidth) tb.scrollLeft = at.offsetLeft - tb.offsetLeft - (tb.clientWidth - at.offsetWidth) / 2;
   if (v === 'daten') renderData(); else if (v === 'merk') { renderMerk(); if (zsMode() === 'demo' || zsMode() === 'verbunden') smLoad(); } else if (v === 'report') renderReport(); else if (v === 'staefa') { renderStaefa(); zsStartPoll(); } else if (v === 'teams') renderTeam(); else renderPlayers();
 }
-function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); renderNewBox(); }
-function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: '', team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); smLoad(); }
+function renderAll() { migrateMerk(); renderStatus(); $('#merkCount').textContent = state.merk.size || ''; if (state.view === 'daten') renderData(); else if (state.view === 'merk') renderMerk(); else if (state.view === 'report') renderReport(); else if (state.view === 'staefa') renderStaefa(); else if (state.view === 'teams') renderTeam(); else renderPlayers(); renderDrawer(); renderCmpBar(); renderNewBox(); tourMaybe(); }
+function startDemo() { zsReset(); state.demo = makeDemo(); state.f = { ...state.f, group: [], team: '', q: '', yearFrom: 0, yearTo: 0, pos: '', center: null, cantons: new Set() }; $('#fName').value = ''; $('#fYearFrom').value = ''; $('#fYearTo').value = ''; setView('spieler'); renderAll(); smLoad(); }
 function setRole(r) {
   state.f.role = r; state.sort = defaultSort(r); state.sortDefault = true; state.limit = 100; state.t.sort = [{ key: 'score', dir: -1 }]; state.t.limit = 100;
   $('#roleF').setAttribute('aria-pressed', r === 'F'); $('#roleG').setAttribute('aria-pressed', r === 'G'); renderTable();
@@ -2075,6 +2108,50 @@ function levelOf(liga) {
 }
 const levelTxt = (v) => (v > 0 ? '+' : v < 0 ? '−' : '±') + nf(Math.abs(v), 1);
 
+// Formtrend: letzte 3 Spiele gegenüber den Spielen davor (Feldspieler: Tore pro Spiel, Torhüter: Paradenquote)
+function formOf(a) {
+  a.form = null; a.formTip = '';
+  const h = a.hist.slice().sort((x, y) => x.d.localeCompare(y.d)); if (h.length < 4) { a.formTip = 'Für einen Trend braucht es mindestens 4 Spiele in dieser Liga.'; return; }
+  const last = h.slice(-3), before = h.slice(0, -3), sum = (L, k) => L.reduce((s, x) => s + x[k], 0);
+  if (a.role === 'F') {
+    const l3 = sum(last, 'goals') / 3, bf = sum(before, 'goals') / before.length;
+    a.form = l3 - bf; a.formTip = 'Letzte 3 Spiele: ' + nf(l3, 1) + ' Tore pro Spiel, davor ' + nf(bf, 1) + ' (' + before.length + (before.length === 1 ? ' Spiel' : ' Spiele') + ').';
+  } else {
+    const s3 = sum(last, 'sg'), sb = sum(before, 'sg');
+    if (s3 < 10 || sb < 10) { a.formTip = 'Zu wenige erfasste Gegenwürfe für einen Trend (Liveticker lite?).'; return; }
+    const q3 = sum(last, 'sv') / s3, qb = sum(before, 'sv') / sb;
+    a.form = (q3 - qb) * 100; a.formTip = 'Letzte 3 Spiele: ' + Math.round(q3 * 100) + ' % Paraden, davor ' + Math.round(qb * 100) + ' %.';
+  }
+}
+// Anzeige: deutliche Veränderung mit Pfeil (Feldspieler ab ±0.8 Tore, Torhüter ab ±5 Prozentpunkte), sonst →
+const formTxt = (a) => { if (a.form == null) return '–'; const lim = a.role === 'F' ? 0.8 : 5, v = a.role === 'F' ? signed(a.form, 1) : signed(Math.round(a.form)) + ' Pkt'; return (a.form >= lim ? '▲ ' : a.form <= -lim ? '▼ ' : '→ ') + v; };
+
+// Leistungsprofil im Spielerprofil: wo steht der Spieler in seiner Hauptliga (Anteil der Vergleichsspieler, die schlechter sind)
+function perfProfile(d, id, role) {
+  const T = buildTalent(d), mine = T[role].filter((a) => a.id === id).sort((x, y) => y.games - x.games)[0]; if (!mine) return '';
+  const L = T.leagues[role][mine.liga]; if (!L || L.thin) return '<h3 style="margin-top:18px">Leistungsprofil</h3><p class="small muted">In der ' + esc(mine.liga) + ' gibt es zu wenige Vergleichsspieler für ein Profil.</p>';
+  const peers = L.peers.filter((a) => a.id !== id), F = role === 'F';
+  const M = F ? [
+    ['Tore pro Spiel', (a) => (a.games ? a.goals / a.games : null), 1, (v) => nf(v, 1)],
+    ['Wurfquote', (a) => (a.qs >= 10 ? a.qg / a.qs : null), 1, (v) => Math.round(v * 100) + ' %'],
+    ['7-Meter-Quote', (a) => (a.s7 >= 3 ? a.g7 / a.s7 : null), 1, (v) => Math.round(v * 100) + ' %'],
+    ['Wenig techn. Fehler', (a) => (a.games ? a.tf / a.games : null), -1, (v) => nf(v, 1) + ' pro Spiel'],
+    ['Wenig Zeitstrafen', (a) => (a.games ? a.min2 / a.games : null), -1, (v) => nf(v, 1) + ' pro Spiel'],
+  ] : [
+    ['Paradenquote', (a) => (a.sg >= 30 ? a.sv / a.sg : null), 1, (v) => Math.round(v * 100) + ' %'],
+    ['Paraden pro Spiel', (a) => (a.sn ? a.sv / a.sn : null), 1, (v) => nf(v, 1)],
+    ['7-Meter gehalten', (a) => (a.sg7 >= 3 ? a.sv7 / a.sg7 : null), 1, (v) => Math.round(v * 100) + ' %'],
+  ];
+  const rowsH = M.map(([label, fn, better, fmt]) => {
+    const v = fn(mine), vals = peers.map(fn).filter((x) => x != null);
+    if (v == null || vals.length < 5) return '<div class="pp"><span class="pplab">' + esc(label) + '</span><span class="ppbar"><i style="width:0"></i></span><span class="ppval muted">zu wenig Daten</span></div>';
+    const worse = vals.filter((x) => (x - v) * better < 0).length, eq = vals.filter((x) => x === v).length, pct = Math.round(((worse + eq / 2) / vals.length) * 100);
+    const avg = vals.reduce((s, x) => s + x, 0) / vals.length, cls = pct >= 75 ? 'hi' : pct <= 25 ? 'lo' : '';
+    return '<div class="pp" title="' + esc(label + ': ' + fmt(v) + ', Schnitt der Liga ' + fmt(avg) + '. Besser als ' + pct + ' % von ' + vals.length + ' Vergleichsspielern.') + '"><span class="pplab">' + esc(label) + '</span><span class="ppbar"><i class="' + cls + '" style="width:' + pct + '%"></i></span><span class="ppval"><b>' + pct + ' %</b> <small>' + esc(fmt(v)) + ' · Ø ' + esc(fmt(avg)) + '</small></span></div>';
+  }).join('');
+  return '<h3 style="margin-top:18px">Leistungsprofil</h3><p class="small muted" style="margin:0 0 6px">Besser als wie viel Prozent der Spieler in der ' + esc(mine.liga) + ' (' + peers.length + ' Vergleichsspieler mit mindestens 3 Spielen, aktuelle Saison). Grün heisst oberes Viertel, rot unteres Viertel.' + (mine.games < 3 ? ' <b>Achtung:</b> nur ' + mine.games + (mine.games === 1 ? ' Spiel' : ' Spiele') + ', das Profil ist noch wenig aussagekräftig.' : '') + '</p><div class="ppbox">' + rowsH + '</div>';
+}
+
 // Pro Spieler und Liga zusammenfassen und mit dem Schnitt der Liga vergleichen (einmal pro Datenstand)
 function buildTalent(d, opt) {
   if (!opt && d._talent && d._talent.ver === (d._ver || 0)) { if (d._talent.wTF !== state.t.wTF) applyPerf(d._talent); return d._talent; }
@@ -2086,15 +2163,17 @@ function buildTalent(d, opt) {
     const liga = ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId });
     const k = r.role + '|' + liga + '|' + r.playerId;
     let a = map.get(k);
-    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, saves: 0, shotsGK: 0, tf: 0, upCat: 0, upNat: 0, upG: 0, teams: new Set(), groups: new Set() }; map.set(k, a); }
+    if (!a) { a = { id: r.playerId, role: r.role, liga, name: r.name, teamId: r.teamId, last: '', games: 0, goals: 0, shots: 0, qg: 0, qs: 0, qn: 0, sv: 0, sg: 0, sn: 0, saves: 0, shotsGK: 0, tf: 0, min2: 0, g7: 0, s7: 0, sv7: 0, sg7: 0, hist: [], upCat: 0, upNat: 0, upG: 0, teams: new Set(), groups: new Set() }; map.set(k, a); }
     a.teams.add(String(r.teamId)); a.groups.add(String(g.groupId)); // für die Filter «Team» und «Liga und Gruppe»
     const u = upOf(d, r); if (u) { a.upCat = Math.max(a.upCat, u.cat); a.upNat = u.nat; a.upG++; }
     if (r.role === 'F' || r.shotsGK > 0) a.games++;
     a.goals += r.goals || 0; a.shots += r.shots || 0; a.qg += r.qg; a.qs += r.qs; a.qn += r.qn; a.sv += r.sv; a.sg += r.sg; a.sn += r.sn; a.saves += r.saves || 0; a.shotsGK += r.shotsGK || 0; a.tf += r.tf || 0;
+    a.min2 += r.min2 || 0; if (!r.lite) { a.g7 += r.goals7 || 0; a.s7 += r.shots7 || 0; a.sv7 += r.saves7 || 0; a.sg7 += r.shots7GK || 0; } // 7-Meter nur aus voll erfassten Spielen
+    if (r.role === 'F' || r.shotsGK > 0) a.hist.push({ d: String(g.date), goals: r.goals || 0, sv: r.sv, sg: r.sg }); // Verlauf für den Formtrend
     const date = String(g.date); if (date >= a.last) { a.last = date; a.teamId = r.teamId; a.name = r.name; }
   }
   const T = { ver: d._ver || 0, F: [], G: [], leagues: { F: {}, G: {} } };
-  for (const a of map.values()) { const pi = d.players[a.id] || {}; a.year = pi.year || 0; a.position = pi.position || ''; a.team = idx.teams[a.teamId] || ''; a.up = a.upCat ? { cat: a.upCat, nat: a.upNat, games: a.upG } : null; a.level = levelOf(a.liga); T[a.role].push(a); }
+  for (const a of map.values()) { const pi = d.players[a.id] || {}; a.year = pi.year || 0; a.position = pi.position || ''; a.team = idx.teams[a.teamId] || ''; a.up = a.upCat ? { cat: a.upCat, nat: a.upNat, games: a.upG } : null; a.level = levelOf(a.liga); formOf(a); T[a.role].push(a); }
   for (const role of ['F', 'G']) {
     const byLiga = {}; for (const a of T[role]) (byLiga[a.liga] || (byLiga[a.liga] = [])).push(a);
     for (const [liga, list] of Object.entries(byLiga)) {
@@ -2187,7 +2266,8 @@ function talCols(role) {
     ];
   const dist = state.f.center ? [{ k: 'dist', label: 'km', title: 'Luftlinie zum gewählten Mittelpunkt', v: (a) => (a.dist == null ? null : a.dist), t: (a) => (a.dist == null ? '–' : nf(a.dist, 0)) }] : [];
   // Score und Leistung direkt hinter dem Namen, damit sie ohne seitliches Scrollen sichtbar sind
-  return [tail[1], tail[0], ...common.slice(0, 2), ...dist, ...common.slice(2), ...mid];
+  const form = { k: 'form', label: 'Form', title: 'Letzte 3 Spiele gegenüber den Spielen davor: Tore pro Spiel, bei Torhütern Paradenquote. ▲ deutlich besser, ▼ deutlich schlechter. Fahre über einen Wert für die Zahlen.', v: (a) => a.form, t: formTxt, tip: (a) => a.formTip };
+  return [tail[1], tail[0], form, ...common.slice(0, 2), ...dist, ...common.slice(2), ...mid];
 }
 // Hinweis «+ U17 Elite» auf weitere Ligen des Spielers, mit deren Zahlen beim Darüberfahren
 // Kennzeichen hinter dem Namen in der Talent-Bewertung: «Spielt hoch» und weitere Ligen, ohne Doppelungen.
@@ -2210,7 +2290,7 @@ function talentList() {
   // Filter kommen aus der gemeinsamen Filterleiste der Spielerseite (state.f), Mindestwerte und Regler aus state.t
   const d = data(), T = buildTalent(d), t = state.t, f = state.f, role = f.role;
   let list = T[role].filter((a) => a.games >= t.minGames && (role === 'F' ? a.shots >= t.minShots : a.sg >= t.minGK));
-  if (f.group) list = list.filter((a) => [...a.groups].some((gid) => groupMatch(d, gid, f.group)));
+  if (gsel(f).length) list = list.filter((a) => [...a.groups].some((gid) => gsel(f).some((s) => groupMatch(d, gid, s))));
   if (f.team) list = list.filter((a) => a.teams.has(String(f.team)));
   if (f.pos) list = list.filter((a) => posMatch(a.position || '', f.pos));
   const toks = norm(f.q).split(/\s+/).filter(Boolean);
@@ -2221,7 +2301,7 @@ function talentList() {
   for (const a of list) { a.score = a.perf == null ? null : a.perf + t.wAge * (a.ageAdv || 0) + t.wLiga * (a.level || 0); a.others = []; a.upShow = a.up; }
   // Eine Zeile pro Spieler: die Liga mit dem besten Score (bei Gleichstand die mit mehr Spielen).
   // Ausnahme: eine Gruppe ist gewählt oder «Jede Liga einzeln zeigen» ist an.
-  if (!f.group && !t.split) {
+  if (!gsel(f).length && !t.split) {
     const val = (x) => (x.score == null ? -1e9 : x.score), best = new Map();
     for (const a of list) { const b = best.get(a.id); if (!b || val(a) - val(b) > 0 || (val(a) === val(b) && a.games > b.games)) best.set(a.id, a); }
     for (const a of list) {
@@ -3675,11 +3755,25 @@ $('#merkClear').onclick = (e) => {
 };
 $('#goDaten').onclick = () => setView('daten');
 $('#demoStart1').onclick = startDemo; $('#demoStart2').onclick = startDemo;
-$('#demoEnd').onclick = () => { zsReset(); state.demo = null; smOff(); state.f.group = ''; state.f.team = ''; closeDetail(); renderAll(); };
+$('#demoEnd').onclick = () => { zsReset(); state.demo = null; smOff(); state.f.group = []; state.f.team = ''; closeDetail(); renderAll(); };
 $('#roleF').onclick = () => setRole('F'); $('#roleG').onclick = () => setRole('G');
-$('#fSeason').onchange = (e) => { state.f.season = e.target.value; state.f.group = ''; state.f.team = ''; state.limit = 100; fillSelects(); renderTable(); };
+$('#fSeason').onchange = (e) => { state.f.season = e.target.value; state.f.group = []; state.f.team = ''; state.limit = 100; fillSelects(); renderTable(); };
 $('#fUp').onchange = (e) => { state.f.up = e.target.checked; state.limit = 100; renderTable(); };
-$('#fGroup').onchange = (e) => { state.f.group = e.target.value; state.limit = 100; fillSelects(); renderTable(); };
+// Mehrfachauswahl «Liga und Gruppe»: aufklappen, Häkchen setzen, sofort filtern
+const gPanelOpen = (open) => { $('#fGroupPanel').hidden = !open; $('#fGroupBtn').setAttribute('aria-expanded', String(open)); };
+$('#fGroupBtn').onclick = (e) => { e.stopPropagation(); gPanelOpen($('#fGroupPanel').hidden); };
+$('#fGroupPanel').addEventListener('change', (e) => {
+  const v = e.target.dataset && e.target.dataset.gsel; if (v == null) return;
+  const cur = gsel(state.f).filter((s) => s !== v); if (e.target.checked) cur.push(v);
+  state.f.group = cur; state.limit = 100; state.t.limit = 100; fillSelects(); renderTable();
+});
+$('#fGroupPanel').addEventListener('click', (e) => {
+  e.stopPropagation();
+  if (e.target.closest('#fGroupNone')) { state.f.group = []; state.limit = 100; fillSelects(); renderTable(); }
+  else if (e.target.closest('#fGroupDone')) gPanelOpen(false);
+});
+document.addEventListener('click', (e) => { if (!e.target.closest('.msel')) gPanelOpen(false); });
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && !$('#fGroupPanel').hidden) { gPanelOpen(false); $('#fGroupBtn').focus(); } });
 $('#fTeam').onchange = (e) => { state.f.team = e.target.value; state.limit = 100; renderTable(); };
 $('#fName').oninput = (e) => { state.f.q = e.target.value; state.limit = 100; renderTable(); };
 // Mindestwerte schreiben in die gerade aktive Ansicht (Zahlen oder Talent-Bewertung)
@@ -3748,6 +3842,32 @@ $('#copyTable').onclick = async () => {
   const ok = await kopieren(lines.join('\n'));
   flash($('#copyMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
+/* ---------- Einführung für neue Nutzer ----------
+   Erscheint einmal, sobald Daten geladen sind (gemerkt im Browser), und jederzeit über den Knopf «?» oben. */
+const TOUR = [
+  { sel: () => (matchMedia('(max-width: 860px)').matches ? '#filterToggle' : '#filterPanel'), t: 'Filter', x: 'Hier stellst du ein, wen du suchst: Liga und Gruppe (mehrere auf einmal möglich), Team, Jahrgang, Gebiet und mehr. Aktive Filter erscheinen oben über der Liste und lassen sich mit ✕ einzeln entfernen.' },
+  { sel: () => '.modebar', t: 'Zahlen und Talent-Bewertung', x: '«Zahlen» zeigt die gezählten Werte aus allen Spielen. Die «Talent-Bewertung» vergleicht jeden Spieler mit seiner Liga und berücksichtigt Alter und Ligastärke. Beim Score gilt: höher ist besser. Fährst du über einen Wert, siehst du die Rechnung.' },
+  { sel: () => (matchMedia('(max-width: 640px)').matches ? '#cardList' : '#tablewrap'), t: 'Spielerprofil und Merkliste', x: 'Ein Klick auf einen Namen öffnet das Profil mit Formkurve, Leistungsprofil, nächsten Spielen und PDF-Bericht. Mit dem Stern ☆ setzt du einen Spieler auf die Merkliste.' },
+  { sel: () => '.qs', t: 'Schnellsuche', x: 'Kennst du den Namen, tipp ihn hier ein. Das Profil öffnet sich direkt, egal wo du gerade bist.' },
+  { sel: () => '#tabMerk', t: 'Merklisten', x: 'In der Merkliste siehst du, wann deine Spieler das nächste Mal spielen. Nach der Anmeldung im Reiter «Spielerübersicht Stäfa» gibt es eine private Liste, Team-Listen und die Möglichkeit, Spieler an andere zu schicken.' },
+];
+state.tour = -1;
+function tourShow(i) {
+  document.querySelectorAll('.tourhl').forEach((e) => e.classList.remove('tourhl'));
+  const box = $('#tour');
+  if (i < 0 || i >= TOUR.length) { state.tour = -1; box.hidden = true; lsSet('scouting.tour', true); return; }
+  state.tour = i; const s = TOUR[i], el = $(s.sel());
+  if (el) { el.classList.add('tourhl'); el.scrollIntoView({ block: 'center', behavior: 'smooth' }); }
+  box.innerHTML = '<div class="tourstep small muted">Schritt ' + (i + 1) + ' von ' + TOUR.length + '</div><h3 id="tourTitle">' + esc(s.t) + '</h3><p>' + esc(s.x) + '</p>' +
+    '<div class="row"><button class="btn" id="tourNext">' + (i === TOUR.length - 1 ? 'Fertig' : 'Weiter') + '</button>' + (i ? '<button class="btn secondary" id="tourBack">Zurück</button>' : '') + '<button class="linkbtn" id="tourClose">Einführung schliessen</button></div>';
+  box.hidden = false; $('#tourNext').focus();
+}
+function tourStart() { if (state.view !== 'spieler') setView('spieler'); if (!rows(data()).length) return; closeDetail(); tourShow(0); }
+function tourMaybe() { if (state.tourAsked || lsGet('scouting.tour', false) || !rows(data()).length || state.view !== 'spieler' || state.open) return; state.tourAsked = true; setTimeout(() => { if (!state.open && state.view === 'spieler') tourShow(0); }, 600); }
+$('#tour').addEventListener('click', (e) => { if (e.target.closest('#tourNext')) tourShow(state.tour + 1); else if (e.target.closest('#tourBack')) tourShow(state.tour - 1); else if (e.target.closest('#tourClose')) tourShow(-1); });
+$('#helpBtn').onclick = tourStart;
+document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && state.tour >= 0) tourShow(-1); });
+
 /* ---------- «Neu seit deinem letzten Besuch» ---------- */
 // Beim Klick auf «Gesehen» merkt sich der Browser den Datenstand (neustes Spiel, Spitze der Talent-Bewertung).
 // Beim nächsten Öffnen zeigt der Kasten, was seither dazugekommen ist. Beim allerersten Besuch erscheint nichts.

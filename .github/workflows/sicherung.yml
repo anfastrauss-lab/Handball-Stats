@@ -1,4 +1,4 @@
-# Jede Woche eine verschlüsselte Sicherung der Spielerübersicht (Akten, Techniktests, Änderungsverlauf)
+# Jede Woche eine verschlüsselte Sicherung der Spielerübersicht (Akten, Techniktests, Änderungsverlauf) und der Merklisten
 # aus dem Zentralspeicher in den Ordner «sicherung» legen. Ohne eingerichteten Zentralspeicher passiert nichts.
 name: Sicherung
 
