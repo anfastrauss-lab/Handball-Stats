@@ -164,14 +164,18 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .litenote { margin: 8px 0 0; }
 .upline { margin: 12px 0 0; font-size: 14.5px; }
 /* Wurfbilder */
-.wsgrid { display: grid; grid-template-columns: minmax(180px, 1fr) minmax(240px, 1.3fr) minmax(240px, 1.3fr); gap: 16px; margin-top: 14px; }
+.wsgrid { display: grid; grid-template-columns: minmax(200px, 1fr) minmax(240px, 1.2fr) minmax(240px, 1.2fr); grid-template-areas: "top top top" "sh sit sit" "sh court goal" "sh act act"; gap: 10px 16px; }
+.wsa-top { grid-area: top; display: flex; gap: 8px 14px; align-items: end; flex-wrap: wrap; } .wsa-sh { grid-area: sh; } .wsa-sit { grid-area: sit; } .wsa-court { grid-area: court; } .wsa-goal { grid-area: goal; } .wsa-act { grid-area: act; }
+.wsatk { flex: 1 1 320px; } .wsatk button { min-height: 46px; font-size: 15px; } .wsatk button b { margin-left: 6px; font-size: 17px; }
+.wstw { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; } .wsart { margin-bottom: 10px; }
+.wsgame { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; }
 .wsstep { font-weight: 700; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .wsshooters { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
 .wsp { text-align: left; padding: 9px 8px; min-height: 44px; border: 1px solid var(--line); border-radius: 6px; background: var(--surface); color: var(--ink); cursor: pointer; font: inherit; font-size: 14px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .wsp b { display: inline-block; min-width: 22px; }
 .wsp.on, .chipbtn.on { background: var(--court); color: var(--court-ink); border-color: var(--court); }
 .chipbtn { border: 1px solid var(--court); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 5px 11px; min-height: 34px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; }
-.wsres { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.wsres { display: grid; grid-template-columns: repeat(6, 1fr); gap: 6px; } .wsres .btn { grid-column: span 2; } .wsres .btn:nth-child(-n+2) { grid-column: span 3; }
 .wsres .btn { min-height: 48px; }
 .wsundo { margin-left: 8px; min-height: 40px; }
 .wsres .btn:first-child { background: #1F7A47; border-color: #1F7A47; color: #fff; }
@@ -197,7 +201,7 @@ td .lg { margin-left: 0; }
 .lg.g { background: #00B140; } .lg.s { background: #E8141C; } .lg.o { background: transparent; box-shadow: inset 0 0 0 2px #E8141C; }
 .wslegend { margin: 6px 0 0; }
 .wsana { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-.wsana > .card { margin: 0; }
+.wsana > .card { margin: 0; } .wsana > *, .wsgrid > * { min-width: 0; }
 .wsprep { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; }
 .wsprep .card { margin: 0; break-inside: avoid; }
 .wsplhead { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
@@ -205,8 +209,9 @@ td .lg { margin-left: 0; }
 .wsplbody ul.insights { margin: 0; padding-left: 16px; }
 .seg3 { grid-template-columns: 1fr 1fr 1fr; }
 #wsSub { max-width: 520px; margin-bottom: 14px; }
-@media (max-width: 900px) { .wsgrid { grid-template-columns: 1fr 1fr; } .wsgrid > div:first-child { grid-column: 1 / -1; } }
-@media (max-width: 640px) { .wsgrid, .wsana { grid-template-columns: 1fr; } .wsprep { grid-template-columns: 1fr; } }
+@media (max-width: 900px) { .wsgrid { grid-template-columns: 1fr 1fr; grid-template-areas: "top top" "sh sh" "sit sit" "court goal" "act act"; } }
+@media (max-width: 1200px) { body.wslive .topbar { position: static; } }
+@media (max-width: 640px) { .wsana { grid-template-columns: 1fr; } .wsprep { grid-template-columns: 1fr; } .wscap { padding: 10px; } .wsgrid { gap: 8px; } .wsshooters { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 4px; } .wsp { min-height: 40px; padding: 6px 5px; font-size: 13px; } .wsp b { min-width: 18px; } .wsstep { font-size: 13px; margin-bottom: 2px; } .chipbtn { min-height: 32px; padding: 4px 9px; font-size: 13px; } .wsres .btn { min-height: 46px; padding: 6px 2px; } .wsres .btn.secondary { font-size: 13px; } .wsatk button { font-size: 14px; } .wsart, .wsa-sit { flex-wrap: nowrap; overflow-x: auto; margin-bottom: 4px; padding-bottom: 2px; scrollbar-width: none; } .wsart .chipbtn, .wsa-sit .chipbtn { flex: 0 0 auto; } .wstw select { padding: 6px 8px; } }
 @media print { body.pprint .wsprep { display: block; } body.pprint .wsprep .card { margin-bottom: 10px; } }
 .zsadd { margin-bottom: 14px; border-color: var(--court); }
 /* Talent-Tabelle kompakt: weniger Innenabstand, Ligaschnitt und Stufe klein unter dem Wert */
@@ -2080,6 +2085,7 @@ async function loadFiles(files) {
 
 /* ---------- Steuerung ---------- */
 function setView(v) {
+  document.body.classList.remove('wslive');
   if (v === 'talent') { state.mode = 'talent'; lsSet('scouting.modus', 'talent'); v = 'spieler'; } // früherer Reiter «Talent-Radar»
   state.view = v;
   $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten'; $('#viewWurf').hidden = v !== 'wurf';
@@ -3042,7 +3048,7 @@ const wsZoneTxt = (z) => (z ? (z[0] === 'm' && z[1] === 'm' ? 'Mitte' : WS_ROW[z
 const wsResTxt = (r) => (WS_RES.find((x) => x[0] === r) || [r, r])[1];
 const WS_LOCAL = 'scouting.wuerfe';
 function wsBlank(sit) { return { pid: null, nr: null, name: '', unknown: false, x: null, y: null, gx: null, gy: null, sit: sit || 'position', art: '' }; }
-state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: 'tw', ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
+state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', tws: { home: '', away: '' }, pick: false, store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: lsGet('scouting.wspersp', 'werfer'), ana: { kind: 'werfer', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
 const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL/i.test(ligaKey(d.groups[gid] || { name: '' }));
 
 // ---- Speicher: Zentralspeicher (Tabelle «wuerfe») oder dieser Browser ----
@@ -3082,7 +3088,7 @@ function wsZone(x, y, sit) {
   const px = Math.min(Math.max(x, 85), 115), dist = Math.hypot(x - px, y), ang = Math.atan2(x - 100, Math.max(y, 0.01)) * 180 / Math.PI;
   if (dist <= 90) return Math.abs(ang) >= 58 ? (x < 100 ? 'LA' : 'RA') : 'KM';
   if (Math.abs(ang) >= 70) return x < 100 ? 'LA' : 'RA';
-  return ang < -22 ? 'RL' : ang > 22 ? 'RR' : 'RM';
+  return ang < -15 ? 'RL' : ang > 15 ? 'RR' : 'RM';
 }
 const wsGoalZone = (gx, gy) => (gx == null ? null : (gy < 200 / 3 ? 'o' : gy < 400 / 3 ? 'm' : 'u') + (gx < 100 ? 'l' : gx < 200 ? 'm' : 'r'));
 const arcPts = (cx, r, a0, a1) => { const p = []; for (let i = 0; i <= 14; i++) { const t = (a0 + (a1 - a0) * i / 14) * Math.PI / 180; p.push((cx + r * Math.cos(t)).toFixed(1) + ',' + (r * Math.sin(t)).toFixed(1)); } return p; };
@@ -3229,6 +3235,9 @@ function renderWurf() {
   note.innerHTML = n + (ws.msg ? '<br><span class="msg err">' + esc(ws.msg) + '</span>' : ''); note.hidden = !n; ws.msg = '';
   if (!rows(d).length) { $('#wsBody').innerHTML = '<div class="card empty"><p class="muted">Lade zuerst Daten oder schau dir die Demo an.</p></div>'; return; }
   $('#wsBody').innerHTML = ws.sub === 'auswertung' ? wsAnalysisHTML(d) : ws.sub === 'vorbereitung' ? wsPrepHTML(d) : wsCaptureHTML(d);
+  document.body.classList.toggle('wslive', ws.sub === 'erfassen' && !!$('#wsCap'));
+  // nach der Spielwahl die Erfassung oben ins Bild holen (Handy, Tablet)
+  if (ws.scrollCap) { ws.scrollCap = false; const cap = $('#wsCap'), bar = $('.topbar'); if (cap) setTimeout(() => { const sticky = bar && getComputedStyle(bar).position === 'sticky' ? bar.offsetHeight : 0; const top = ($('.wsgame') || cap).getBoundingClientRect().top; window.scrollTo(0, top + window.scrollY - sticky - 8); }, 0); }
 }
 // Auswahlliste der Spiele (bei einer Suche alle passenden Spiele der Saison, sonst nur die nächsten und letzten)
 function wsGameOptions(d) {
@@ -3244,24 +3253,31 @@ function wsCurWing() { const c = state.ws.cur; if (c.sit === '7m' || c.x == null
 function wsCaptureHTML(d) {
   const ws = state.ws, g = wsGameObj(d), c = ws.cur;
   const wz = wsCurWing();
-  let h = '<div class="card wscap"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 220px"><label for="wsQ">Spiel suchen</label><input type="search" id="wsQ" value="' + esc(ws.q) + '" placeholder="Team, Liga oder Datum, z. B. Pfadi 18.10." autocomplete="off"></div>' +
-    '<div class="field" style="flex:2 1 320px"><label for="wsGame">Spiel</label><select id="wsGame">' + wsGameOptions(d) + '</select></div>' +
-    '<label class="check"><input type="checkbox" id="wsAll"' + (ws.allLeagues ? ' checked' : '') + '> alle Ligen statt nur QHL/NLB</label></div>';
-  if (!g) return h + '<p class="small muted" style="margin:8px 0 0">Wähle ein Spiel oder such danach (die Suche findet alle Spiele der Saison, auch ausserhalb von QHL/NLB). Kommende Spiele (aus dem Spielplan) eignen sich für die Erfassung an der Linie, gespielte für die Analyse am Video.</p></div>';
-  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, defId = atkHome ? g.awayTeamId : g.homeTeamId, atkName = atkHome ? g.homeName : g.awayName, defName = atkHome ? g.awayName : g.homeName;
-  const shooters = wsRoster(d, atkId, 'F'), gks = wsRoster(d, defId, 'G');
-  h += '<div class="row" style="margin-top:10px;align-items:end"><div class="field"><span class="lbl">Wer wirft?</span><div class="seg"><button data-wsatk="home" aria-pressed="' + atkHome + '">' + esc(g.homeName) + '</button><button data-wsatk="away" aria-pressed="' + !atkHome + '">' + esc(g.awayName) + '</button></div></div>' +
-    '<div class="field"><label for="wsTw">Im Tor von ' + esc(defName) + '</label><select id="wsTw"><option value="">unbekannt</option>' + gks.map((p) => '<option value="' + p.id + '"' + (String(p.id) === ws.tw ? ' selected' : '') + '>' + (p.nr ? p.nr + ' · ' : '') + esc(fullName(p.name)) + '</option>').join('') + '</select></div></div>';
-  h += '<div class="wsgrid"><div><div class="wsstep">1. Werfer <span class="muted small">' + esc(atkName) + '</span></div><div class="wsshooters">' +
+  // Spielwahl: nach der Wahl zusammengeklappt, damit beim Erfassen wenig gescrollt werden muss
+  if (!g || ws.pick) {
+    const h = '<div class="card"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 220px"><label for="wsQ">Spiel suchen</label><input type="search" id="wsQ" value="' + esc(ws.q) + '" placeholder="Team, Liga oder Datum, z. B. Pfadi 18.10." autocomplete="off"></div>' +
+      '<div class="field" style="flex:2 1 320px"><label for="wsGame">Spiel</label><select id="wsGame">' + wsGameOptions(d) + '</select></div>' +
+      '<label class="check"><input type="checkbox" id="wsAll"' + (ws.allLeagues ? ' checked' : '') + '> alle Ligen statt nur QHL/NLB</label>' + (g ? '<button class="btn secondary" data-wspick="0">Fertig</button>' : '') + '</div>';
+    if (!g) return h + '<p class="small muted" style="margin:8px 0 0">Wähle ein Spiel oder such danach (die Suche findet alle Spiele der Saison, auch ausserhalb von QHL/NLB). Kommende Spiele (aus dem Spielplan) eignen sich für die Erfassung an der Linie, gespielte für die Analyse am Video.</p></div>';
+    return h + '</div>';
+  }
+  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, defId = atkHome ? g.awayTeamId : g.homeTeamId, defName = atkHome ? g.awayName : g.homeName;
+  const shooters = wsRoster(d, atkId, 'F'), gks = wsRoster(d, defId, 'G'), tw = ws.tws[ws.atk] || '';
+  const inGame = state.ws.shots.filter((s) => String(s.game_id) === String(g.gameId)), goals = (tid) => inGame.filter((s) => String(s.angriff_team_id) === String(tid) && s.ergebnis === 'tor').length;
+  let h = '<div class="card wsgame"><div><b>' + esc(g.homeName) + ' – ' + esc(g.awayName) + '</b> <span class="muted small">' + esc(fmtWhen(g.date)) + '</span></div><button class="linkbtn small" data-wspick="1">Spiel wechseln</button></div>';
+  h += '<div class="card wscap" id="wsCap"><div class="wsgrid">' +
+    '<div class="wsa-top"><div class="seg wsatk" role="group" aria-label="Wer greift an?"><button data-wsatk="home" aria-pressed="' + atkHome + '">' + esc(g.homeName) + ' <b>' + goals(g.homeTeamId) + '</b></button><button data-wsatk="away" aria-pressed="' + !atkHome + '">' + esc(g.awayName) + ' <b>' + goals(g.awayTeamId) + '</b></button></div>' +
+    '<label class="wstw"><span class="small muted">Im Tor ' + esc(defName) + '</span><select id="wsTw"><option value="">unbekannt</option>' + gks.map((p) => '<option value="' + p.id + '"' + (String(p.id) === tw ? ' selected' : '') + '>' + (p.nr ? p.nr + ' · ' : '') + esc(fullName(p.name)) + '</option>').join('') + '</select></label></div>' +
+    '<div class="wsa-sh"><div class="wsstep">1. Werfer</div><div class="wsshooters">' +
     shooters.map((p) => '<button class="wsp' + (c.pid === p.id ? ' on' : '') + '" data-wsp="' + p.id + '"><b>' + (p.nr || '–') + '</b> ' + esc(splitName(p.name).sur) + '</button>').join('') +
     '<button class="wsp' + (c.unknown ? ' on' : '') + '" data-wsp="?"><b>?</b> unbekannt</button></div>' + (shooters.length ? '' : '<p class="small muted">Für dieses Team sind noch keine Spieler bekannt. Wähle «unbekannt».</p>') + '</div>' +
-    '<div><div class="wsstep">2. Position <span class="chips">' + WS_SIT.map(([k, l]) => '<button class="chipbtn' + (c.sit === k ? ' on' : '') + '" data-wssit="' + k + '">' + l + '</button>').join('') + '</span></div>' + courtSVG([], { click: true, id: 'wsCourt', marker: c, labels: false }) +
-    '<p class="small muted" style="margin:2px 0 0">' + (c.sit === '7m' ? '7-Meter: Position wird automatisch gesetzt.' : c.x != null ? 'Position: ' + esc(WS_ZONES[wsZone(c.x, c.y, c.sit)]) : 'Tippe auf das Feld, von wo geworfen wurde.') + '</p></div>' +
-    '<div><div class="wsstep">3. Ziel im Tor <span class="muted small">' + (wz ? 'Sicht ' + WS_ZONES[wz] + ', schräg' : 'Sicht Werfer') + '</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: { ...c, zone: wz }, wing: wz ? (wz === 'LA' ? 'L' : 'R') : null }) +
-    '<div class="wsstep" style="margin-top:10px">Wurfart <span class="muted small">(freiwillig)</span></div><div class="chips">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div>' +
-    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span>' + (c.pid || c.unknown || (c.x != null && c.sit !== '7m') || c.gx != null || c.art ? '<button class="linkbtn small" data-wsclear="1" style="margin-left:auto">Eingabe leeren</button>' : '') + '</div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div></div></div>' +
-    '<p class="msg ok" id="wsMsg" aria-live="polite">' + (ws.last && ws.last.game === String(g.gameId) ? esc(ws.last.txt) + (ws.last.id != null ? ' <button class="btn secondary wsundo" data-wsundo="' + ws.last.id + '">↶ Rückgängig</button>' : '') : '') + '</p></div>';
-  const inGame = state.ws.shots.filter((s) => String(s.game_id) === String(g.gameId)).reverse();
+    '<div class="wsa-sit chips">' + WS_SIT.map(([k, l]) => '<button class="chipbtn' + (c.sit === k ? ' on' : '') + '" data-wssit="' + k + '">' + l + '</button>').join('') + '</div>' +
+    '<div class="wsa-court"><div class="wsstep">2. Position <span class="muted small">' + (c.sit === '7m' ? '7-Meter' : c.x != null ? esc(WS_ZONES[wsZone(c.x, c.y, c.sit)]) : '') + '</span></div>' + courtSVG([], { click: true, id: 'wsCourt', marker: c, labels: false }) + '</div>' +
+    '<div class="wsa-goal"><div class="wsstep">3. Ziel <span class="muted small">' + (wz ? 'schräg, ' + WS_ZONES[wz] : 'Sicht Werfer') + '</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: { ...c, zone: wz }, wing: wz ? (wz === 'LA' ? 'L' : 'R') : null }) + '</div>' +
+    '<div class="wsa-act"><div class="chips wsart">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div>' +
+    '<div class="wsstep">4. Ergebnis <span class="muted small">(speichert)</span>' + (c.pid || c.unknown || (c.x != null && c.sit !== '7m') || c.gx != null || c.art ? '<button class="linkbtn small" data-wsclear="1" style="margin-left:auto">Eingabe leeren</button>' : '') + '</div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div>' +
+    '<p class="msg ok" id="wsMsg" aria-live="polite">' + (ws.last && ws.last.game === String(g.gameId) ? esc(ws.last.txt) + (ws.last.id != null ? ' <button class="btn secondary wsundo" data-wsundo="' + ws.last.id + '">↶ Rückgängig</button>' : '') : '') + '</p></div></div></div>';
+  inGame.reverse();
   const sum = (tid) => wsSum(inGame.filter((s) => String(s.angriff_team_id) === String(tid)));
   const A = sum(g.homeTeamId), B = sum(g.awayTeamId);
   h += '<div class="card"><h3>Würfe in diesem Spiel</h3><p class="small muted" style="margin:0 0 8px">' + esc(g.homeName) + ': ' + A.n + ' Würfe, ' + A.tor + ' Tore · ' + esc(g.awayName) + ': ' + B.n + ' Würfe, ' + B.tor + ' Tore' + (inGame.length ? ' · Der neuste Wurf steht oben, ✕ löscht ihn.' : '') + '</p>' +
@@ -3293,7 +3309,7 @@ async function wsSave(res) {
   if (!c.pid && !c.unknown) return msg('Bitte zuerst den Werfer wählen (oder «unbekannt»).', 'err');
   if (c.sit !== '7m' && c.x == null) return msg('Bitte die Position auf dem Feld antippen.', 'err');
   if ((res === 'tor' || res === 'parade') && c.gx == null) return msg('Bitte antippen, wohin im Tor geworfen wurde.', 'err');
-  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, gk = ws.tw ? wsRoster(d, atkHome ? g.awayTeamId : g.homeTeamId, 'G').find((p) => String(p.id) === ws.tw) : null;
+  const atkHome = ws.atk === 'home', atkId = atkHome ? g.homeTeamId : g.awayTeamId, gk = ws.tws[ws.atk] ? wsRoster(d, atkHome ? g.awayTeamId : g.homeTeamId, 'G').find((p) => String(p.id) === ws.tws[ws.atk]) : null;
   const p = c.pid ? wsRoster(d, atkId, 'F').find((x) => x.id === c.pid) : null, x = c.sit === '7m' ? 100 : c.x, y = c.sit === '7m' ? 70 : c.y;
   const row = { game_id: g.gameId, spiel: g.homeName + ' – ' + g.awayName, datum: g.date, liga: ligaKey(d.groups[g.groupId] || { name: '' }), angriff_team_id: atkId, angriff_team: atkHome ? g.homeName : g.awayName,
     player_id: p ? p.id : null, spieler: p ? p.name : '', nr: p ? p.nr || null : null, tw_id: gk ? gk.id : null, tw_name: gk ? gk.name : '', tw_team: atkHome ? g.awayName : g.homeName,
@@ -3325,7 +3341,7 @@ function wsAnalysisHTML(d) {
   let h = '<div class="card"><div class="row" style="align-items:end"><div class="field"><span class="lbl">Auswerten</span><div class="seg seg3"><button data-wskind="werfer" aria-pressed="' + (a.kind === 'werfer') + '">Werfer</button><button data-wskind="tw" aria-pressed="' + (a.kind === 'tw') + '">Torhüter</button><button data-wskind="team" aria-pressed="' + (a.kind === 'team') + '">Team</button></div></div>' +
     '<div class="field" style="flex:1 1 260px"><label for="wsAnaId">' + (a.kind === 'werfer' ? 'Werfer' : a.kind === 'tw' ? 'Torhüter' : 'Team (Würfe dieses Teams)') + '</label><select id="wsAnaId">' + (list.length ? list.map((x) => '<option value="' + esc(x.id) + '"' + (x.id === a.id ? ' selected' : '') + '>' + esc(x.label) + ' · ' + x.n + ' Würfe' + (a.kind === 'tw' ? '' : ', Quote ' + Math.round(((x.tor || 0) / x.n) * 100) + ' %') + '</option>').join('') : '<option value="">noch keine Würfe erfasst</option>') + '</select></div>' +
     '<div class="field"><label for="wsAnaSit">Situation</label><select id="wsAnaSit"><option value="">alle</option>' + WS_SIT.map(([k, l]) => '<option value="' + k + '"' + (a.sit === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
-    '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button></div></div></div></div>';
+    '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button></div></div></div></div>';
   if (!a.id) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
   const key = a.kind === 'werfer' ? 'player_id' : a.kind === 'tw' ? 'tw_id' : 'angriff_team_id';
   const mine = S.filter((s) => String(s[key]) === a.id && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), tw = a.kind === 'tw', mir = ws.persp === 'tw';
@@ -3375,7 +3391,8 @@ $('#wsBody').addEventListener('click', (e) => {
   const court = t.closest('#wsCourt'); if (court) { if (ws.cur.sit === '7m') return; const [x, y] = svgPoint(e, court); ws.cur.x = Math.max(0, Math.min(200, x)); ws.cur.y = Math.max(0, Math.min(140, y)); return renderWurf(); }
   const goal = t.closest('#wsGoal'); if (goal) { const wz = wsCurWing(); let [x, y] = svgPoint(e, goal); if (wz) [x, y] = wingInv(x, y, wz === 'LA' ? 'L' : 'R', wz); ws.cur.gx = Math.max(-10, Math.min(310, x)); ws.cur.gy = Math.max(-10, Math.min(210, y)); return renderWurf(); }
   const b = t.closest('button'); if (!b) return;
-  if (b.dataset.wsatk) { ws.atk = b.dataset.wsatk; ws.tw = ''; ws.cur = wsBlank(ws.cur.sit); return renderWurf(); }
+  if (b.dataset.wsatk) { ws.atk = b.dataset.wsatk; ws.cur = wsBlank(ws.cur.sit === '7m' ? 'position' : ws.cur.sit); return renderWurf(); } // Torhüter bleibt pro Team gewählt
+  if (b.dataset.wspick) { ws.pick = b.dataset.wspick === '1'; return renderWurf(); }
   if (b.dataset.wsp) { const v = b.dataset.wsp, again = v === '?' ? ws.cur.unknown : ws.cur.pid === Number(v); ws.cur.pid = again || v === '?' ? null : Number(v); ws.cur.unknown = !again && v === '?'; return renderWurf(); } // nochmals antippen = abwählen
   if (b.dataset.wsclear) { ws.cur = wsBlank(ws.cur.sit === '7m' ? 'position' : ws.cur.sit); return renderWurf(); }
   if (b.dataset.wsundo) { const id = Number(b.dataset.wsundo), txt = ws.last ? ws.last.txt.replace(/^Gespeichert: /, '') : ''; b.disabled = true; wsDel(id).then(() => { ws.last = { id: null, game: ws.last ? ws.last.game : '', txt: 'Zurückgenommen: ' + txt }; renderWurf(); }).catch((x) => { ws.msg = 'Zurücknehmen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
@@ -3384,7 +3401,7 @@ $('#wsBody').addEventListener('click', (e) => {
   if (b.dataset.wsres) return wsSave(b.dataset.wsres);
   if (b.dataset.wsdel) { if (window.confirm('Diesen Wurf löschen?')) wsDel(Number(b.dataset.wsdel)).then(renderWurf).catch((x) => { ws.msg = 'Löschen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
   if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; return renderWurf(); }
-  if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; return renderWurf(); }
+  if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; lsSet('scouting.wspersp', ws.persp); return renderWurf(); }
   if (b.id === 'wsPrepPdf') return wsPrepOpen();
   if (b.dataset.wsplayer) return openDetail(Number(b.dataset.wsplayer), b.dataset.role);
 });
@@ -3394,9 +3411,9 @@ $('#wsBody').addEventListener('input', (e) => {
 });
 $('#wsBody').addEventListener('change', (e) => {
   const ws = state.ws, t = e.target;
-  if (t.id === 'wsGame') { ws.game = t.value; ws.atk = 'home'; ws.tw = ''; ws.cur = wsBlank(); }
+  if (t.id === 'wsGame') { ws.game = t.value; ws.atk = 'home'; ws.tws = { home: '', away: '' }; ws.cur = wsBlank(); ws.pick = false; ws.scrollCap = true; }
   else if (t.id === 'wsAll') { ws.allLeagues = t.checked; }
-  else if (t.id === 'wsTw') ws.tw = t.value;
+  else if (t.id === 'wsTw') ws.tws[ws.atk] = t.value;
   else if (t.id === 'wsAnaId') ws.ana.id = t.value;
   else if (t.id === 'wsAnaSit') ws.ana.sit = t.value;
   else if (t.id === 'wsPrep') { ws.prep = t.value; lsSet('scouting.wsprep', ws.prep); }
