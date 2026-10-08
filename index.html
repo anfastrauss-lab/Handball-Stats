@@ -189,12 +189,12 @@ svg.goal { max-width: 460px; } svg.court { max-width: 520px; } svg.goal.small { 
 .goal .gbig { font-size: 24px; font-weight: 800; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
 .goal .gsub { font-size: 13px; text-anchor: middle; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
 .goal.small .gbig { font-size: 30px; }
-svg .dot { stroke: var(--surface); stroke-width: 1; fill-opacity: .7; } svg .dot.g { fill: var(--bad); } svg .dot.s { fill: var(--good); } svg .dot.o { fill: var(--ink-2); }
+svg .dot { stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; fill-opacity: .95; } svg .dot.g { fill: #E8141C; } svg .dot.s { fill: #00B140; } svg .dot.o { fill: var(--ink-2); }
 svg .mark { fill: var(--signal); stroke: var(--ink); stroke-width: 1.5; }
 .goal .mark { stroke-width: 3; }
 .lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 2px 0 8px; vertical-align: 0; }
 td .lg { margin-left: 0; }
-.lg.g { background: var(--bad); } .lg.s { background: var(--good); } .lg.o { background: var(--ink-2); }
+.lg.g { background: #E8141C; } .lg.s { background: #00B140; } .lg.o { background: var(--ink-2); }
 .wslegend { margin: 6px 0 0; }
 .wsana { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
 .wsana > .card { margin: 0; }
@@ -3258,8 +3258,8 @@ function wsCaptureHTML(d) {
     '<div><div class="wsstep">2. Position <span class="chips">' + WS_SIT.map(([k, l]) => '<button class="chipbtn' + (c.sit === k ? ' on' : '') + '" data-wssit="' + k + '">' + l + '</button>').join('') + '</span></div>' + courtSVG([], { click: true, id: 'wsCourt', marker: c, labels: false }) +
     '<p class="small muted" style="margin:2px 0 0">' + (c.sit === '7m' ? '7-Meter: Position wird automatisch gesetzt.' : c.x != null ? 'Position: ' + esc(WS_ZONES[wsZone(c.x, c.y, c.sit)]) : 'Tippe auf das Feld, von wo geworfen wurde.') + '</p></div>' +
     '<div><div class="wsstep">3. Ziel im Tor <span class="muted small">' + (wz ? 'Sicht ' + WS_ZONES[wz] + ', schräg' : 'Sicht Werfer') + '</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: { ...c, zone: wz }, wing: wz ? (wz === 'LA' ? 'L' : 'R') : null }) +
-    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span>' + (c.pid || c.unknown || (c.x != null && c.sit !== '7m') || c.gx != null || c.art ? '<button class="linkbtn small" data-wsclear="1" style="margin-left:auto">Eingabe leeren</button>' : '') + '</div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div>' +
-    '<details class="hint" style="margin-top:8px"' + (c.art ? ' open' : '') + '><summary>Wurfart (freiwillig)</summary><div class="chips" style="margin-top:6px">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div></details></div></div>' +
+    '<div class="wsstep" style="margin-top:10px">Wurfart <span class="muted small">(freiwillig)</span></div><div class="chips">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div>' +
+    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span>' + (c.pid || c.unknown || (c.x != null && c.sit !== '7m') || c.gx != null || c.art ? '<button class="linkbtn small" data-wsclear="1" style="margin-left:auto">Eingabe leeren</button>' : '') + '</div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div></div></div>' +
     '<p class="msg ok" id="wsMsg" aria-live="polite">' + (ws.last && ws.last.game === String(g.gameId) ? esc(ws.last.txt) + (ws.last.id != null ? ' <button class="btn secondary wsundo" data-wsundo="' + ws.last.id + '">↶ Rückgängig</button>' : '') : '') + '</p></div>';
   const inGame = state.ws.shots.filter((s) => String(s.game_id) === String(g.gameId)).reverse();
   const sum = (tid) => wsSum(inGame.filter((s) => String(s.angriff_team_id) === String(tid)));
