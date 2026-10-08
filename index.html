@@ -168,6 +168,7 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .wsa-top { grid-area: top; display: flex; gap: 8px 14px; align-items: end; flex-wrap: wrap; } .wsa-sh { grid-area: sh; } .wsa-sit { grid-area: sit; } .wsa-court { grid-area: court; } .wsa-goal { grid-area: goal; } .wsa-act { grid-area: act; }
 .wsatk { flex: 1 1 320px; } .wsatk button { min-height: 46px; font-size: 15px; } .wsatk button b { margin-left: 6px; font-size: 17px; }
 .wstw { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; } .wsart { margin-bottom: 10px; }
+.wslinks { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
 .wsgame { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 10px 14px; margin-bottom: 10px; }
 .wsstep { font-weight: 700; margin-bottom: 6px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
 .wsshooters { display: grid; grid-template-columns: repeat(auto-fill, minmax(118px, 1fr)); gap: 6px; }
@@ -2549,6 +2550,8 @@ function renderTeam() {
   let h = '<div class="card"><div class="dhead"><div><h2 class="dname" style="font-size:36px">' + esc(name) + '</h2><p class="muted" style="margin-top:6px">' + esc(ligaTxt) + (club ? '<br>' + esc((club.zip ? club.zip + ' ' : '') + club.city + ' ' + club.canton) : '') + '</p><button class="btn secondary" data-cmpfocus style="margin-top:10px">Mit einem anderen Team vergleichen</button></div>' +
     '<div class="form" title="Letzte fünf Spiele, ältestes zuerst" aria-label="Form"><span class="small muted" style="display:block;margin-bottom:4px">Form</span>' + (form || '–') + '</div></div>' +
     '<div class="kpis five">' + kpi(String(td.n), 'Spiele') + kpi(td.w + '-' + td.u + '-' + td.l, 'Bilanz S-U-N') + kpi(td.n ? nf(td.gf / td.n, 1) : '–', 'Tore pro Spiel') + kpi(td.n ? nf(td.ga / td.n, 1) : '–', 'Gegentore pro Spiel') + kpi(td.n ? signed(td.gf - td.ga) : '–', 'Tordifferenz') + '</div></div>';
+  const wsN = state.ws.loaded ? state.ws.shots.filter((s) => String(s.angriff_team_id) === String(id)).length : null;
+  h += '<div class="card wslinks"><div><b>Wurfbilder</b> <span class="small muted">' + (wsN == null ? 'Erfasste Würfe dieses Teams' : wsN ? wsN + ' erfasste Würfe dieses Teams' : 'Für dieses Team sind noch keine Würfe erfasst') + '</span></div><div class="row"><button class="btn secondary" data-wsteam="auswertung">Wurfbilder ansehen</button><button class="btn secondary" data-wsteam="vorbereitung">Torhüter-Vorbereitung</button></div></div>';
   const ins = teamInsights(d, td);
   const last = td.res.slice(-8).reverse().map((r) => { const c = r.gf > r.ga ? 's' : r.gf < r.ga ? 'n' : 'u', lg = ligaKey(d.groups[r.g.groupId] || { name: '' });
     return '<tr class="gamerow" data-tgame="' + r.g.gameId + '" tabindex="0"><td>' + esc(fmtDate(r.g.date)) + '</td><td class="left">' + esc(lg) + '</td><td class="left">' + (r.home ? '' : '@ ') + esc(r.opp) + '</td><td><span class="res-' + c + '">' + c.toUpperCase() + '</span> ' + r.gf + ':' + r.ga + '</td></tr>'; }).join('');
@@ -3338,6 +3341,8 @@ function wsAnalysisHTML(d) {
   const add = (m, k, label, s) => { const o = m.get(k) || { id: k, label, n: 0, tor: 0 }; o.n++; if (s.ergebnis === 'tor') o.tor++; m.set(k, o); };
   const teams = new Map(); for (const s of S) if (teamKey(s) && teamKey(s) !== '|') add(teams, teamKey(s), teamLabel(s), s);
   const tList = [...teams.values()].sort((x, y) => x.label.localeCompare(y.label, 'de'));
+  if (a.want && ws.loaded) { if (teams.has(a.want)) a.team = a.want; else a.missing = index(d).teams[a.want] || 'dieses Team'; a.want = ''; } else if (a.want) a.team = a.want;
+  const missing = a.missing || '';
   if (!teams.has(a.team)) a.team = tList.length ? [...teams.values()].sort((x, y) => y.n - x.n)[0].id : '';
   const inTeam = S.filter((s) => teamKey(s) === a.team), people = new Map();
   for (const s of inTeam) if (s[pkey]) add(people, String(s[pkey]), (s[tw ? 'tw_name' : 'spieler'] ? fullName(s[tw ? 'tw_name' : 'spieler']) : '') + (!tw && s.nr ? ' (' + s.nr + ')' : ''), s);
@@ -3349,6 +3354,7 @@ function wsAnalysisHTML(d) {
     '<div class="field" style="flex:1 1 220px"><label for="wsAnaId">2. ' + (tw ? 'Torhüter' : 'Werfer') + '</label><select id="wsAnaId"><option value="">' + (tw ? 'alle Torhüter des Teams' : 'ganzes Team') + '</option>' + sel(pList, a.id) + '</select></div>' +
     '<div class="field"><label for="wsAnaSit">Situation</label><select id="wsAnaSit"><option value="">alle</option>' + WS_SIT.map(([k, l]) => '<option value="' + k + '"' + (a.sit === k ? ' selected' : '') + '>' + l + '</option>').join('') + '</select></div>' +
     '<div class="field"><span class="lbl">Tor anzeigen</span><div class="seg"><button data-wspersp="werfer" aria-pressed="' + (ws.persp === 'werfer') + '">Sicht Werfer</button><button data-wspersp="tw" aria-pressed="' + (ws.persp === 'tw') + '">Sicht Torhüter</button></div></div></div></div>';
+  if (missing) h += '<div class="notice">Für <b>' + esc(missing) + '</b> sind noch keine Würfe erfasst. Unten siehst du ein anderes Team. Würfe erfasst du im Bereich «Erfassen».</div>';
   if (!a.team) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
   const mine = inTeam.filter((s) => (!a.id || String(s[pkey]) === a.id) && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), mir = ws.persp === 'tw';
   const tableKind = tw ? 'tw' : a.id ? 'werfer' : 'team';
@@ -3390,6 +3396,13 @@ function wsPrepDrawer() {
   $('#drawer').innerHTML = '<div class="dhead"><div><h2 class="dname" id="dTitle">Torhüter-Vorbereitung</h2><p class="muted" style="margin-top:6px">' + esc(new Date().toLocaleDateString('de-CH')) + ' · Torbilder aus Sicht des Torhüters</p></div><div class="row noprint"><button class="btn secondary" id="dPrint" title="Druckansicht öffnen. Im Druckfenster «Als PDF speichern» wählen.">⎙ PDF</button><button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div></div>' + (t ? wsPrepBody(d, t.id) : '');
   $('#drawer').hidden = false; $('#backdrop').hidden = false;
 }
+// Aus dem Reiter «Teams»: Wurfbilder oder Vorbereitung für dieses Team öffnen
+function wsGotoTeam(id, sub) {
+  const ws = state.ws; ws.sub = sub; lsSet('scouting.wsub', sub);
+  ws.ana.kind = 'werfer'; ws.ana.team = String(id); ws.ana.id = ''; ws.ana.sit = ''; ws.ana.want = String(id); ws.ana.missing = '';
+  ws.prep = String(id); lsSet('scouting.wsprep', ws.prep);
+  setView('wurf'); window.scrollTo(0, 0);
+}
 // Ereignisse im Reiter
 document.querySelectorAll('[data-wsub]').forEach((b) => (b.onclick = () => { state.ws.sub = b.dataset.wsub; lsSet('scouting.wsub', state.ws.sub); renderWurf(); }));
 $('#wsNote').addEventListener('click', (e) => { if (e.target.closest('#wsImport')) wsImport(); });
@@ -3407,7 +3420,7 @@ $('#wsBody').addEventListener('click', (e) => {
   if (b.dataset.wsart) { ws.cur.art = ws.cur.art === b.dataset.wsart ? '' : b.dataset.wsart; return renderWurf(); }
   if (b.dataset.wsres) return wsSave(b.dataset.wsres);
   if (b.dataset.wsdel) { if (window.confirm('Diesen Wurf löschen?')) wsDel(Number(b.dataset.wsdel)).then(renderWurf).catch((x) => { ws.msg = 'Löschen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
-  if (b.dataset.wskind) { ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; ws.ana.team = ''; return renderWurf(); }
+  if (b.dataset.wskind) { ws.ana.missing = ''; ws.ana.kind = b.dataset.wskind; ws.ana.id = ''; ws.ana.team = ''; return renderWurf(); }
   if (b.dataset.wspersp) { ws.persp = b.dataset.wspersp; lsSet('scouting.wspersp', ws.persp); return renderWurf(); }
   if (b.id === 'wsPrepPdf') return wsPrepOpen();
   if (b.dataset.wsplayer) return openDetail(Number(b.dataset.wsplayer), b.dataset.role);
@@ -3421,7 +3434,7 @@ $('#wsBody').addEventListener('change', (e) => {
   if (t.id === 'wsGame') { ws.game = t.value; ws.atk = 'home'; ws.tws = { home: '', away: '' }; ws.cur = wsBlank(); ws.pick = false; ws.scrollCap = true; }
   else if (t.id === 'wsAll') { ws.allLeagues = t.checked; }
   else if (t.id === 'wsTw') ws.tws[ws.atk] = t.value;
-  else if (t.id === 'wsAnaTeam') { ws.ana.team = t.value; ws.ana.id = ''; }
+  else if (t.id === 'wsAnaTeam') { ws.ana.team = t.value; ws.ana.id = ''; ws.ana.missing = ''; }
   else if (t.id === 'wsAnaId') ws.ana.id = t.value;
   else if (t.id === 'wsAnaSit') ws.ana.sit = t.value;
   else if (t.id === 'wsPrep') { ws.prep = t.value; lsSet('scouting.wsprep', ws.prep); }
@@ -4205,6 +4218,7 @@ $('#teamSel2').onchange = (e) => { const v = e.target.value; state.team2 = v && 
 $('#teamSwap').onclick = () => { if (state.team && state.team2) { [state.team, state.team2] = [state.team2, state.team]; renderTeam(); } };
 $('#teamCmpOff').onclick = () => { state.team2 = null; $('#teamQ2').value = ''; renderTeam(); };
 $('#teamBody').addEventListener('click', (e) => {
+  const wl = e.target.closest('[data-wsteam]'); if (wl) return wsGotoTeam(state.team, wl.dataset.wsteam);
   const pl = e.target.closest('[data-player]'); if (pl) return openDetail(Number(pl.dataset.player), pl.dataset.role);
   const dt = e.target.closest('[data-teamdetail]'); if (dt) { state.team = dt.dataset.teamdetail; state.team2 = null; $('#teamQ2').value = ''; return renderTeam(); }
   if (e.target.closest('[data-cmpfocus]')) { $('#teamQ2').focus(); if ($('#teamQ2').scrollIntoView) $('#teamQ2').scrollIntoView({ block: 'center' }); return; }
