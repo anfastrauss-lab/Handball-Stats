@@ -173,6 +173,7 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .chipbtn { border: 1px solid var(--court); border-radius: 999px; background: var(--surface); color: var(--ink); padding: 5px 11px; min-height: 34px; cursor: pointer; font: inherit; font-size: 14px; font-weight: 600; }
 .wsres { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 .wsres .btn { min-height: 48px; }
+.wsundo { margin-left: 8px; min-height: 40px; }
 .wsres .btn:first-child { background: #B03A2A; border-color: #B03A2A; color: #fff; }
 .wsres .btn:nth-child(2) { background: #1F7A47; border-color: #1F7A47; color: #fff; }
 svg.court, svg.goal { width: 100%; height: auto; display: block; touch-action: manipulation; user-select: none; }
@@ -3059,8 +3060,8 @@ async function wsLoad() {
 }
 async function wsAdd(row) {
   row.erfasst_von = (state.zs.me && state.zs.me.name) || ''; row.erfasst_am = new Date().toISOString();
-  if (state.ws.store === 'shared') { const r = await zsStore().shotAdd(row); state.ws.shots.push(r || row); }
-  else { const all = lsGet(WS_LOCAL, []); row.id = -Date.now(); all.push(row); lsSet(WS_LOCAL, all); state.ws.shots = all; }
+  if (state.ws.store === 'shared') { const r = await zsStore().shotAdd(row); state.ws.shots.push(r || row); return r || row; }
+  const all = lsGet(WS_LOCAL, []); row.id = -Date.now(); all.push(row); lsSet(WS_LOCAL, all); state.ws.shots = all; return row;
 }
 async function wsDel(id) {
   if (state.ws.store === 'shared' && id > 0) await zsStore().shotDel(id);
@@ -3103,8 +3104,51 @@ function courtSVG(shots, opt) {
   return h + '</svg>';
 }
 // Tor mit 3×3 Zonen: Anteil und Erfolg pro Zone, Punkte der einzelnen Würfe
+// Aussenwürfe: Tor schräg aus Sicht des Aussenspielers. un = 0 kurze Ecke, 1 lange Ecke; side = Bildseite der kurzen Ecke
+const wsWing = (s) => s.zone === 'LA' || s.zone === 'RA';
+const wsUn = (zone, gx) => (zone === 'RA' ? 1 - gx / 300 : gx / 300);
+const wsWingZone = (s) => wsGoalZone(wsUn(s.zone, +s.gx) * 300, +s.gy); // Spalte l = kurze Ecke, r = lange Ecke
+const wsWingTxt = (z) => (z ? (z[0] === 'm' && z[1] === 'm' ? 'Mitte' : WS_ROW[z[0]] + ' ' + { l: 'kurze Ecke', m: 'Mitte', r: 'lange Ecke' }[z[1]]) : '');
+const wsGoalTxt = (s) => (s.gx == null ? '' : wsWing(s) ? wsWingTxt(wsWingZone(s)) : wsZoneTxt(wsGoalZone(+s.gx, +s.gy)));
+const WING = { x0: 30, w: 200, top: 35, bot: 175 };
+function wingPt(un, v, side) {
+  const x = WING.x0 + un * WING.w, t = WING.top * un, b = 200 - (200 - WING.bot) * un, y = t + v * (b - t);
+  return [side === 'R' ? 300 - x : x, y];
+}
+function wingInv(x, y, side, zone) {
+  if (side === 'R') x = 300 - x;
+  const un = Math.max(-0.05, Math.min(1.05, (x - WING.x0) / WING.w)), t = WING.top * un, b = 200 - (200 - WING.bot) * un;
+  return [(zone === 'RA' ? 1 - un : un) * 300, ((y - t) / (b - t)) * 200];
+}
+// Bildseite der kurzen Ecke: nur Rechtsaussen-Würfe wie vom Rechtsaussen gesehen, sonst wie vom Linksaussen
+const wsWingSide = (L) => (L.length && L.every((s) => s.zone === 'RA') ? 'R' : 'L');
+const wsWingSides = (L) => [...new Set(L.map((s) => WS_ZONES[s.zone]))].join(' und ');
+function wingGoalSVG(shots, opt) {
+  const side = opt.wing, onGoal = shots.filter((s) => s.gx != null), cells = {}, tot = onGoal.length || 1, P = (u, v) => wingPt(u, v, side).map((n) => n.toFixed(1)).join(',');
+  for (const s of onGoal) { const z = wsWingZone(s), c = (cells[z] ||= { n: 0, tor: 0, par: 0 }); c.n++; if (s.ergebnis === 'tor') c.tor++; if (s.ergebnis === 'parade') c.par++; }
+  const max = Math.max(1, ...Object.values(cells).map((c) => c.n)); let txt = '';
+  let h = '<svg class="goal wing' + (opt.click ? ' pick' : '') + (opt.small ? ' small' : '') + '" id="' + (opt.id || '') + '" viewBox="-14 -14 328 244" role="img" aria-label="Tor aus Sicht des Aussenspielers">';
+  ['o', 'm', 'u'].forEach((r, ri) => ['l', 'm', 'r'].forEach((c, ci) => {
+    const v = cells[r + c], u0 = ci / 3, u1 = (ci + 1) / 3, v0 = ri / 3, v1 = (ri + 1) / 3;
+    h += '<polygon points="' + [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)].join(' ') + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
+    if (v && !opt.click) {
+      const [cx, cy] = wingPt((u0 + u1) / 2, (v0 + v1) / 2, side), sc = 1 - 0.25 * (u0 + u1) / 2;
+      const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.n / tot) * 100) + '%';
+      const sub = opt.tw ? v.par + '/' + (v.par + v.tor) + ' geh.' : v.tor + '/' + v.n;
+      txt += '<text x="' + cx.toFixed(1) + '" y="' + (cy - 2).toFixed(1) + '" class="gbig" style="font-size:' + Math.round(22 * sc) + 'px">' + big + '</text>' + (opt.small ? '' : '<text x="' + cx.toFixed(1) + '" y="' + (cy + 16).toFixed(1) + '" class="gsub">' + sub + '</text>');
+    }
+  }));
+  h += '<polygon points="' + [P(0, 0), P(1, 0), P(1, 1), P(0, 1)].join(' ') + '" class="gframe"/>';
+  const [nx] = wingPt(0, 1, side), [fx] = wingPt(1, 1, side);
+  h += '<text x="' + nx.toFixed(1) + '" y="222" class="gsub" style="font-weight:700">kurze Ecke</text><text x="' + fx.toFixed(1) + '" y="222" class="gsub" style="font-weight:700">lange Ecke</text>';
+  const dot = (s) => { const [x, y] = wingPt(wsUn(s.zone, +s.gx), +s.gy / 200, side); return [x, y]; };
+  if (opt.dots !== false) for (const s of onGoal) { const [x, y] = dot(s); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + WS_ZONES[s.zone] + ' · ' + wsGoalTxt(s) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>'; }
+  if (opt.marker && opt.marker.gx != null) { const [x, y] = dot(opt.marker); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" class="mark"/>'; }
+  return h + txt + '</svg>';
+}
 function goalSVG(shots, opt) {
   opt = opt || {};
+  if (opt.wing) return wingGoalSVG(shots, opt);
   const mir = !!opt.mirror, onGoal = shots.filter((s) => s.gx != null), cells = {}, tot = onGoal.length || 1;
   for (const s of onGoal) { const z = wsGoalZone(+s.gx, +s.gy), c = (cells[z] ||= { n: 0, tor: 0, par: 0 }); c.n++; if (s.ergebnis === 'tor') c.tor++; if (s.ergebnis === 'parade') c.par++; }
   const max = Math.max(1, ...Object.values(cells).map((c) => c.n)); let txt = '';
@@ -3127,13 +3171,17 @@ function goalSVG(shots, opt) {
 // Tendenzen in Worten
 function wsTendencies(shots, tw, mir) {
   const flip = (z) => (mir && z ? z[0] + ({ l: 'r', m: 'm', r: 'l' }[z[1]]) : z), zt = (z) => wsZoneTxt(flip(z)), sicht = mir ? 'aus Sicht Torhüter' : 'aus Sicht Werfer';
-  const out = [], og = shots.filter((s) => s.gx != null && s.zone !== '7M'), s7 = shots.filter((s) => s.zone === '7M');
+  const out = [], og = shots.filter((s) => s.gx != null && s.zone !== '7M' && !wsWing(s)), wg = shots.filter((s) => s.gx != null && wsWing(s)), s7 = shots.filter((s) => s.zone === '7M');
   const count = (L, f) => { const m = {}; for (const s of L) { const k = f(s); if (k) m[k] = (m[k] || 0) + 1; } return Object.entries(m).sort((a, b) => b[1] - a[1]); };
   if (og.length >= 5) {
     const gz = count(og, (s) => wsGoalZone(+s.gx, +s.gy)); if (gz[0]) out.push('Zielt am häufigsten <b>' + esc(zt(gz[0][0])) + '</b> (' + Math.round((gz[0][1] / og.length) * 100) + ' %' + (gz[1] ? ', danach ' + esc(zt(gz[1][0])) + ' ' + Math.round((gz[1][1] / og.length) * 100) + ' %' : '') + '), ' + sicht + '.');
     const rows = count(og, (s) => WS_ROW[wsGoalZone(+s.gx, +s.gy)[0]]), cols = count(og, (s) => WS_COL[flip(wsGoalZone(+s.gx, +s.gy))[1]]);
     if (rows[0] && rows[0][1] / og.length >= 0.5) out.push('Höhe: meist <b>' + esc(rows[0][0]) + '</b> (' + Math.round((rows[0][1] / og.length) * 100) + ' %).');
     if (cols[0] && cols[0][1] / og.length >= 0.5) out.push('Seite: meist <b>' + esc(cols[0][0]) + '</b> ' + sicht + ' (' + Math.round((cols[0][1] / og.length) * 100) + ' %).');
+  }
+  if (wg.length >= 3) {
+    const wz = count(wg, (s) => wsWingZone(s)), pc = (n) => Math.round((n / wg.length) * 100), kurz = wg.filter((s) => wsWingZone(s)[1] === 'l').length, lang = wg.filter((s) => wsWingZone(s)[1] === 'r').length;
+    out.push('Von aussen (' + wg.length + ' aufs Tor): meist <b>' + esc(wsWingTxt(wz[0][0])) + '</b> (' + pc(wz[0][1]) + ' %), kurze Ecke ' + pc(kurz) + ' %, lange Ecke ' + pc(lang) + ' %.');
   }
   const pz = count(shots.filter((s) => s.zone && s.zone !== '7M'), (s) => s.zone); if (pz[0] && shots.length >= 5) out.push('Wirft vor allem von <b>' + esc(WS_ZONES[pz[0][0]]) + '</b> (' + pz[0][1] + ' von ' + shots.filter((s) => s.zone && s.zone !== '7M').length + ').');
   const art = count(shots, (s) => s.art); if (art[0] && art[0][1] >= 3) out.push('Häufigste Wurfart: <b>' + esc(art[0][0]) + '</b> (' + art[0][1] + '×).');
@@ -3191,8 +3239,11 @@ function wsGameOptions(d) {
     (games.some((x) => x.kommend) ? '<optgroup label="Kommende Spiele (live erfassen)">' + games.filter((x) => x.kommend).map(opt).join('') + '</optgroup>' : '') +
     (games.some((x) => !x.kommend) ? '<optgroup label="Gespielte Spiele (am Video)">' + games.filter((x) => !x.kommend).map(opt).join('') + '</optgroup>' : '');
 }
+// Aussenposition des aktuellen Wurfs (dann wird das Tor schräg gezeichnet)
+function wsCurWing() { const c = state.ws.cur; if (c.sit === '7m' || c.x == null) return ''; const z = wsZone(c.x, c.y, c.sit); return z === 'LA' || z === 'RA' ? z : ''; }
 function wsCaptureHTML(d) {
   const ws = state.ws, g = wsGameObj(d), c = ws.cur;
+  const wz = wsCurWing();
   let h = '<div class="card wscap"><div class="row" style="align-items:end"><div class="field" style="flex:1 1 220px"><label for="wsQ">Spiel suchen</label><input type="search" id="wsQ" value="' + esc(ws.q) + '" placeholder="Team, Liga oder Datum, z. B. Pfadi 18.10." autocomplete="off"></div>' +
     '<div class="field" style="flex:2 1 320px"><label for="wsGame">Spiel</label><select id="wsGame">' + wsGameOptions(d) + '</select></div>' +
     '<label class="check"><input type="checkbox" id="wsAll"' + (ws.allLeagues ? ' checked' : '') + '> alle Ligen statt nur QHL/NLB</label></div>';
@@ -3206,15 +3257,15 @@ function wsCaptureHTML(d) {
     '<button class="wsp' + (c.unknown ? ' on' : '') + '" data-wsp="?"><b>?</b> unbekannt</button></div>' + (shooters.length ? '' : '<p class="small muted">Für dieses Team sind noch keine Spieler bekannt. Wähle «unbekannt».</p>') + '</div>' +
     '<div><div class="wsstep">2. Position <span class="chips">' + WS_SIT.map(([k, l]) => '<button class="chipbtn' + (c.sit === k ? ' on' : '') + '" data-wssit="' + k + '">' + l + '</button>').join('') + '</span></div>' + courtSVG([], { click: true, id: 'wsCourt', marker: c, labels: false }) +
     '<p class="small muted" style="margin:2px 0 0">' + (c.sit === '7m' ? '7-Meter: Position wird automatisch gesetzt.' : c.x != null ? 'Position: ' + esc(WS_ZONES[wsZone(c.x, c.y, c.sit)]) : 'Tippe auf das Feld, von wo geworfen wurde.') + '</p></div>' +
-    '<div><div class="wsstep">3. Ziel im Tor <span class="muted small">Sicht Werfer</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: c }) +
-    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span></div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div>' +
+    '<div><div class="wsstep">3. Ziel im Tor <span class="muted small">' + (wz ? 'Sicht ' + WS_ZONES[wz] + ', schräg' : 'Sicht Werfer') + '</span></div>' + goalSVG([], { click: true, id: 'wsGoal', marker: { ...c, zone: wz }, wing: wz ? (wz === 'LA' ? 'L' : 'R') : null }) +
+    '<div class="wsstep" style="margin-top:6px">4. Ergebnis <span class="muted small">(speichert den Wurf)</span>' + (c.pid || c.unknown || (c.x != null && c.sit !== '7m') || c.gx != null || c.art ? '<button class="linkbtn small" data-wsclear="1" style="margin-left:auto">Eingabe leeren</button>' : '') + '</div><div class="wsres">' + WS_RES.map(([k, l]) => '<button class="btn' + (k === 'tor' || k === 'parade' ? '' : ' secondary') + '" data-wsres="' + k + '">' + l + '</button>').join('') + '</div>' +
     '<details class="hint" style="margin-top:8px"' + (c.art ? ' open' : '') + '><summary>Wurfart (freiwillig)</summary><div class="chips" style="margin-top:6px">' + WS_ART.map((a) => '<button class="chipbtn' + (c.art === a ? ' on' : '') + '" data-wsart="' + a + '">' + a + '</button>').join('') + '</div></details></div></div>' +
-    '<p class="msg" id="wsMsg" aria-live="polite"></p></div>';
+    '<p class="msg ok" id="wsMsg" aria-live="polite">' + (ws.last && ws.last.game === String(g.gameId) ? esc(ws.last.txt) + (ws.last.id != null ? ' <button class="btn secondary wsundo" data-wsundo="' + ws.last.id + '">↶ Rückgängig</button>' : '') : '') + '</p></div>';
   const inGame = state.ws.shots.filter((s) => String(s.game_id) === String(g.gameId)).reverse();
   const sum = (tid) => wsSum(inGame.filter((s) => String(s.angriff_team_id) === String(tid)));
   const A = sum(g.homeTeamId), B = sum(g.awayTeamId);
   h += '<div class="card"><h3>Würfe in diesem Spiel</h3><p class="small muted" style="margin:0 0 8px">' + esc(g.homeName) + ': ' + A.n + ' Würfe, ' + A.tor + ' Tore · ' + esc(g.awayName) + ': ' + B.n + ' Würfe, ' + B.tor + ' Tore' + (inGame.length ? ' · Der neuste Wurf steht oben, ✕ löscht ihn.' : '') + '</p>' +
-    (inGame.length ? '<div style="overflow-x:auto"><table class="dtable"><tbody>' + inGame.slice(0, 40).map((s) => '<tr><td class="left">' + esc(s.angriff_team) + '</td><td class="left">' + (s.nr ? s.nr + ' · ' : '') + esc(s.spieler ? fullName(s.spieler) : 'unbekannt') + '</td><td class="left">' + esc(WS_ZONES[s.zone] || '') + (s.situation === 'gegenstoss' ? ' (Gegenstoss)' : '') + '</td><td class="left">' + esc(wsZoneTxt(s.tor_zone) || '–') + '</td><td class="left"><span class="lg ' + wsDotCls(s) + '"></span> ' + esc(wsResTxt(s.ergebnis)) + '</td><td><button class="linkbtn" data-wsdel="' + s.id + '" aria-label="Wurf löschen">✕</button></td></tr>').join('') + '</tbody></table></div>' : '<p class="small muted" style="margin:0">Noch keine Würfe erfasst.</p>') + '</div>';
+    (inGame.length ? '<div style="overflow-x:auto"><table class="dtable"><tbody>' + inGame.slice(0, 40).map((s) => '<tr><td class="left">' + esc(s.angriff_team) + '</td><td class="left">' + (s.nr ? s.nr + ' · ' : '') + esc(s.spieler ? fullName(s.spieler) : 'unbekannt') + '</td><td class="left">' + esc(WS_ZONES[s.zone] || '') + (s.situation === 'gegenstoss' ? ' (Gegenstoss)' : '') + '</td><td class="left">' + esc(wsGoalTxt(s) || '–') + '</td><td class="left"><span class="lg ' + wsDotCls(s) + '"></span> ' + esc(wsResTxt(s.ergebnis)) + '</td><td><button class="linkbtn" data-wsdel="' + s.id + '" aria-label="Wurf löschen">✕</button></td></tr>').join('') + '</tbody></table></div>' : '<p class="small muted" style="margin:0">Noch keine Würfe erfasst.</p>') + '</div>';
   h += wsTeamStats(d, g, inGame);
   return h;
 }
@@ -3248,9 +3299,8 @@ async function wsSave(res) {
     player_id: p ? p.id : null, spieler: p ? p.name : '', nr: p ? p.nr || null : null, tw_id: gk ? gk.id : null, tw_name: gk ? gk.name : '', tw_team: atkHome ? g.awayName : g.homeName,
     x: Math.round(x * 10) / 10, y: Math.round(y * 10) / 10, gx: c.gx == null ? null : Math.round(c.gx), gy: c.gy == null ? null : Math.round(c.gy), zone: wsZone(x, y, c.sit), tor_zone: c.gx == null ? null : wsGoalZone(c.gx, c.gy), ergebnis: res, situation: c.sit, art: c.art || null };
   try {
-    await wsAdd(row);
-    ws.cur = wsBlank(); renderWurf();
-    msg('Gespeichert: ' + (p ? (p.nr ? p.nr + ' ' : '') + splitName(p.name).sur : 'unbekannt') + ', ' + WS_ZONES[row.zone] + (row.tor_zone ? ' → ' + wsZoneTxt(row.tor_zone) : '') + ', ' + wsResTxt(res) + '.', 'ok');
+    const saved = await wsAdd(row);
+    ws.cur = wsBlank(); ws.last = { id: saved.id, game: String(g.gameId), txt: 'Gespeichert: ' + (p ? (p.nr ? p.nr + ' ' : '') + splitName(p.name).sur : 'unbekannt') + ', ' + WS_ZONES[row.zone] + (row.gx != null ? ' → ' + wsGoalTxt(row) : '') + ', ' + wsResTxt(res) + '.' }; renderWurf();
   } catch (e) { msg('Speichern nicht möglich: ' + (e.message || 'keine Verbindung'), 'err'); }
 }
 function wsAnalysisHTML(d) {
@@ -3270,8 +3320,10 @@ function wsAnalysisHTML(d) {
   if (!a.id) return h + '<div class="card empty"><p class="muted" style="margin:0">Sobald Würfe erfasst sind, erscheinen hier die Wurfbilder.</p></div>';
   const key = a.kind === 'werfer' ? 'player_id' : a.kind === 'tw' ? 'tw_id' : 'angriff_team_id';
   const mine = S.filter((s) => String(s[key]) === a.id && (!a.sit || s.situation === a.sit)), sm = wsSum(mine), tw = a.kind === 'tw', mir = ws.persp === 'tw';
+  const front = mine.filter((s) => !wsWing(s)), wing = mine.filter(wsWing);
   const tend = wsTendencies(mine, tw, mir);
-  h += '<div class="wsana"><div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore, ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(mine, { mirror: mir, tw }) + WS_LEGEND + '</div>' +
+  h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore, ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + WS_LEGEND + '</div>' : '') +
+    (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'In den Feldern: Anteil der Würfe aufs Tor, darunter Tore / Würfe.') + '</p>' + goalSVG(wing, { wing: wsWingSide(wing), tw }) + WS_LEGEND + '</div>' : '') +
     '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
     '<div class="card"><h3>Tendenzen</h3>' + (tend.length ? '<ul class="insights">' + tend.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted" style="margin:0">Für Tendenzen braucht es mindestens 5 erfasste Würfe.</p>') + '</div>';
   return h;
@@ -3289,12 +3341,12 @@ function wsPrepBody(d, teamId) {
   const F = aggregate(d, { role: 'F', group: [], team: String(teamId) }).sort((a, b) => b.goals - a.goals).slice(0, 10);
   const next = Object.values(d.fixtures || {}).filter((f) => new Date(f.date).getTime() > refNow() && (String(f.homeTeamId) === String(teamId) || String(f.awayTeamId) === String(teamId))).sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
   let h = '<div class="card"><h3>' + esc(team) + '</h3><p class="small muted" style="margin:0 0 8px">' + (next ? 'Nächstes Spiel: ' + esc(fmtWhen(next.date)) + ', ' + esc(next.homeName) + ' – ' + esc(next.awayName) + '. ' : '') + S.length + ' erfasste Würfe dieses Teams. Werfer sortiert nach Toren in dieser Saison.</p>' +
-    (S.length >= 5 ? '<div class="wsana"><div><b class="small">Team: wohin geworfen wird</b> <span class="small muted">(Sicht Torhüter)</span>' + goalSVG(S, { mirror: true }) + '</div><div><b class="small">Team: von wo</b>' + courtSVG(S, {}) + '</div></div>' + WS_LEGEND : '') + '</div>';
+    (S.length >= 5 ? '<div class="wsana"><div><b class="small">Team: wohin geworfen wird</b> <span class="small muted">(Sicht Torhüter' + (S.some(wsWing) ? ', ohne Aussen' : '') + ')</span>' + goalSVG(S.filter((s) => !wsWing(s)), { mirror: true }) + '</div>' + (S.filter(wsWing).length >= 3 ? '<div><b class="small">Team: von aussen</b> <span class="small muted">(schräg)</span>' + goalSVG(S.filter(wsWing), { wing: wsWingSide(S.filter(wsWing)) }) + '</div>' : '') + '<div><b class="small">Team: von wo</b>' + courtSVG(S, {}) + '</div></div>' + WS_LEGEND : '') + '</div>';
   h += '<div class="wsprep">' + F.map((p) => {
     const mine = S.filter((s) => String(s.player_id) === String(p.id)), tend = wsTendencies(mine, false, true), s = splitName(p.name);
     return '<div class="card wspl"><div class="wsplhead"><div><b>' + (mine[0] && mine[0].nr ? mine[0].nr + ' · ' : '') + esc(s.sur) + '</b> ' + esc(s.first) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + (p.year ? (p.position ? ', ' : '') + p.year : '') + '</span></div>' +
       '<div class="small" style="text-align:right">' + nf(p.games ? p.goals / p.games : 0, 1) + ' Tore/Spiel<br><span class="muted">7m ' + (p.shots7 ? p.goals7 + '/' + p.shots7 : '–') + ' · Quote ' + pctTxt(rate(p.qg, p.qs)) + '</span></div></div>' +
-      (mine.length ? '<div class="wsplbody">' + goalSVG(mine, { mirror: true, small: true }) + '<div>' + (tend.length ? '<ul class="insights small">' + tend.slice(0, 4).map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted">' + mine.length + ' erfasste Würfe, noch zu wenige für Tendenzen.</p>') + '</div></div>' : '<p class="small muted" style="margin:6px 0 0">Noch keine erfassten Würfe.</p>') + '</div>';
+      (mine.length ? '<div class="wsplbody"><div>' + (mine.some((s) => !wsWing(s)) || !mine.some(wsWing) ? goalSVG(mine.filter((s) => !wsWing(s)), { mirror: true, small: true }) : '') + (mine.some(wsWing) ? '<div class="small muted" style="text-align:center">von aussen</div>' + goalSVG(mine.filter(wsWing), { wing: wsWingSide(mine.filter(wsWing)), small: true }) : '') + '</div><div>' + (tend.length ? '<ul class="insights small">' + tend.slice(0, 4).map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted">' + mine.length + ' erfasste Würfe, noch zu wenige für Tendenzen.</p>') + '</div></div>' : '<p class="small muted" style="margin:6px 0 0">Noch keine erfassten Würfe.</p>') + '</div>';
   }).join('') + '</div>';
   return h;
 }
@@ -3311,10 +3363,12 @@ $('#wsNote').addEventListener('click', (e) => { if (e.target.closest('#wsImport'
 $('#wsBody').addEventListener('click', (e) => {
   const ws = state.ws, t = e.target;
   const court = t.closest('#wsCourt'); if (court) { if (ws.cur.sit === '7m') return; const [x, y] = svgPoint(e, court); ws.cur.x = Math.max(0, Math.min(200, x)); ws.cur.y = Math.max(0, Math.min(140, y)); return renderWurf(); }
-  const goal = t.closest('#wsGoal'); if (goal) { const [x, y] = svgPoint(e, goal); ws.cur.gx = Math.max(-10, Math.min(310, x)); ws.cur.gy = Math.max(-10, Math.min(210, y)); return renderWurf(); }
+  const goal = t.closest('#wsGoal'); if (goal) { const wz = wsCurWing(); let [x, y] = svgPoint(e, goal); if (wz) [x, y] = wingInv(x, y, wz === 'LA' ? 'L' : 'R', wz); ws.cur.gx = Math.max(-10, Math.min(310, x)); ws.cur.gy = Math.max(-10, Math.min(210, y)); return renderWurf(); }
   const b = t.closest('button'); if (!b) return;
   if (b.dataset.wsatk) { ws.atk = b.dataset.wsatk; ws.tw = ''; ws.cur = wsBlank(ws.cur.sit); return renderWurf(); }
-  if (b.dataset.wsp) { const v = b.dataset.wsp; ws.cur.pid = v === '?' ? null : Number(v); ws.cur.unknown = v === '?'; return renderWurf(); }
+  if (b.dataset.wsp) { const v = b.dataset.wsp, again = v === '?' ? ws.cur.unknown : ws.cur.pid === Number(v); ws.cur.pid = again || v === '?' ? null : Number(v); ws.cur.unknown = !again && v === '?'; return renderWurf(); } // nochmals antippen = abwählen
+  if (b.dataset.wsclear) { ws.cur = wsBlank(ws.cur.sit === '7m' ? 'position' : ws.cur.sit); return renderWurf(); }
+  if (b.dataset.wsundo) { const id = Number(b.dataset.wsundo), txt = ws.last ? ws.last.txt.replace(/^Gespeichert: /, '') : ''; b.disabled = true; wsDel(id).then(() => { ws.last = { id: null, game: ws.last ? ws.last.game : '', txt: 'Zurückgenommen: ' + txt }; renderWurf(); }).catch((x) => { ws.msg = 'Zurücknehmen nicht möglich: ' + (x.message || ''); renderWurf(); }); return; }
   if (b.dataset.wssit) { ws.cur.sit = b.dataset.wssit; if (ws.cur.sit === '7m') { ws.cur.x = 100; ws.cur.y = 70; } return renderWurf(); }
   if (b.dataset.wsart) { ws.cur.art = ws.cur.art === b.dataset.wsart ? '' : b.dataset.wsart; return renderWurf(); }
   if (b.dataset.wsres) return wsSave(b.dataset.wsres);

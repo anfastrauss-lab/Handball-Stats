@@ -81,6 +81,7 @@ create policy "sicherung wuerfe" on public.wuerfe for select to authenticated us
 
 - **Erfassen:** Spiel wählen (kommende Spiele aus dem Spielplan für die Erfassung an der Linie, gespielte Spiele für das Video). Dann pro Wurf: Werfer antippen, Position auf dem Feld antippen, Ziel im Tor antippen, Ergebnis antippen. Mit dem Ergebnis ist der Wurf gespeichert. Bei «Vorbei» und «Geblockt» braucht es kein Ziel im Tor. Wer im Tor steht, wählst du oben einmal aus (bei Wechsel neu wählen).
 - **Auswertung:** pro Werfer, pro Torhüter (auch die eigenen) oder pro Team. Zeigt, wohin geworfen wird (3×3 Felder im Tor), von wo, und Tendenzen in Worten. Das Tor lässt sich aus Sicht Torhüter (gespiegelt) oder aus Sicht Werfer zeigen.
+- **Aussenwürfe:** Wird die Position bei Linksaussen oder Rechtsaussen angetippt, erscheint das Tor schräg aus Sicht des Aussenspielers. In der Auswertung haben Aussenwürfe ein eigenes Torbild mit «kurzer Ecke» und «langer Ecke», damit sich Linksaussen und Rechtsaussen gemeinsam auswerten lassen.
 - **Gegner-Vorbereitung:** wählt einen Gegner und zeigt seine besten Werfer mit Statistik und Torbild. Mit «Als PDF für den Torhüter» entsteht ein Blatt zum Mitgeben.
 - Standard sind nur QHL- und NLB-Spiele. Mit «alle Ligen» lassen sich auch andere Spiele erfassen.
 
