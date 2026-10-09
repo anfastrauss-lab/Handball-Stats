@@ -97,6 +97,14 @@ textarea { min-height: 90px; resize: vertical; }
 .dot.off { fill: var(--ink-2); opacity: .35; }
 .dot.zero { fill: none; stroke: var(--ink-2); stroke-width: .5; opacity: .45; }
 .dot:focus-visible { outline: none; stroke: var(--ink); stroke-width: 1.2; }
+.clubmap svg { width: 100%; height: auto; display: block; max-height: 300px; }
+.canton.mini { cursor: default; } .canton.mini:hover { fill: var(--surface); } .canton.mini.sel, .canton.mini.sel:hover { fill: var(--bar); }
+.clubmark { fill: var(--signal); stroke: var(--ink); stroke-width: 1; }
+.clubring { fill: none; stroke: var(--signal); stroke-width: 1.6; pointer-events: none; animation: clubpulse 1.6s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+ clubpulse { 0% { opacity: 1; transform: scale(.6); } 100% { opacity: 0; transform: scale(1.6); } }
+ (prefers-reduced-motion: reduce) { .clubring { animation: none; } }
+.clubother { fill: var(--ink-2); opacity: .7; }
+.clubname { font: 700 9px var(--font-body); fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; pointer-events: none; }
 .radius { fill: var(--court); fill-opacity: .08; stroke: var(--court); stroke-width: .9; stroke-dasharray: 3 2; pointer-events: none; }
 .centermark { fill: var(--signal); stroke: var(--ink); stroke-width: .9; pointer-events: none; }
 .tip { position: absolute; pointer-events: none; background: var(--ink); color: var(--bg); padding: 6px 10px; border-radius: 6px; font-size: 13px; line-height: 1.35; z-index: 5; max-width: 240px; }
@@ -194,7 +202,7 @@ svg.goal { max-width: 460px; } svg.court { max-width: 520px; } svg.goal.small { 
 .goal .gbig { font-size: 24px; font-weight: 800; text-anchor: middle; fill: var(--ink); paint-order: stroke; stroke: var(--surface); stroke-width: 4px; }
 .goal .gsub { font-size: 13px; text-anchor: middle; fill: var(--ink-2); paint-order: stroke; stroke: var(--surface); stroke-width: 3px; }
 .goal.small .gbig { font-size: 30px; }
-svg .dot { stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; fill-opacity: .95; } svg .dot.g { fill: #00B140; } svg .dot.s { fill: #E8141C; } svg .dot.o { fill: transparent; stroke: #E8141C; stroke-width: 2px; }
+svg.court .dot, svg.goal .dot { stroke: #fff; stroke-width: 1px; vector-effect: non-scaling-stroke; fill-opacity: .95; } svg.court .dot.g, svg.goal .dot.g { fill: #00B140; } svg.court .dot.s, svg.goal .dot.s { fill: #E8141C; } svg.court .dot.o, svg.goal .dot.o { fill: transparent; stroke: #E8141C; stroke-width: 2px; }
 svg .mark { fill: var(--signal); stroke: var(--ink); stroke-width: 1.5; }
 .goal .mark { stroke-width: 3; }
 .lg { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin: 0 2px 0 8px; vertical-align: 0; }
@@ -1637,6 +1645,25 @@ function fillPositions() { fillPosSelect('#fPos', state.f); }
 const MAP = JSON.parse($('#mapdata').textContent);
 const projXY = (lat, lon) => [(lon - MAP.LON0) * MAP.KX, (MAP.LAT1 - lat) * MAP.KY];
 const hasGeo = (d) => Object.keys(d.clubs).length > 0 && Object.keys(d.teams).length > 0;
+// Kleine Karte im Spielerprofil: Standort des Vereins (und weiterer Vereine, für die der Spieler gespielt hat)
+function clubMapHTML(d, allMine, mainTeamId) {
+  if (!hasGeo(d)) return '';
+  const clubOf = (tid) => { const t = d.teams[tid]; const c = t && d.clubs[t.clubId]; return c && Number.isFinite(+c.lat) && +c.lat ? c : null; };
+  const main = clubOf(mainTeamId), seen = new Set(main ? [main.clubId] : []), others = [];
+  for (const x of allMine.slice().reverse()) { const c = clubOf(x.r.teamId); if (c && !seen.has(c.clubId)) { seen.add(c.clubId); others.push(c); } }
+  if (!main && !others.length) return '';
+  const m = main || others.shift(); state.mapFocus = m.clubId; // auch auf der grossen Karte hervorheben
+  let s = '';
+  for (const [c, dd] of Object.entries(MAP.cantons)) s += '<path class="canton mini' + (c === m.canton ? ' sel' : '') + '" d="' + dd + '"></path>';
+  s += '<path class="lake" d="' + MAP.lakes + '"></path>';
+  for (const c of others) { const [x, y] = projXY(+c.lat, +c.lon); s += '<circle class="clubother" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="2.4"><title>' + esc(c.name) + '</title></circle>'; }
+  const [x, y] = projXY(+m.lat, +m.lon), right = x > MAP.W * 0.68;
+  s += '<circle class="clubring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"></circle><circle class="clubmark" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="4"></circle>' +
+    '<text class="clubname" x="' + (right ? x - 8 : x + 8).toFixed(1) + '" y="' + (y + 3).toFixed(1) + '" text-anchor="' + (right ? 'end' : 'start') + '">' + esc(m.name) + '</text>';
+  const place = (c) => [(c.zip ? c.zip + ' ' : '') + (c.city || ''), c.canton].filter(Boolean).join(', ');
+  return '<h3 style="margin-top:18px">Verein</h3><p class="small muted" style="margin:0 0 6px"><b>' + esc(m.name) + '</b>' + (place(m) ? ', ' + esc(place(m)) : '') + (others.length ? '. Auch gespielt für: ' + others.map((c) => esc(c.name)).join(', ') + ' (graue Punkte)' : '') + '.</p>' +
+    '<div class="clubmap"><svg viewBox="0 0 ' + MAP.W + ' ' + MAP.H + '" role="img" aria-label="Karte der Schweiz mit dem Standort von ' + esc(m.name) + '">' + s + '</svg></div>';
+}
 function initMap() {
   let s = '';
   for (const [c, dd] of Object.entries(MAP.cantons)) s += '<path class="canton" data-c="' + c + '" d="' + dd + '"></path>';
@@ -1699,6 +1726,8 @@ function renderMap() {
     s += '<circle class="dot ' + cls + '" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + r.toFixed(1) + '" tabindex="0" role="button" data-club="' + esc(c.c.clubId) + '" aria-label="' + esc(c.c.name + ', ' + c.n + ' Spieler. Umkreis um diesen Verein legen') + '"></circle>';
   }
   if (f.center) { const [x, y] = projXY(f.center.lat, f.center.lon); s += '<path class="centermark" d="M' + x.toFixed(1) + ' ' + (y - 4.5).toFixed(1) + 'L' + (x + 3.5).toFixed(1) + ' ' + y.toFixed(1) + 'L' + x.toFixed(1) + ' ' + (y + 4.5).toFixed(1) + 'L' + (x - 3.5).toFixed(1) + ' ' + y.toFixed(1) + 'Z"></path>'; }
+  const fc = state.mapFocus && d.clubs[state.mapFocus];
+  if (fc && Number.isFinite(+fc.lat) && +fc.lat) { const [x, y] = projXY(+fc.lat, +fc.lon); s += '<circle class="clubring" cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9"></circle><text class="clubname" x="' + (x + 9).toFixed(1) + '" y="' + (y - 7).toFixed(1) + '">' + esc(fc.name) + '</text>'; }
   $('#mDyn').innerHTML = s;
 }
 function showTip(el, ev) {
@@ -1826,6 +1855,7 @@ function openDetail(id, role) {
 function closeDetail() {
   state.open = null; $('#drawer').hidden = true; $('#backdrop').hidden = true;
   if (state.view === 'merk') renderMerk(); // Notizen aus dem Profil sofort zeigen
+  if (state.view === 'spieler' && state.mapFocus) renderMap(); // Verein des Spielers auf der Karte zeigen
   if (state.lastFocus && document.contains(state.lastFocus)) state.lastFocus.focus();
 }
 const LITE_TIP = 'Liveticker lite: In diesem Spiel wurden nur Tore erfasst, keine Würfe und Paraden. Es zählt für Tore und Spiele, aber nicht für Quoten.';
@@ -1942,6 +1972,7 @@ function renderDrawer() {
     '<p class="small muted">' + esc(profSummary(p, role, sumLabel)) + '</p>' +
     ligaInsight(d, id, role) +
     perfProfile(d, id, role) +
+    clubMapHTML(d, allMine, last.r.teamId) +
     nextBlock +
     seasonTable(d, allMine, role) +
     '<h3 style="margin-top:18px">' + (role === 'F' ? 'Tore pro Spiel' : 'Paraden pro Spiel') + '</h3><div class="bars">' + bars + '</div>' +
@@ -3151,7 +3182,7 @@ function wingGoalSVG(shots, opt) {
   const [nx] = wingPt(0, 1, side), [fx] = wingPt(1, 1, side);
   h += '<text x="' + nx.toFixed(1) + '" y="222" class="gsub" style="font-weight:700">kurze Ecke</text><text x="' + fx.toFixed(1) + '" y="222" class="gsub" style="font-weight:700">lange Ecke</text>';
   const dot = (s) => { const [x, y] = wingPt(wsUn(s.zone, +s.gx), +s.gy / 200, side); return [x, y]; };
-  if (opt.dots !== false) for (const s of onGoal) { const [x, y] = dot(s); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + WS_ZONES[s.zone] + ' · ' + wsGoalTxt(s) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>'; }
+  if (opt.dots === true) for (const s of onGoal) { const [x, y] = dot(s); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + WS_ZONES[s.zone] + ' · ' + wsGoalTxt(s) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>'; }
   if (opt.marker && opt.marker.gx != null) { const [x, y] = dot(opt.marker); h += '<circle cx="' + x.toFixed(1) + '" cy="' + y.toFixed(1) + '" r="9" class="mark"/>'; }
   return h + txt + '</svg>';
 }
@@ -3172,7 +3203,7 @@ function goalSVG(shots, opt) {
     }
   }
   h += '<rect x="0" y="0" width="300" height="200" class="gframe"/>';
-  if (opt.dots !== false) for (const s of onGoal) h += '<circle cx="' + (mir ? 300 - s.gx : +s.gx).toFixed(1) + '" cy="' + (+s.gy).toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + wsZoneTxt(wsGoalZone(+s.gx, +s.gy)) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>';
+  if (opt.dots === true) for (const s of onGoal) h += '<circle cx="' + (mir ? 300 - s.gx : +s.gx).toFixed(1) + '" cy="' + (+s.gy).toFixed(1) + '" r="' + (opt.small ? 6 : onGoal.length > 40 ? 3.5 : 5) + '" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + wsZoneTxt(wsGoalZone(+s.gx, +s.gy)) + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>';
   if (opt.marker && opt.marker.gx != null) h += '<circle cx="' + (mir ? 300 - opt.marker.gx : opt.marker.gx).toFixed(1) + '" cy="' + opt.marker.gy.toFixed(1) + '" r="9" class="mark"/>';
   h += txt;
   return h + '</svg>';
@@ -3360,9 +3391,9 @@ function wsAnalysisHTML(d) {
   const tableKind = tw ? 'tw' : a.id ? 'werfer' : 'team';
   const front = mine.filter((s) => !wsWing(s)), wing = mine.filter(wsWing);
   const tend = wsTendencies(mine, tw, mir);
-  h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore' + (tw ? ', ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') : ' (Wurfquote <b>' + (sm.n ? Math.round((sm.tor / sm.n) * 100) : 0) + ' %</b>)') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + WS_LEGEND + '</div>' : '') +
-    (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld.') + '</p>' + goalSVG(wing, { wing: mir ? (wsWingSide(wing) === 'L' ? 'R' : 'L') : wsWingSide(wing), tw }) + WS_LEGEND + '</div>' : '') +
-    '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe und Wurfquote pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + '</div></div>' +
+  h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore' + (tw ? ', ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') : ' (Wurfquote <b>' + (sm.n ? Math.round((sm.tor / sm.n) * 100) : 0) + ' %</b>)') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld. Je kräftiger das Feld, desto mehr Würfe gehen dorthin.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + '</div>' : '') +
+    (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld. Je kräftiger das Feld, desto mehr Würfe gehen dorthin.') + '</p>' + goalSVG(wing, { wing: mir ? (wsWingSide(wing) === 'L' ? 'R' : 'L') : wsWingSide(wing), tw }) + '</div>' : '') +
+    '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe und Wurfquote pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + WS_LEGEND + '</div></div>' +
     wsQuoteTable(mine, tableKind) +
     '<div class="card"><h3>Tendenzen</h3>' + (tend.length ? '<ul class="insights">' + tend.map((x) => '<li>' + x + '</li>').join('') + '</ul>' : '<p class="small muted" style="margin:0">Für Tendenzen braucht es mindestens 5 erfasste Würfe.</p>') + '</div>';
   return h;
