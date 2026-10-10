@@ -176,6 +176,10 @@ td.note { white-space: normal; max-width: 300px; min-width: 150px; color: var(--
 .wsa-top { grid-area: top; display: flex; gap: 8px 14px; align-items: end; flex-wrap: wrap; } .wsa-sh { grid-area: sh; } .wsa-sit { grid-area: sit; } .wsa-court { grid-area: court; } .wsa-goal { grid-area: goal; } .wsa-act { grid-area: act; }
 .wsatk { flex: 1 1 320px; } .wsatk button { min-height: 46px; font-size: 15px; } .wsatk button b { margin-left: 6px; font-size: 17px; }
 .wstw { display: flex; flex-direction: column; gap: 2px; flex: 1 1 200px; } .wsart { margin-bottom: 10px; }
+svg.goal .gcell.zpick { cursor: pointer; } svg.goal .gcell.zpick:hover { stroke: var(--signal); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+svg.goal .gcell.zsel { stroke: var(--signal); stroke-width: 4px; vector-effect: non-scaling-stroke; }
+svg.goal text, svg.goal .hlgoal { pointer-events: none; } svg.goal .zout { fill: none; stroke: var(--signal); stroke-width: 4px; vector-effect: non-scaling-stroke; pointer-events: none; }
+svg.court .dot.dim, svg.court .lauf.dim { opacity: .12; }
 svg.court .hit { fill: transparent; cursor: pointer; }
 svg.court .hlring { fill: none; stroke: var(--signal); stroke-width: 2.5px; vector-effect: non-scaling-stroke; }
 svg.goal .hlgoal { stroke: var(--signal); stroke-width: 4px; vector-effect: non-scaling-stroke; fill-opacity: 1; }
@@ -3158,6 +3162,19 @@ const wsDotCls = (s) => (s.ergebnis === 'tor' ? 'g' : s.ergebnis === 'parade' ? 
 // Laufweg eines Wurfs: Liste von [x, y] (gespeichert als JSON-Text)
 function wsLauf(s) { const v = s && s.lauf; if (!v) return null; if (Array.isArray(v)) return v.length > 1 ? v : null; try { const a = JSON.parse(v); return Array.isArray(a) && a.length > 1 ? a : null; } catch (e) { return null; } }
 const wsLaufPts = (L) => L.map((p) => (+p[0]).toFixed(1) + ',' + (+p[1]).toFixed(1)).join(' ');
+// Angeklickte Torzone: alle Würfe dorthin auf dem Feld hervorheben (gw '1' = schräges Aussen-Tor)
+const wsZoneSel = (gw, z) => !!(state.ws.hlZone && state.ws.hlZone.gw === gw && state.ws.hlZone.z === z);
+function wsInZone(s) {
+  const hz = state.ws.hlZone; if (!hz || s.gx == null) return false;
+  return hz.gw === '1' ? wsWing(s) && wsWingZone(s) === hz.z : !wsWing(s) && wsGoalZone(+s.gx, +s.gy) === hz.z;
+}
+function wsZoneInfo(shots) {
+  const hz = state.ws.hlZone; if (!hz) return '';
+  const L = shots.filter(wsInZone); if (!L.length) return '';
+  const tor = L.filter((s) => s.ergebnis === 'tor').length, par = L.filter((s) => s.ergebnis === 'parade').length, sieben = L.filter((s) => s.zone === '7M').length;
+  return '<div class="notice wshl">Feld <b>' + esc(hz.gw === '1' ? wsWingTxt(hz.z) + ' (von aussen)' : wsZoneTxt(hz.z)) + '</b>: ' + L.length + (L.length === 1 ? ' Wurf, ' : ' Würfe, ') + tor + (tor === 1 ? ' Tor, ' : ' Tore, ') + par + ' gehalten (Wurfquote ' + Math.round((tor / L.length) * 100) + ' %). Auf dem Spielfeld gelb umrandet, die anderen Würfe sind ausgeblendet.' +
+    (sieben ? ' <span class="small muted">' + sieben + ' davon 7-Meter, die stehen nicht auf dem Feld.</span>' : '') + ' <button class="linkbtn small" data-wshl="">Auswahl aufheben</button></div>';
+}
 // Angeklickter Wurf: kurze Beschreibung über den Bildern
 function wsHlInfo(shots) {
   const s = state.ws.hl != null && shots.find((x) => String(x.id) === String(state.ws.hl)); if (!s) return '';
@@ -3175,12 +3192,13 @@ function courtSVG(shots, opt) {
     '<rect x="0" y="0" width="200" height="140" class="cbg"/><polyline points="' + dLine(60) + '" class="l6"/><polyline points="' + dLine(90) + '" class="l9"/>' +
     '<line x1="96" y1="70" x2="104" y2="70" class="l7"/><line x1="85" y1="1.5" x2="115" y2="1.5" class="lgoal"/>';
   const laufe = shots.filter((s) => s.zone !== '7M' && wsLauf(s));
-  for (const s of laufe) h += '<polyline class="lauf' + (laufe.length > 40 ? ' faint' : '') + '" points="' + wsLaufPts(wsLauf(s)) + '"/>';
-  const hlId = opt.click ? null : state.ws.hl;
+  const zoneDim = !opt.click && !!state.ws.hlZone && shots.some(wsInZone);
+  for (const s of laufe) h += '<polyline class="lauf' + (laufe.length > 40 ? ' faint' : '') + (zoneDim && !wsInZone(s) ? ' dim' : '') + '" points="' + wsLaufPts(wsLauf(s)) + '"/>';
+  const hlId = opt.click ? null : state.ws.hl, zoneOn = !opt.click && !!state.ws.hlZone && shots.some(wsInZone);
   for (const s of shots) if (s.x != null && s.zone !== '7M') {
-    const cx = (+s.x).toFixed(1), cy = (+s.y).toFixed(1), on = hlId != null && String(s.id) === String(hlId);
+    const cx = (+s.x).toFixed(1), cy = (+s.y).toFixed(1), on = (hlId != null && String(s.id) === String(hlId)) || (zoneOn && wsInZone(s)), dim = zoneOn && !wsInZone(s);
     if (on) h += '<circle cx="' + cx + '" cy="' + cy + '" r="5.5" class="hlring"/>';
-    h += '<circle cx="' + cx + '" cy="' + cy + '" r="2.4" class="dot ' + wsDotCls(s) + '"><title>' + esc((s.spieler || '') + ' · ' + (WS_ZONES[s.zone] || '') + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>' +
+    h += '<circle cx="' + cx + '" cy="' + cy + '" r="2.4" class="dot ' + wsDotCls(s) + (dim ? ' dim' : '') + '"><title>' + esc((s.spieler || '') + ' · ' + (WS_ZONES[s.zone] || '') + ' · ' + wsResTxt(s.ergebnis)) + '</title></circle>' +
       (opt.click ? '' : '<circle cx="' + cx + '" cy="' + cy + '" r="5" class="hit" data-sid="' + esc(s.id) + '" role="button" tabindex="-1" aria-label="Wurf von ' + esc(s.spieler ? fullName(s.spieler) : 'unbekannt') + ' anzeigen"/>');
   }
   if (opt.labels !== false) for (const [z, [x, y]] of Object.entries(LP)) { const v = byZ[z]; if (!v) continue; h += '<text x="' + x + '" y="' + y + '" class="ztxt">' + (opt.tw ? v.par + '/' + (v.tor + v.par) : v.tor + '/' + v.n + ' · ' + Math.round((v.tor / v.n) * 100) + '%') + '</text>'; }
@@ -3215,7 +3233,8 @@ function wingGoalSVG(shots, opt) {
   let h = '<svg class="goal wing' + (opt.click ? ' pick' : '') + (opt.small ? ' small' : '') + '" id="' + (opt.id || '') + '" viewBox="-14 -14 328 244" role="img" aria-label="Tor aus Sicht des Aussenspielers">';
   ['o', 'm', 'u'].forEach((r, ri) => ['l', 'm', 'r'].forEach((c, ci) => {
     const v = cells[r + c], u0 = ci / 3, u1 = (ci + 1) / 3, v0 = ri / 3, v1 = (ri + 1) / 3;
-    h += '<polygon points="' + [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)].join(' ') + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
+    h += '<polygon points="' + [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)].join(' ') + '" class="gcell' + (wsZoneSel('1', r + c) ? ' zsel' : '') + (v && !opt.click ? ' zpick' : '') + '" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"' + (v && !opt.click ? ' data-gz="' + r + c + '" data-gw="1"' : '') + '/>';
+    if (wsZoneSel('1', r + c)) txt = '<polygon points="' + [P(u0, v0), P(u1, v0), P(u1, v1), P(u0, v1)].join(' ') + '" class="zout"/>' + txt;
     if (v && !opt.click) {
       const [cx, cy] = wingPt((u0 + u1) / 2, (v0 + v1) / 2, side), sc = 1 - 0.25 * (u0 + u1) / 2;
       const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.tor / v.n) * 100) + '%';
@@ -3241,7 +3260,8 @@ function goalSVG(shots, opt) {
   let h = '<svg class="goal' + (opt.click ? ' pick' : '') + (opt.small ? ' small' : '') + '" id="' + (opt.id || '') + '" viewBox="-14 -14 328 228" role="img" aria-label="Tor mit Trefferzonen">';
   for (const r of ['o', 'm', 'u']) for (const c of ['l', 'm', 'r']) {
     const z = r + c, v = cells[z], col = mir ? { l: 2, m: 1, r: 0 }[c] : { l: 0, m: 1, r: 2 }[c], x = col * 100, y = { o: 0, m: 1, u: 2 }[r] * (200 / 3);
-    h += '<rect x="' + x + '" y="' + y.toFixed(1) + '" width="100" height="' + (200 / 3).toFixed(1) + '" class="gcell" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"/>';
+    h += '<rect x="' + x + '" y="' + y.toFixed(1) + '" width="100" height="' + (200 / 3).toFixed(1) + '" class="gcell' + (wsZoneSel('0', z) ? ' zsel' : '') + (v && !opt.click ? ' zpick' : '') + '" style="fill-opacity:' + (v && !opt.click ? (0.12 + 0.6 * v.n / max).toFixed(2) : 0) + '"' + (v && !opt.click ? ' data-gz="' + z + '" data-gw="0"' : '') + '/>';
+    if (wsZoneSel('0', z)) txt = '<rect x="' + x + '" y="' + y.toFixed(1) + '" width="100" height="' + (200 / 3).toFixed(1) + '" class="zout"/>' + txt;
     if (v && !opt.click) {
       const big = opt.tw ? Math.round((v.par / Math.max(1, v.par + v.tor)) * 100) + '%' : Math.round((v.tor / v.n) * 100) + '%';
       const sub = opt.tw ? v.par + ' von ' + (v.par + v.tor) + ' gehalten' : v.tor + '/' + v.n + ' Tore · ' + Math.round((v.n / tot) * 100) + '%';
@@ -3466,7 +3486,7 @@ function wsAnalysisMain(d) {
   const tableKind = tw ? 'tw' : a.id ? 'werfer' : 'team';
   const front = mine.filter((s) => !wsWing(s)), wing = mine.filter(wsWing);
   const tend = wsTendencies(mine, tw, mir);
-  h += wsHlInfo(mine);
+  h += wsHlInfo(mine) + wsZoneInfo(mine);
   h += '<div class="wsana">' + (front.length || !wing.length ? '<div class="card"><h3>' + (tw ? 'Wo er hält und Tore bekommt' : 'Wohin geworfen wird') + (wing.length ? ' (Rückraum, Kreis, 7m)' : '') + '</h3><p class="small muted" style="margin:0 0 6px">' + sm.n + ' Würfe, ' + sm.tor + ' Tore' + (tw ? ', ' + sm.par + ' gehalten' + (sm.quote != null ? ' (Paradenquote ' + sm.quote + ' %)' : '') : ' (Wurfquote <b>' + (sm.n ? Math.round((sm.tor / sm.n) * 100) : 0) + ' %</b>)') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld. Je kräftiger das Feld, desto mehr Würfe gehen dorthin.') + ' ' + (mir ? 'Sicht Torhüter (gespiegelt).' : 'Sicht Werfer.') + '</p>' + goalSVG(front, { mirror: mir, tw }) + '</div>' : '') +
     (wing.length ? '<div class="card"><h3>Von aussen</h3><p class="small muted" style="margin:0 0 6px">' + wing.length + ' Würfe von ' + wsWingSides(wing) + '. Tor schräg aus Sicht des Aussenspielers' + (wsWingSide(wing) === 'L' && wing.some((s) => s.zone === 'RA') ? ', beide Seiten zusammengefasst' : '') + '. ' + (tw ? 'In den Feldern: Anteil gehaltener Würfe.' : 'Grosse Zahl: Wurfquote in diesem Feld (Tore / Würfe), darunter Tore / Würfe und Anteil der Würfe in dieses Feld. Je kräftiger das Feld, desto mehr Würfe gehen dorthin.') + '</p>' + goalSVG(wing, { wing: mir ? (wsWingSide(wing) === 'L' ? 'R' : 'L') : wsWingSide(wing), tw }) + '</div>' : '') +
     '<div class="card"><h3>Von wo</h3><p class="small muted" style="margin:0 0 6px">' + (tw ? 'Zahlen: gehalten / aufs Tor pro Position.' : 'Zahlen: Tore / Würfe und Wurfquote pro Position.') + ' 7-Meter siehe Tendenzen.</p>' + courtSVG(mine, { tw }) + WS_LEGEND + '</div></div>' +
@@ -3501,7 +3521,7 @@ function wsPrepBody(d, teamId) {
   const F = aggregate(d, { role: 'F', group: [], team: String(teamId) }).sort((a, b) => b.goals - a.goals).slice(0, 10);
   const next = Object.values(d.fixtures || {}).filter((f) => new Date(f.date).getTime() > refNow() && (String(f.homeTeamId) === String(teamId) || String(f.awayTeamId) === String(teamId))).sort((a, b) => String(a.date).localeCompare(String(b.date)))[0];
   let h = '<div class="card"><h3>' + esc(team) + '</h3><p class="small muted" style="margin:0 0 8px">' + (next ? 'Nächstes Spiel: ' + esc(fmtWhen(next.date)) + ', ' + esc(next.homeName) + ' – ' + esc(next.awayName) + '. ' : '') + S.length + ' erfasste Würfe dieses Teams. Werfer sortiert nach Toren in dieser Saison.</p>' +
-    wsHlInfo(S) + (S.length >= 5 ? '<div class="wsana"><div><b class="small">Team: wohin geworfen wird</b> <span class="small muted">(' + sicht + (S.some(wsWing) ? ', ohne Aussen' : '') + ')</span>' + goalSVG(S.filter((s) => !wsWing(s)), { mirror: mir }) + '</div>' + (S.filter(wsWing).length >= 3 ? '<div><b class="small">Team: von aussen</b> <span class="small muted">(schräg)</span>' + goalSVG(S.filter(wsWing), { wing: wside(S.filter(wsWing)) }) + '</div>' : '') + '<div><b class="small">Team: von wo</b>' + courtSVG(S, {}) + '</div></div>' + WS_LEGEND : '') + '</div>';
+    wsHlInfo(S) + wsZoneInfo(S) + (S.length >= 5 ? '<div class="wsana"><div><b class="small">Team: wohin geworfen wird</b> <span class="small muted">(' + sicht + (S.some(wsWing) ? ', ohne Aussen' : '') + ')</span>' + goalSVG(S.filter((s) => !wsWing(s)), { mirror: mir }) + '</div>' + (S.filter(wsWing).length >= 3 ? '<div><b class="small">Team: von aussen</b> <span class="small muted">(schräg)</span>' + goalSVG(S.filter(wsWing), { wing: wside(S.filter(wsWing)) }) + '</div>' : '') + '<div><b class="small">Team: von wo</b>' + courtSVG(S, {}) + '</div></div>' + WS_LEGEND : '') + '</div>';
   h += '<div class="wsprep">' + F.map((p) => {
     const mine = S.filter((s) => String(s.player_id) === String(p.id)), tend = wsTendencies(mine, false, mir), s = splitName(p.name);
     return '<div class="card wspl"><div class="wsplhead"><div><b>' + (mine[0] && mine[0].nr ? mine[0].nr + ' · ' : '') + esc(s.sur) + '</b> ' + esc(s.first) + '<span class="team" style="margin-left:0">' + esc(p.position || '') + (p.year ? (p.position ? ', ' : '') + p.year : '') + '</span></div>' +
@@ -3525,15 +3545,16 @@ function wsGotoTeam(id, sub) {
   setView('wurf'); window.scrollTo(0, 0);
 }
 // Ereignisse im Reiter
-document.querySelectorAll('[data-wsub]').forEach((b) => (b.onclick = () => { state.ws.sub = b.dataset.wsub; lsSet('scouting.wsub', state.ws.sub); renderWurf(); }));
+document.querySelectorAll('[data-wsub]').forEach((b) => (b.onclick = () => { state.ws.sub = b.dataset.wsub; state.ws.hl = null; state.ws.hlZone = null; lsSet('scouting.wsub', state.ws.sub); renderWurf(); }));
 $('#wsNote').addEventListener('click', (e) => { if (e.target.closest('#wsImport')) wsImport(); });
 $('#wsBody').addEventListener('click', (e) => {
   const ws = state.ws, t = e.target;
-  const hit = t.closest('[data-sid]'); if (hit) { ws.hl = String(ws.hl) === hit.dataset.sid ? null : hit.dataset.sid; return renderWurf(); }
+  const hit = t.closest('[data-sid]'); if (hit) { ws.hl = String(ws.hl) === hit.dataset.sid ? null : hit.dataset.sid; ws.hlZone = null; return renderWurf(); }
+  const gz = t.closest('[data-gz]'); if (gz) { ws.hlZone = wsZoneSel(gz.dataset.gw, gz.dataset.gz) ? null : { gw: gz.dataset.gw, z: gz.dataset.gz }; ws.hl = null; return renderWurf(); }
   if (t.closest('#wsCourt')) return; // Feld: siehe Zeichnen unten (pointerdown/-move/-up)
   const goal = t.closest('#wsGoal'); if (goal) { const wz = wsCurWing(); let [x, y] = svgPoint(e, goal); if (wz) [x, y] = wingInv(x, y, wz === 'LA' ? 'L' : 'R', wz); ws.cur.gx = Math.max(-10, Math.min(310, x)); ws.cur.gy = Math.max(-10, Math.min(210, y)); return renderWurf(); }
   const b = t.closest('button'); if (!b) return;
-  if (b.dataset.wshl !== undefined) { ws.hl = null; return renderWurf(); }
+  if (b.dataset.wshl !== undefined) { ws.hl = null; ws.hlZone = null; return renderWurf(); }
   if (b.dataset.wsatk) { ws.atk = b.dataset.wsatk; ws.cur = wsBlank(ws.cur.sit === '7m' ? 'position' : ws.cur.sit); return renderWurf(); } // Torhüter bleibt pro Team gewählt
   if (b.dataset.wspick) { ws.pick = b.dataset.wspick === '1'; return renderWurf(); }
   if (b.dataset.wsp) { const v = b.dataset.wsp, again = v === '?' ? ws.cur.unknown : ws.cur.pid === Number(v); ws.cur.pid = again || v === '?' ? null : Number(v); ws.cur.unknown = !again && v === '?'; return renderWurf(); } // nochmals antippen = abwählen
