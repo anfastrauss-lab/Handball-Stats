@@ -3242,8 +3242,11 @@ function wsTendencies(shots, tw, mir) {
   if (og.length >= 5) {
     const gz = count(og, (s) => wsGoalZone(+s.gx, +s.gy)); if (gz[0]) out.push('Zielt am häufigsten <b>' + esc(zt(gz[0][0])) + '</b> (' + Math.round((gz[0][1] / og.length) * 100) + ' %' + (gz[1] ? ', danach ' + esc(zt(gz[1][0])) + ' ' + Math.round((gz[1][1] / og.length) * 100) + ' %' : '') + '), ' + sicht + '.');
     const rows = count(og, (s) => WS_ROW[wsGoalZone(+s.gx, +s.gy)[0]]), cols = count(og, (s) => WS_COL[flip(wsGoalZone(+s.gx, +s.gy))[1]]);
-    if (rows[0] && rows[0][1] / og.length >= 0.5) out.push('Höhe: meist <b>' + esc(rows[0][0]) + '</b> (' + Math.round((rows[0][1] / og.length) * 100) + ' %).');
-    if (cols[0] && cols[0][1] / og.length >= 0.5) out.push('Seite: meist <b>' + esc(cols[0][0]) + '</b> ' + sicht + ' (' + Math.round((cols[0][1] / og.length) * 100) + ' %).');
+    // «meist» nur bei klarer Mehrheit (ab 60 %), «eher» bei deutlichem Vorsprung, sonst kein Satz
+    const lean = (L, was, extra) => { if (!L[0]) return; const p = (i) => Math.round((L[i][1] / og.length) * 100), lead = L[1] ? p(0) - p(1) : p(0);
+      if (p(0) >= 60) out.push(was + ': meist <b>' + esc(L[0][0]) + '</b>' + extra + ' (' + p(0) + ' %).');
+      else if (lead >= 15) out.push(was + ': eher <b>' + esc(L[0][0]) + '</b>' + extra + ' (' + p(0) + ' %' + (L[1] ? ', ' + esc(L[1][0]) + ' ' + p(1) + ' %' : '') + ').'); };
+    lean(rows, 'Höhe', ''); lean(cols, 'Seite', ' ' + sicht);
   }
   if (wg.length >= 3) {
     const wz = count(wg, (s) => wsWingZone(s)), pc = (n) => Math.round((n / wg.length) * 100), kurz = wg.filter((s) => wsWingZone(s)[1] === 'l').length, lang = wg.filter((s) => wsWingZone(s)[1] === 'r').length;
