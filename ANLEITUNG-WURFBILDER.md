@@ -58,9 +58,13 @@ create table if not exists public.wuerfe (
   ergebnis        text        not null check (ergebnis in ('tor', 'parade', 'pfosten', 'vorbei', 'block')),
   situation       text        not null default 'position' check (situation in ('position', 'gegenstoss', '7m')),
   art             text,
+  lauf            text,                              -- Laufweg vor dem Wurf (Punkte als JSON)
   erfasst_von     text        not null default '',
   erfasst_am      timestamptz not null default now()
 );
+-- Falls die Tabelle schon bestand: Spalte für den Laufweg nachträglich anlegen
+alter table public.wuerfe add column if not exists lauf text;
+
 create index if not exists wuerfe_game on public.wuerfe (game_id);
 create index if not exists wuerfe_player on public.wuerfe (player_id);
 create index if not exists wuerfe_tw on public.wuerfe (tw_id);
@@ -77,10 +81,23 @@ create policy "wuerfe loeschen"  on public.wuerfe for delete to authenticated us
 create policy "sicherung wuerfe" on public.wuerfe for select to authenticated using (public.ist_sicherung());
 ```
 
+## Nachtrag: Laufweg
+
+Wenn du die Tabelle schon früher eingerichtet hast, fehlt ihr die Spalte für den Laufweg. Führe dafür im SQL Editor diesen einen Befehl aus (gefahrlos, bestehende Würfe bleiben erhalten):
+
+```sql
+alter table public.wuerfe add column if not exists lauf text;
+notify pgrst, 'reload schema';
+```
+
+Ohne die Spalte werden die Würfe trotzdem gespeichert, nur ohne Laufweg. Das Tool zeigt dann einen Hinweis.
+
 ## So funktioniert der Reiter
 
 - **Erfassen:** Spiel wählen (kommende Spiele aus dem Spielplan für die Erfassung an der Linie, gespielte Spiele für das Video). Dann pro Wurf: Werfer antippen, Position auf dem Feld antippen, Ziel im Tor antippen, Ergebnis antippen. Mit dem Ergebnis ist der Wurf gespeichert. Bei «Vorbei» und «Geblockt» braucht es kein Ziel im Tor. Wer im Tor steht, wählst du oben einmal aus (bei Wechsel neu wählen).
 - **Auswertung:** pro Werfer, pro Torhüter (auch die eigenen) oder pro Team. Zeigt, wohin geworfen wird (3×3 Felder im Tor), von wo, und Tendenzen in Worten. Das Tor lässt sich aus Sicht Torhüter (gespiegelt) oder aus Sicht Werfer zeigen.
+- **Laufweg:** Auf dem Feld mit gedrückter Maustaste (oder mit dem Finger) den Weg des Werfers ziehen. Wo du loslässt, ist der Abwurfpunkt. Ein einfacher Tipp setzt nur den Abwurfpunkt. In der Auswertung erscheinen die Laufwege als Linien zum Abwurfpunkt.
+- **Position korrigieren:** Unter dem Feld lässt sich die erkannte Position (LA, RL, RM, RR, RA, Kreis) von Hand ändern, z. B. wenn ein Rückraumspieler an der Seite abspringt.
 - **Aussenwürfe:** Wird die Position bei Linksaussen oder Rechtsaussen angetippt, erscheint das Tor schräg aus Sicht des Aussenspielers. In der Auswertung haben Aussenwürfe ein eigenes Torbild mit «kurzer Ecke» und «langer Ecke», damit sich Linksaussen und Rechtsaussen gemeinsam auswerten lassen.
 - **Gegner-Vorbereitung:** wählt einen Gegner und zeigt seine besten Werfer mit Statistik und Torbild. Mit «Als PDF für den Torhüter» entsteht ein Blatt zum Mitgeben.
 - Standard sind nur QHL- und NLB-Spiele. Mit «alle Ligen» lassen sich auch andere Spiele erfassen.
