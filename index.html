@@ -2424,7 +2424,7 @@ function talentList() {
   // Mehrfach-Sortierung: die erste Spalte zählt am meisten, die nächste entscheidet bei Gleichstand (wie angezeigt gerundet)
   const cols = talCols(role), byName = (x, y) => fullName(x.name).localeCompare(fullName(y.name), 'de');
   const levels = t.sort.map((s) => ({ s, col: cols.find((c) => c.k === s.key) })).filter((x) => x.s.key === 'name' || x.col);
-  const shownVal = (col, a) => { const v = col.v(a); return typeof v === 'number' ? Math.round(v * 10) / 10 : v; };
+  const shownVal = (col, a) => { const v = col.v(a); if (typeof v !== 'number') return v; const m = col.k === 'pct' || col.k === 'spct' ? 100 : 10; return Math.round(v * m) / m; }; // Quoten sind Brüche (0.43), angezeigt in ganzen Prozent
   list.sort((x, y) => {
     for (const { s, col } of levels) {
       if (s.key === 'name') { const r = byName(x, y) * s.dir; if (r) return r; continue; }
