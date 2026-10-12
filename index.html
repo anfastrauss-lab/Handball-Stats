@@ -2132,10 +2132,14 @@ async function loadFiles(files) {
 }
 
 /* ---------- Steuerung ---------- */
+const VIEWS = ['spieler', 'teams', 'wurf', 'report', 'merk', 'daten', 'staefa'];
+function hashSave() { const h = '#' + state.view + (state.view === 'teams' && state.team ? '/' + encodeURIComponent(state.team) : ''); if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { /* egal */ } }
+function hashRead() { const m = /^#([a-z]+)(?:\/(.+))?$/.exec(location.hash || ''); return m && VIEWS.includes(m[1]) ? { v: m[1], team: m[2] ? decodeURIComponent(m[2]) : null } : null; }
 function setView(v) {
   document.body.classList.remove('wslive');
   if (v === 'talent') { state.mode = 'talent'; lsSet('scouting.modus', 'talent'); v = 'spieler'; } // früherer Reiter «Talent-Radar»
   state.view = v;
+  hashSave();
   $('#viewSpieler').hidden = v !== 'spieler'; $('#viewStaefa').hidden = v !== 'staefa'; $('#viewReport').hidden = v !== 'report'; $('#viewTeams').hidden = v !== 'teams'; $('#viewMerk').hidden = v !== 'merk'; $('#viewDaten').hidden = v !== 'daten'; $('#viewWurf').hidden = v !== 'wurf';
   for (const [k, id] of [['spieler', 'tabSpieler'], ['staefa', 'tabStaefa'], ['report', 'tabReport'], ['teams', 'tabTeams'], ['merk', 'tabMerk'], ['daten', 'tabDaten'], ['wurf', 'tabWurf']]) $('#' + id).setAttribute('aria-selected', v === k);
   const at = $('.tab[aria-selected="true"]'), tb = $('.tabs'); // Handy: gewählten Reiter in die wischbare Leiste holen
@@ -2593,6 +2597,7 @@ function teamInsights(d, td) {
   return out;
 }
 function renderTeam() {
+  if (state.view === 'teams') hashSave();
   fillTeamSelect();
   const d = data(), body = $('#teamBody'), idx = index(d);
   if (!rows(d).length && !Object.keys(d.games).length) { body.innerHTML = '<div class="card empty"><h2>Noch keine Daten</h2><p class="muted">Lade zuerst Daten im Reiter «Daten» oder schau dir die Demo an.</p></div>'; return; }
@@ -4726,6 +4731,7 @@ $('#wipe').onclick = async (e) => {
     state.storeOk = true;
     if (saved && saved.stats) { state.real = { groups: saved.groups || {}, games: saved.games || {}, stats: saved.stats || {}, players: saved.players || {}, clubs: saved.clubs || {}, teams: saved.teams || {}, fixtures: saved.fixtures || {} }; }
   } catch (e) { state.storeOk = false; }
+  const hv = hashRead(); if (hv && hv.v !== 'spieler' && (rows(data()).length || hv.v === 'daten' || hv.v === 'staefa')) { if (hv.team) state.team = hv.team; setView(hv.v); } // ohne Daten bleibt die Startseite mit dem Passwortfeld
   renderAll();
   window.__scout = state; // für Tests
   loadShared();

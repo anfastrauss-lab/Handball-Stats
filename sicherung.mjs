@@ -5,7 +5,9 @@ import path from 'node:path';
 import { encrypt } from './crypto.mjs';
 
 const env = (k) => (process.env[k] || '').trim();
-const URL_ = env('SUPABASE_URL').replace(/\/$/, ''), KEY = env('SUPABASE_ANON_KEY'), MAIL = env('SICHERUNG_EMAIL'), PW = env('SICHERUNG_PASSWORD'), SCOUT = env('SCOUT_PASSWORD');
+// Nur Protokoll und Servername zählen: «https://xyz.supabase.co/rest/v1/» wird zu «https://xyz.supabase.co»
+const origin = (u) => { try { return u ? new URL(u).origin : ''; } catch (e) { return u.replace(/\/$/, ''); } };
+const URL_ = origin(env('SUPABASE_URL')), KEY = env('SUPABASE_ANON_KEY'), MAIL = env('SICHERUNG_EMAIL'), PW = env('SICHERUNG_PASSWORD'), SCOUT = env('SCOUT_PASSWORD');
 const DIR = process.env.SICHERUNG_ORDNER || 'sicherung', BEHALTEN = Number(process.env.SICHERUNG_BEHALTEN || 104);
 const fail = (m) => { console.error('FEHLER: ' + m); process.exit(1); };
 if (!URL_ || !KEY || !MAIL || !PW) { console.log('Der Zentralspeicher ist noch nicht eingerichtet (Secrets fehlen). Sicherung übersprungen.'); process.exit(0); }
