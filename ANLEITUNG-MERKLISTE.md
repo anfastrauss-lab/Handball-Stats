@@ -64,10 +64,14 @@ create table if not exists public.merkliste (
                 check (status in ('beobachten', 'live', 'kontakt', 'probe', 'nein')),
   bewertung     smallint    check (bewertung between 1 and 5),
   notiz         text        not null default '',
+  position      text        not null default '',
   geaendert_von text        not null default '',
   geaendert_am  timestamptz not null default now(),
   primary key (liste_id, player_id, rolle)
 );
+
+-- Falls die Tabelle schon bestand: Spalte für die Position nachträglich anlegen
+alter table public.merkliste add column if not exists position text not null default '';
 
 -- Empfehlungen («Spieler schicken»)
 create table if not exists public.empfehlungen (
@@ -143,6 +147,17 @@ create policy "sicherung mitglieder"   on public.merklisten_mitglieder for selec
 create policy "sicherung eintraege"    on public.merkliste for select to authenticated using (public.ist_sicherung());
 create policy "sicherung empfehlungen" on public.empfehlungen for select to authenticated using (public.ist_sicherung());
 ```
+
+## Nachtrag: Position
+
+Auf der Merkliste lässt sich pro Spieler eine Position vermerken. Wenn du die Tabellen schon früher eingerichtet hast, führe dafür im SQL Editor diesen Befehl aus (gefahrlos, bestehende Einträge bleiben erhalten):
+
+```sql
+alter table public.merkliste add column if not exists position text not null default '';
+notify pgrst, 'reload schema';
+```
+
+Ohne die Spalte zeigt das Tool beim Speichern einer Position einen Hinweis. Status, Bewertung und Notizen funktionieren weiterhin.
 
 ## Sicherung
 

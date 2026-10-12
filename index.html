@@ -189,6 +189,7 @@ svg.court.pick { touch-action: none; }
 svg.court .lauf { fill: none; stroke: var(--ink-2); stroke-width: 1.4px; vector-effect: non-scaling-stroke; opacity: .7; stroke-linecap: round; stroke-linejoin: round; }
 svg.court .lauf.faint { opacity: .3; }
 svg.court .lauf.cur { stroke: var(--signal); stroke-width: 2.5px; opacity: 1; stroke-dasharray: 5 3; }
+select.merkpos { min-width: 150px; padding: 5px 8px; font-size: 14px; }
 .wszov { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 4px; } .wszov .chipbtn { min-height: 30px; padding: 3px 8px; font-size: 13px; }
 .wsmanage summary { cursor: pointer; } .btn.small { padding: 4px 10px; min-height: 32px; font-size: 13px; }
 .wslinks { display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -2166,6 +2167,15 @@ function merkSorted(role, list) {
     return (x - y) * dir || byName(a, b);
   });
 }
+// Auf der Merkliste vermerkte Position (Zentralspeicher: Spalte «position», sonst im Browser)
+const MERK_POS = ['Torhüter', 'Linksaussen', 'Rückraum links', 'Rückraum Mitte', 'Rückraum rechts', 'Rechtsaussen', 'Kreis', 'Rückraum', 'Aussen', 'Allrounder'];
+state.merkPos = lsGet('scouting.merkpos', {});
+function merkPosOf(id, role) { return String((state.sm.active ? (smCurRows()[mk(id, role)] || {}).position : state.merkPos[mk(id, role)]) || ''); }
+function merkPosSet(id, role, v) {
+  if (state.sm.active) return smSave({ player_id: id, rolle: role, position: v });
+  if (v) state.merkPos[mk(id, role)] = v; else delete state.merkPos[mk(id, role)];
+  lsSet('scouting.merkpos', state.merkPos);
+}
 function noteOf(id) { const n = String(state.notes[id] || '').trim().replace(/\s+/g, ' '); return n.length > 140 ? n.slice(0, 140) + ' …' : n; }
 function merkSection(role, list) {
   if (!list.length) return '';
@@ -2173,6 +2183,7 @@ function merkSection(role, list) {
   const arrow = (k) => (sk.key === k ? (sk.dir < 0 ? ' ▼' : ' ▲') : '');
   let h = '<div class="merkgroup"><h3>' + (role === 'F' ? 'Feldspieler' : 'Torhüter') + ' <span class="muted">' + list.length + '</span></h3><div class="tablewrap"><table><thead><tr><th class="left name"><button class="thbtn" data-msort="name" style="text-align:left">Spieler' + arrow('name') + '</button></th>';
   const sm = state.sm.active, sth = (t) => '<th class="left"><span class="thbtn" style="cursor:default;text-align:left;display:block">' + t + '</span></th>';
+  h += sth('Position');
   if (sm) h += sth('Status') + sth('Bewertung');
   for (const c of cols) h += '<th title="' + esc(c.title) + '"><button class="thbtn" data-msort="' + c.k + '">' + esc(c.label) + arrow(c.k) + '</button></th>';
   h += '<th class="left"><span class="thbtn" style="cursor:default;text-align:left;display:block">Notiz</span></th></tr></thead><tbody>';
@@ -2181,6 +2192,8 @@ function merkSection(role, list) {
     h += '<tr data-id="' + p.id + '" data-role="' + role + '"><td class="name"><button class="star" data-mstar="' + p.id + '" aria-pressed="true" aria-label="Von der Merkliste entfernen">★</button><button class="namebtn"><b>' + esc(s.sur) + '</b> ' + esc(s.first) + '</button>' +
       '<span class="team">' + esc(p.team) + (p.club && p.club.canton ? ' (' + esc(p.club.canton) + ')' : '') + (p.position ? ', ' + esc(p.position) : '') + '</span></td>';
     const sr = sm && smCurRows()[mk(p.id, role)];
+    const pv = merkPosOf(p.id, role);
+    h += '<td class="left"><select class="merkpos" data-mpos="' + p.id + '" aria-label="Position von ' + esc(fullName(p.name)) + '"><option value="">' + (p.position ? 'laut handball.ch: ' + esc(p.position) : '–') + '</option>' + MERK_POS.map((o) => '<option' + (o === pv ? ' selected' : '') + '>' + esc(o) + '</option>').join('') + (pv && !MERK_POS.includes(pv) ? '<option selected>' + esc(pv) + '</option>' : '') + '</select></td>';
     if (sm) h += '<td class="left">' + (sr ? smStatusBadge(sr.status) : '') + '</td><td class="left" style="color:var(--signal)">' + (sr && sr.bewertung ? '★'.repeat(sr.bewertung) : '<span class="muted">–</span>') + '</td>';
     for (const c of cols) h += '<td>' + esc(colText(c, p)) + '</td>';
     h += '<td class="note">' + esc(noteOf(p.id)) + (sr && sr.geaendert_von ? '<br><span class="small">' + esc(sr.geaendert_von) + ', ' + esc(fmtDT(sr.geaendert_am)) + '</span>' : '') + '</td></tr>';
@@ -4162,7 +4175,7 @@ function smApply() {
   for (const r of list) if (String(r.notiz || '').trim() && !n[r.player_id]) n[r.player_id] = r.notiz;
   state.notes = n; state.newBoxVer = null;
 }
-function smLocal() { state.merk = new Set(lsGet('scouting.merkliste', [])); state.notes = lsGet('scouting.notizen', {}); state.newBoxVer = null; }
+function smLocal() { state.merk = new Set(lsGet('scouting.merkliste', [])); state.notes = lsGet('scouting.notizen', {}); state.merkPos = lsGet('scouting.merkpos', {}); state.newBoxVer = null; }
 function smRerender(quiet) {
   $('#merkCount').textContent = state.merk.size || '';
   if (state.view === 'merk') renderMerk(); else if (state.view === 'spieler') renderTable(); else if (state.view === 'report') renderReport();
@@ -4201,9 +4214,10 @@ async function smSave(row, quiet) {
   const lid = row.liste_id || state.sm.cur, map = (state.sm.rows[lid] ||= {}), k = mk(row.player_id, row.rolle), before = map[k];
   const full = { name: '', status: 'beobachten', bewertung: null, notiz: '', ...(before || {}), ...row, liste_id: lid, geaendert_von: (state.zs.me && state.zs.me.name) || '', geaendert_am: new Date().toISOString() };
   const send = { liste_id: lid, player_id: full.player_id, rolle: full.rolle, name: full.name || '', status: full.status, bewertung: full.bewertung, notiz: full.notiz || '', geaendert_von: full.geaendert_von, geaendert_am: full.geaendert_am };
+  if (full.position != null) send.position = full.position;
   map[k] = send; smApply(); smRerender(quiet);
   try { const r = await zsStore().merkPut(send); if (r) { map[k] = r; smApply(); } state.sm.msg = ''; }
-  catch (e) { if (before) map[k] = before; else delete map[k]; smApply(); state.sm.msg = 'Speichern nicht möglich: ' + (e.message || 'keine Verbindung'); smRerender(); }
+  catch (e) { if (before) map[k] = before; else delete map[k]; smApply(); state.sm.msg = 'Speichern nicht möglich: ' + (e.message || 'keine Verbindung'); if ('position' in row && /position/i.test(e.message || '')) state.sm.msg = 'Die Position lässt sich noch nicht speichern: Im Zentralspeicher fehlt die Spalte dafür. Den Befehl findest du in ANLEITUNG-MERKLISTE.md (Abschnitt «Nachtrag: Position»).'; smRerender(); }
 }
 async function smDelete(pid, rolle, lid) {
   lid = lid || state.sm.cur; const map = state.sm.rows[lid] || {}, k = mk(pid, rolle), before = map[k]; if (!before) return;
@@ -4413,8 +4427,9 @@ $('#teamBody').addEventListener('click', (e) => {
 });
 $('#teamBody').addEventListener('keydown', (e) => { if (e.key === 'Enter' && e.target.matches && e.target.matches('tr[data-tgame]')) openGameDirect(Number(e.target.dataset.tgame)); });
 $('#merkToPlayers').onclick = () => setView('spieler');
-$('#merkBody').addEventListener('change', (e) => { if (e.target.id === 'merkDays') { state.merkDays = Number(e.target.value) || 0; lsSet('scouting.merkTage', state.merkDays); renderMerk(); } });
+$('#merkBody').addEventListener('change', (e) => { const mp = e.target.closest('[data-mpos]'); if (mp) { merkPosSet(Number(mp.dataset.mpos), mp.closest('tr').dataset.role, mp.value); return; } if (e.target.id === 'merkDays') { state.merkDays = Number(e.target.value) || 0; lsSet('scouting.merkTage', state.merkDays); renderMerk(); } });
 $('#merkBody').addEventListener('click', (e) => {
+  if (e.target.closest('select')) return; // Positions-Auswahl
   const pl = e.target.closest('[data-player]'); if (pl) return openDetail(Number(pl.dataset.player), pl.dataset.role);
   const sb = e.target.closest('[data-msort]');
   if (sb) { const k = sb.dataset.msort, s = state.merkSort; state.merkSort = s.key === k ? { key: k, dir: -s.dir } : { key: k, dir: k === 'name' ? 1 : -1 }; return renderMerk(); }
@@ -4425,7 +4440,7 @@ $('#merkCopy').onclick = async () => {
   const lines = [['Name', 'Team', 'Kanton', 'Jahrgang', 'Position', 'Rolle', 'Spiele', 'Tore bzw. Paraden', 'Würfe bzw. Gegenwürfe', 'Quote', 'Status', 'Bewertung', 'Notiz'].join('\t')];
   for (const role of ['F', 'G']) for (const p of merkSorted(role, (state.merkLists && state.merkLists[role]) || [])) {
     const f = role === 'F';
-    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.sv, p.sg)), (state.sm.active && smCurRows()[mk(p.id, role)]) ? smStatusLabel(smCurRows()[mk(p.id, role)].status) : '', (state.sm.active && smCurRows()[mk(p.id, role)] && smCurRows()[mk(p.id, role)].bewertung) || '', String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
+    lines.push([fullName(p.name), p.team, p.club ? p.club.canton : '', p.year || '', merkPosOf(p.id, role) || p.position, f ? 'Feldspieler' : 'Torhüter', p.games, f ? p.goals : p.saves, f ? p.shots : p.shotsGK, pctTxt(f ? rate(p.qg, p.qs) : rate(p.sv, p.sg)), (state.sm.active && smCurRows()[mk(p.id, role)]) ? smStatusLabel(smCurRows()[mk(p.id, role)].status) : '', (state.sm.active && smCurRows()[mk(p.id, role)] && smCurRows()[mk(p.id, role)].bewertung) || '', String(state.notes[p.id] || '').replace(/\s+/g, ' ')].join('\t'));
   }
   const ok = await kopieren(lines.join('\n')); flash($('#merkMsg'), ok ? 'Kopiert, jetzt in Excel einfügen' : 'Kopieren nicht möglich', ok ? 'ok' : 'err');
 };
