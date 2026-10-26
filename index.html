@@ -2274,7 +2274,7 @@ function perfProfile(d, id, role) {
     const avg = vals.reduce((s, x) => s + x, 0) / vals.length, cls = pct >= 75 ? 'hi' : pct <= 25 ? 'lo' : '';
     return '<div class="pp" title="' + esc(label + ': ' + fmt(v) + ', Schnitt der Liga ' + fmt(avg) + '. Besser als ' + pct + ' % von ' + vals.length + ' Vergleichsspielern.') + '"><span class="pplab">' + esc(label) + '</span><span class="ppbar"><i class="' + cls + '" style="width:' + pct + '%"></i></span><span class="ppval"><b>' + pct + ' %</b> <small>' + esc(fmt(v)) + ' · Ø ' + esc(fmt(avg)) + '</small></span></div>';
   }).join('');
-  return '<h3 style="margin-top:18px">Leistungsprofil</h3><p class="small muted" style="margin:0 0 6px">Besser als wie viel Prozent der Spieler in der ' + esc(mine.liga) + ' (' + peers.length + ' Vergleichsspieler mit mindestens 3 Spielen, aktuelle Saison). Grün heisst oberes Viertel, rot unteres Viertel.' + (mine.games < 3 ? ' <b>Achtung:</b> nur ' + mine.games + (mine.games === 1 ? ' Spiel' : ' Spiele') + ', das Profil ist noch wenig aussagekräftig.' : '') + '</p><div class="ppbox">' + rowsH + '</div>';
+  return '<h3 style="margin-top:18px">Leistungsprofil</h3><p class="small muted" style="margin:0 0 6px">Besser als wie viel Prozent der Spieler in der ' + esc(mine.liga) + ' (' + peers.length + ' Vergleichsspieler mit mindestens 3 Spielen, aktuelle Saison). Grün heisst oberes Viertel, rot unteres Viertel.' + (T[role].some((a) => a.id === id && a.liga !== mine.liga) ? ' <b>Gezählt werden nur seine ' + mine.games + ' Spiele in der ' + esc(mine.liga) + '</b>, die Zahlen ganz oben enthalten alle Ligen.' : '') + (mine.games < 3 ? ' <b>Achtung:</b> nur ' + mine.games + (mine.games === 1 ? ' Spiel' : ' Spiele') + ', das Profil ist noch wenig aussagekräftig.' : '') + '</p><div class="ppbox">' + rowsH + '</div>';
 }
 
 // Pro Spieler und Liga zusammenfassen und mit dem Schnitt der Liga vergleichen (einmal pro Datenstand)
@@ -2577,9 +2577,37 @@ function teamData(d, id) {
   const F = aggregate(d, { role: 'F', group: '', team: id }), G = aggregate(d, { role: 'G', group: '', team: id });
   return { id, res, n: res.length, w, u, l: res.length - w - u, gf: res.reduce((s, r) => s + r.gf, 0), ga: res.reduce((s, r) => s + r.ga, 0), mainGroup, liga, F, G };
 }
+// Angriffseffizienz eines Teams und seiner Gegner (geschätzte Angriffe = Würfe + technische Fehler, ohne Liveticker lite)
+function teamEff(d, id) {
+  const own = { g: 0, s: 0, tf: 0, s7: 0, g7: 0 }, opp = { g: 0, s: 0, tf: 0 }, games = new Set();
+  const mine = new Set(Object.values(d.games).filter((g) => inSeason(d, g, '') && (String(g.homeTeamId) === id || String(g.awayTeamId) === id)).map((g) => g.gameId));
+  for (const r of rows(d)) {
+    if (r.role !== 'F' || r.lite || !mine.has(r.gameId)) continue;
+    const o = String(r.teamId) === id ? own : opp; o.g += r.qg || 0; o.s += r.qs || 0; o.tf += r.tf || 0;
+    if (o === own) { games.add(r.gameId); own.s7 += r.shots7 || 0; own.g7 += r.goals7 || 0; }
+  }
+  const eff = (o) => (o.s + o.tf >= 40 ? o.g / (o.s + o.tf) : null);
+  return { n: games.size, own, opp, att: eff(own), def: eff(opp), perGame: games.size ? (own.s + own.tf) / games.size : null };
+}
+// Schnitt der Liga (alle Teams zusammen), einmal pro Datenstand
+function ligaEff(d, liga) {
+  d._ligaEff = d._ligaEff && d._ligaEff.ver === (d._ver || 0) ? d._ligaEff : { ver: d._ver || 0, m: {} };
+  if (liga in d._ligaEff.m) return d._ligaEff.m[liga];
+  let g = 0, a = 0;
+  for (const r of rows(d)) {
+    if (r.role !== 'F' || r.lite) continue; const gm = d.games[r.gameId];
+    if (!gm || !inSeason(d, gm, '') || ligaKey(d.groups[gm.groupId] || { name: '' }) !== liga) continue;
+    g += r.qg || 0; a += (r.qs || 0) + (r.tf || 0);
+  }
+  return (d._ligaEff.m[liga] = a >= 200 ? g / a : null);
+}
 function teamInsights(d, td) {
   const out = [], T = buildTalent(d), avg = ligaAverages(d)[td.liga], pn = (p) => fullName(p.name);
   if (td.n) out.push('<b>Angriff und Abwehr:</b> ' + nf(td.gf / td.n, 1) + ' Tore und ' + nf(td.ga / td.n, 1) + ' Gegentore pro Spiel' + (avg ? ' (Ø der Liga: ' + nf(avg, 1) + ' Tore pro Team und Spiel)' : '') + '.');
+  const ef = teamEff(d, td.id), le = ligaEff(d, td.liga), pc = (v) => Math.round(v * 100) + ' %';
+  if (ef.att != null) out.push('<b>Angriffseffizienz:</b> ' + pc(ef.att) + ' (' + ef.own.g + ' Tore aus etwa ' + (ef.own.s + ef.own.tf) + ' Angriffen, ' + nf(ef.perGame, 0) + ' pro Spiel)' + (le != null ? ', Ø der Liga ' + pc(le) + (ef.att - le >= 0.03 ? ', also <span class="up">effizienter als üblich</span>' : le - ef.att >= 0.03 ? ', also <span class="down">weniger effizient als üblich</span>' : ', also im Schnitt') : '') + '. ' +
+    (ef.def != null ? 'Die Gegner kommen gegen dieses Team auf ' + pc(ef.def) + (le != null ? (le - ef.def >= 0.03 ? ' (<span class="up">starke Abwehr</span>)' : ef.def - le >= 0.03 ? ' (<span class="down">anfällige Abwehr</span>)' : '') : '') + '. ' : '') +
+    '<span class="small muted">Angriffe geschätzt als Würfe plus technische Fehler, aus ' + ef.n + (ef.n === 1 ? ' Spiel' : ' Spielen') + ' mit voller Statistik.</span>');
   const H = td.res.filter((r) => r.home), A = td.res.filter((r) => !r.home), per = (L, k) => nf(L.reduce((s, r) => s + r[k], 0) / L.length, 1);
   if (H.length >= 2 && A.length >= 2) out.push('<b>Heim und auswärts:</b> zu Hause ' + per(H, 'gf') + ':' + per(H, 'ga') + ', auswärts ' + per(A, 'gf') + ':' + per(A, 'ga') + ' (Tore:Gegentore pro Spiel).');
   const F = td.F.slice().sort((a, b) => b.goals - a.goals), total = F.reduce((s, p) => s + p.goals, 0);
@@ -2656,6 +2684,7 @@ function teamMetrics(d, td) {
     awayDiff: A.length >= 2 ? A.reduce((s, r) => s + r.gf - r.ga, 0) / A.length : null,
     vsGf: n && avg ? td.gf / n - avg : null, vsGa: n && avg ? td.ga / n - avg : null,
     shotPct: shots >= 20 ? qg / shots : null, sevenPct: s7 >= 5 ? g7 / s7 : null,
+    eff: teamEff(d, td.id).att, effOpp: teamEff(d, td.id).def,
     min2: sg && sum('min2') >= 1 ? sum('min2') / sg : null, tf: sg && sum('tf') >= 1 ? sum('tf') / sg : null,
     top3: goals >= 20 ? top / goals : null, gkPct: gk && gk.sg >= 20 ? gk.sv / gk.sg : null, gkName: gk ? fullName(gk.name) : '',
     avgYear: years.length >= 5 ? mean(years) : null, sg,
@@ -2670,6 +2699,8 @@ const CMP_ROWS = [
   { l: 'Auswärts: Differenz pro Spiel', k: 'awayDiff', f: (v) => signed(v, 1), dec: 1, min: 0.5, better: 'high' },
   { l: 'Tore gegenüber Ligaschnitt', k: 'vsGf', f: (v) => signed(v, 1), dec: 1, min: 0.3, better: 'high', tip: 'Hilft beim Vergleich zwischen verschiedenen Ligen' },
   { l: 'Gegentore gegenüber Ligaschnitt', k: 'vsGa', f: (v) => signed(v, 1), dec: 1, min: 0.3, better: 'low' },
+  { l: 'Angriffseffizienz', k: 'eff', f: (v) => Math.round(v * 100) + '%', dec: 2, min: 0.02, better: 'high', bar: true, tip: 'Tore pro Angriff. Angriffe geschätzt als Würfe plus technische Fehler, nur Spiele mit voller Statistik' },
+  { l: 'Effizienz der Gegner', k: 'effOpp', f: (v) => Math.round(v * 100) + '%', dec: 2, min: 0.02, better: 'low', bar: true, tip: 'Wie effizient die Gegner gegen dieses Team angreifen. Weniger ist besser (starke Abwehr)' },
   { l: 'Wurfquote des Teams', k: 'shotPct', f: (v) => Math.round(v * 100) + '%', dec: 2, min: 0.02, better: 'high', bar: true },
   { l: '7-Meter-Quote', k: 'sevenPct', f: (v) => Math.round(v * 100) + '%', dec: 2, min: 0.05, better: 'high', bar: true },
   { l: 'Fangquote Stammtorhüter', k: 'gkPct', f: (v) => Math.round(v * 100) + '%', dec: 2, min: 0.02, better: 'high', bar: true },
