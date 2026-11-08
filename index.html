@@ -625,6 +625,7 @@ table.plain td { text-align: left; padding: 8px 10px; }
         <li><b>Ligastärke:</b> Die Leistung wird innerhalb der Liga gemessen. Damit ein guter Spieler aus der U17 Elite nicht hinter einem gleich guten aus der Promotion landet, bekommt jede Liga eine Stufe: QHL +2, NLB +1.5, 1. Liga und Elite +1, 2. Liga und Inter +0.5, 3. Liga und Promotion 0, tiefere Ligen −0.5. Die Stufen sind grobe Schätzungen. Mit dem Regler «Gewicht Liga» stellst du ein, wie stark sie zählen. Bei 0 zählt nur der Vergleich innerhalb der Liga.</li>
         <li><b>Spielt hoch:</b> Das gelbe Kennzeichen «↑ U17» heisst, dass ein Spieler in dieser Saison in einer höheren Altersklasse spielt als sein Jahrgang. In der Saison 2026/27 gehören zum Beispiel die Jahrgänge 2010 und 2011 in die U17, ein 2012er dort spielt also hoch. «↑ Aktive» heisst: ein Junior spielt bei den Erwachsenen. Das ist oft ein starkes Talentzeichen, auch wenn die Zahlen dort tiefer sind.</li>
         <li><b>Score:</b> Leistung plus Alter mal Gewicht plus Ligastufe mal Gewicht. Mit den Reglern stellst du ein, wie wichtig dir Alter und Liga sind: Beim Alter gibt 1 pro Jahr einen ganzen Punkt.</li>
+        <li><b>Cupspiele:</b> Sie zählen bei den Zahlen der Spieler und Teams, aber nicht in der Talent-Bewertung, weil dort Gegner aus ganz verschiedenen Ligen aufeinandertreffen. Über den Filter «Liga und Gruppe» siehst du einen Cup einzeln.</li>
         <li><b>Saison:</b> Die Talent-Bewertung zeigt immer die aktuelle Saison. Frühere Saisons siehst du im Spielerprofil unter «Entwicklung über die Saisons».</li>
         <li><b>Grenzen:</b> Ligen mit weniger als 6 Vergleichsspielern bekommen keinen Score. Wer in mehreren Ligen spielt, wird in jeder Liga separat bewertet. Angezeigt wird die Liga mit dem besten Score, die übrigen stehen als grauer Hinweis «+ U15 Promotion» daneben. Spielt er in einer davon hoch, steht stattdessen das gelbe «↑ U17 Elite». Die Zahlen dort siehst du beim Darüberfahren. Mit «Jede Liga einzeln zeigen» oder der Auswahl einer Gruppe unter «Liga und Gruppe» siehst du alle Zeilen. Die Bewertung liefert Kandidaten zum Anschauen und ersetzt kein Training im Zuschauen.</li>
       </ul>
@@ -1310,6 +1311,7 @@ function makeDemo() {
     { id: 9002, category: 'DEMO U19 Elite', name: 'Gruppe 1', teams: ['HV Alpha', 'SC Beta', 'TSV Gamma', 'HC Delta', 'Handball Stäfa', 'GC Zeta'] },
     // Vorsaison mit denselben Spielern (für «Entwicklung über die Saisons»), etwas schwächer
     { id: 9003, category: 'DEMO U19 Elite', name: 'Gruppe 1', season: '2025/26', y: 2025, reuse: 9002, mul: 0.8 },
+    { id: 9004, category: 'DEMO Schweizer Cup U19', name: 'Schweiz', reuse: 9002, only: 5, round: '1/8-Final' },
   ];
   const teamsBy = {};
   const d = emptyData(); let pid = 9000000, tid = 9100, gid = 9500000, used = 0;
@@ -1329,7 +1331,7 @@ function makeDemo() {
     });
     teamsBy[c.id] = T;
     const rounds = []; for (let a = 0; a < T.length; a++) for (let b = 0; b < T.length; b++) if (a !== b) rounds.push([a, b]);
-    rounds.forEach(([a, b], k) => {
+    (c.only ? rounds.slice(0, c.only) : rounds).forEach(([a, b], k) => {
       const date = new Date(Date.UTC(c.y || 2026, 8, 5 + Math.floor(k / 3) * 7, 16, 0)).toISOString();
       const res = [T[a], T[b]].map((tm) => {
         const out = []; let shots = 0, goals = 0;
@@ -1351,7 +1353,7 @@ function makeDemo() {
         return { keeper, faced, saves, f7, s7 };
       });
       const id = ++gid;
-      d.games[id] = { gameId: id, groupId: c.id, date, homeTeamId: T[a].id, homeName: T[a].name, homeScore: res[0].goals, awayTeamId: T[b].id, awayName: T[b].name, awayScore: res[1].goals, hasStats: true };
+      d.games[id] = { gameId: id, groupId: c.id, date, homeTeamId: T[a].id, homeName: T[a].name, homeScore: res[0].goals, awayTeamId: T[b].id, awayName: T[b].name, awayScore: res[1].goals, hasStats: true, ...(c.round ? { round: c.round } : {}) };
       res.forEach((r, i) => {
         for (const o of r.out) {
           d.stats[id + '|' + o.p.id] = { gameId: id, teamId: r.tm.id, playerId: o.p.id, name: o.p.name, nr: o.p.nr, role: 'F',
@@ -1857,7 +1859,7 @@ function renderGame() {
   };
   $('#drawer').innerHTML =
     '<div class="dhead"><div><h2 class="dname" id="dTitle" style="font-size:30px">' + esc(g.homeName) + ' <span>' + g.homeScore + ':' + g.awayScore + '</span> ' + esc(g.awayName) + '</h2>' +
-    '<p class="muted" style="margin-top:6px">' + esc(when) + (lg.main ? '<br>' + esc(lg.main) : '') + (lg.sub ? ', <span class="small">' + esc(lg.sub) + '</span>' : '') + '</p></div>' +
+    '<p class="muted" style="margin-top:6px">' + esc(when) + (lg.main ? '<br>' + esc(lg.main) : '') + (lg.sub ? ', <span class="small">' + esc(lg.sub) + '</span>' : '') + (g.round ? ', <span class="small">' + esc(g.round) + '</span>' : '') + '</p></div>' +
     '<button class="btn secondary" id="dClose" aria-label="Schliessen">Schliessen</button></div>' +
     '<div class="row">' + back + '<a class="btn secondary" id="dWeb" href="' + gameUrl(gid) + '" target="_blank" rel="noopener noreferrer">Auf handball.ch öffnen</a></div>' +
     (isLite(d, gid) ? '<div class="notice warn" style="margin:14px 0 0"><span class="litebadge">Lite</span> Dieses Spiel wurde mit dem <b>Liveticker lite</b> erfasst. Er zählt nur Tore, keine Würfe und Paraden. Deshalb fehlen hier Würfe und Quoten, und das Spiel zählt bei den Spielern nicht für Quoten.</div>' : '') +
@@ -1971,7 +1973,7 @@ function renderDrawer() {
       : '<td>' + (r.lite ? '–' : r.saves) + '/' + r.shotsGK + '</td><td>' + pctTxt(rate(r.sv, r.sg)) + '</td><td>' + (r.lite ? '–' : r.saves7 + '/' + r.shots7GK) + '</td>';
     const liteTag = r.lite ? ' <span class="litebadge" title="' + esc(LITE_TIP) + '">Lite</span>' : '';
     const lg = leagueOf(d.groups[g.groupId]);
-    return '<tr class="gamerow" data-game="' + g.gameId + '" tabindex="0"><td>' + esc(fmtDate(g.date)) + '</td><td class="left">' + esc(lg.main) + (lg.sub ? '<br><span class="small muted">' + esc(lg.sub) + '</span>' : '') + '</td><td class="left">' + (home ? '' : '@ ') + esc(gegner) + '</td><td><span class="res-' + cls + '">' + lab + '</span> ' + own + ':' + opp + liteTag + '</td>' + cells +
+    return '<tr class="gamerow" data-game="' + g.gameId + '" tabindex="0"><td>' + esc(fmtDate(g.date)) + '</td><td class="left">' + esc(lg.main) + (lg.sub || g.round ? '<br><span class="small muted">' + esc([lg.sub, g.round].filter(Boolean).join(' · ')) + '</span>' : '') + '</td><td class="left">' + (home ? '' : '@ ') + esc(gegner) + '</td><td><span class="res-' + cls + '">' + lab + '</span> ' + own + ':' + opp + liteTag + '</td>' + cells +
       '<td><a class="ext" href="' + gameUrl(g.gameId) + '" target="_blank" rel="noopener noreferrer" aria-label="Spiel auf handball.ch öffnen" title="Auf handball.ch öffnen">↗</a></td></tr>';
   }).join('');
   const head = role === 'F' ? '<th>Tore/Würfe</th><th>Quote</th><th title="Technische Fehler">Fehler</th><th title="2-Minuten-Zeitstrafen">Strafen</th>' : '<th>Paraden</th><th>Quote</th><th title="7-Meter: Paraden/Würfe">7-Meter</th>';
@@ -2213,6 +2215,7 @@ const clamp = (v, lo, hi) => Math.min(hi, Math.max(lo, v));
 const nf1 = (v) => nf(v, Number.isInteger(v) ? 0 : 1);
 const yr = (v) => (Number.isInteger(v) ? String(v) : v.toFixed(1));
 const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '');
+const isCup = (g) => /Cup\b/.test((g && g.category) || '');
 state.t = { wTF: 0.3, minGames: 1, minShots: 0, minGK: 0, wAge: 0.5, wLiga: 0.5, split: false, sort: [{ key: 'score', dir: -1 }], limit: 100 };
 state.team = null; state.team2 = null;
 
@@ -2284,6 +2287,7 @@ function buildTalent(d, opt) {
   for (const r of rows(d)) {
     if (r.skipF) continue; // Torhüter, als Feldspieler gemeldet, ohne Aktion
     const g = d.games[r.gameId]; if (!g || !inSeason(d, g, '')) continue; // Talent-Bewertung: nur die aktuelle Saison
+    if (isCup(d.groups[g.groupId])) continue; // Cupspiele nicht: Gegner aus ganz verschiedenen Ligen, kein fairer Vergleich innerhalb einer Liga
     if (opt) { const dd = String(g.date).slice(0, 10); if ((opt.before && dd >= opt.before) || (opt.until && dd > opt.until)) continue; }
     const liga = ligaKey(d.groups[g.groupId] || { name: 'Gruppe ' + g.groupId });
     const k = r.role + '|' + liga + '|' + r.playerId;
@@ -2533,7 +2537,7 @@ function teamList(d) {
   for (const [id, name] of Object.entries(idx.teams)) {
     const gids = [...(idx.teamGroups[id] || [])].filter((gid) => !cur || idx.groupSeason[gid] === cur); // nur Teams der aktuellen Saison
     if (!gids.length) continue;
-    const ligas = [...new Set(gids.map((gid) => ligaKey(d.groups[gid] || { name: 'Gruppe ' + gid })))];
+    const ligas = [...new Set(gids.filter((gid) => !isCup(d.groups[gid])).map((gid) => ligaKey(d.groups[gid] || { name: 'Gruppe ' + gid })))];
     out.push({ id, name, label: name + (ligas.length ? ' (' + ligas.join(', ') + ')' : '') });
   }
   return out.sort((a, b) => a.label.localeCompare(b.label, 'de'));
@@ -2572,7 +2576,7 @@ function teamData(d, id) {
   const res = gm.map((g) => { const home = String(g.homeTeamId) === id; return { g, home, gf: home ? g.homeScore : g.awayScore, ga: home ? g.awayScore : g.homeScore, opp: home ? g.awayName : g.homeName, oppId: home ? g.awayTeamId : g.homeTeamId }; });
   const w = res.filter((r) => r.gf > r.ga).length, u = res.filter((r) => r.gf === r.ga).length;
   const byGroup = {}; for (const r of res) byGroup[r.g.groupId] = (byGroup[r.g.groupId] || 0) + 1;
-  const mainGroup = Object.keys(byGroup).sort((a, b) => byGroup[b] - byGroup[a])[0];
+  const mainGroup = Object.keys(byGroup).sort((a, b) => isCup(d.groups[a]) - isCup(d.groups[b]) || byGroup[b] - byGroup[a])[0]; // Cup nur, wenn das Team keine Liga hat
   const liga = mainGroup != null ? ligaKey(d.groups[mainGroup] || { name: 'Gruppe ' + mainGroup }) : '';
   const F = aggregate(d, { role: 'F', group: '', team: id }), G = aggregate(d, { role: 'G', group: '', team: id });
   return { id, res, n: res.length, w, u, l: res.length - w - u, gf: res.reduce((s, r) => s + r.gf, 0), ga: res.reduce((s, r) => s + r.ga, 0), mainGroup, liga, F, G };
@@ -3151,7 +3155,7 @@ const wsResTxt = (r) => (WS_RES.find((x) => x[0] === r) || [r, r])[1];
 const WS_LOCAL = 'scouting.wuerfe';
 function wsBlank(sit) { return { pid: null, nr: null, name: '', unknown: false, x: null, y: null, zov: '', gx: null, gy: null, sit: sit || 'position', art: '' }; }
 state.ws = { sub: lsGet('scouting.wsub', 'erfassen'), q: '', pickMode: lsGet('scouting.wspickmode', 'spiel'), freeQ: '', tws: { home: '', away: '' }, pick: false, store: 'local', note: '', shots: [], loaded: false, game: '', atk: 'home', tw: '', cur: wsBlank(), allLeagues: null, persp: lsGet('scouting.wspersp', 'werfer'), ana: { kind: 'werfer', team: '', id: '', sit: '' }, prep: lsGet('scouting.wsprep', ''), msg: '' };
-const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL/i.test(ligaKey(d.groups[gid] || { name: '' }));
+const wsTopLeague = (d, gid) => /QHL|NLA|NLB|SPL|Mobiliar/i.test(ligaKey(d.groups[gid] || { name: '' }));
 
 // ---- Speicher: Zentralspeicher (Tabelle «wuerfe») oder dieser Browser ----
 async function wsLoad() {
@@ -3776,7 +3780,7 @@ function staefaPlayers(d) {
   const out = [...m.values()]; for (const p of out) { const pi = d.players[p.id] || {}; p.year = pi.year || 0; p.pos = pi.position || ''; p.games = p.F.games + p.G.games; }
   d._staefa = { key, val: { players: out, teams: T } }; return d._staefa.val;
 }
-const ligaSort = (a, b) => { const n = (s) => { const m = /U(\d+)/.exec(s); return m ? Number(m[1]) : s === 'QHL' ? 99 : s === 'NLB' ? 98 : 50; }; return n(a) - n(b) || a.localeCompare(b, 'de'); };
+const ligaSort = (a, b) => { const n = (s) => { if (/Cup\b/.test(s)) return 200; const m = /U(\d+)/.exec(s); return m ? Number(m[1]) : s === 'QHL' ? 99 : s === 'NLB' ? 98 : 50; }; return n(a) - n(b) || a.localeCompare(b, 'de'); };
 const leer = (a) => !a || AKTE_FELDER.every(([f]) => !String(a[f] || '').trim());
 /* Zusätzliche Spieler: haben eine Akte, spielen aber (in dieser Saison) nicht für Stäfa.
    Mit Trainingstagen gelten sie als «trainiert bei uns» und stehen immer in der Liste. Von Hand erfasste haben eine negative Nummer. */

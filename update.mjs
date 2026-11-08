@@ -18,6 +18,12 @@ const LIGEN = Array.isArray(cfg.ligen) ? cfg.ligen : [];
 const normT = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
 const LIGEN_TEIL = (Array.isArray(cfg.ligenEnthalten) ? cfg.ligenEnthalten : []).map(normT).filter(Boolean);
 const VEREINE = (Array.isArray(cfg.vereineEnthalten) ? cfg.vereineEnthalten : []).map(normT).filter(Boolean);
+// Cup-Bewerbe, deren Name eines dieser Teilwörter enthält, werden geholt (dazu jeder Cup, in dem ein Team aus vereineEnthalten spielt)
+const CUPS_TEIL = (Array.isArray(cfg.cupsEnthalten) ? cfg.cupsEnthalten : []).map(normT).filter(Boolean);
+const istCup = (g) => /Cup\b/.test((g && g.category) || '');
+// In Cupspielen steht hinter dem Teamnamen die Liga, z. B. «Handball Stäfa (QHL)» oder «HC Test (MU15P S1)»
+const ohneZusatz = (n) => String(n || '').replace(/\s*\([A-ZÄÖÜ][A-ZÄÖÜ0-9]*(?: S\d)?\)/g, '').trim();
+const platzhalter = (n) => /^(Sieger|Verlierer|Gewinner)\b/i.test(String(n || ''));
 const PAUSE_MS = Number(process.env.PAUSE_MS ?? cfg.pausenMs ?? 250);
 // Wie viele frühere Saisons zusätzlich geladen werden (für «Entwicklung über Saisons»). 0 = nur die aktuelle.
 const VORSAISONS = Math.max(0, Math.min(3, parseInt(cfg.vorsaisons, 10) || 0));
@@ -28,7 +34,7 @@ const Q_SEASON = '{ season { objectId isActual } }';
 const LV = 'objectId name objectType';
 const Q_MENU = 'query getMenu($s: Int) { menuItem(seasonId: $s) { ' + LV + ' menuItem { ' + LV + ' menuItem { ' + LV + ' menuItem { ' + LV + ' menuItem { ' + LV + ' } } } } } }';
 const Q_NAV = 'query getGroupNavigationDetail($groupId: Int) { groupNavigationDetail(groupId: $groupId) { groupId groupName categoryName seasonName } }';
-const Q_GAMES = 'query getGames($groupId: Int) { games(groupId: $groupId) { objectId homeTeamId homeTeamName homeTeamClubId homeTeamScore awayTeamId awayTeamName awayTeamClubId awayTeamScore gameDateTime } }';
+const Q_GAMES = 'query getGames($groupId: Int) { games(groupId: $groupId) { objectId homeTeamId homeTeamName homeTeamClubId homeTeamScore awayTeamId awayTeamName awayTeamClubId awayTeamScore gameDateTime groupName } }';
 const Q_CLUBS = '{ club { clubId name zipCode city canton latitude longitude } }';
 const Q_PSTATS = 'query getPlayerStats($groupId: Int) { playerStats(groupId: $groupId) { playerId playerYear position hand } }';
 const Q_KADER = 'query getPlayerStaff($teamId: Int) { playerStaff(teamId: $teamId) { player { playerId year position hand } } }';
@@ -70,6 +76,9 @@ console.log('Bisher: ' + data.groups.length + ' Gruppen, ' + data.games.length +
 
 // 2) Gruppen der gewünschten Ligen über das Menü der aktuellen Saison finden
 const gruppenInfo = new Map(), proLiga = new Map(), vorsaisonGruppen = new Set(), aktuelleGruppen = new Set();
+// Cups: Die Cup-Nummer dient als Gruppe (die Nummern der einzelnen Runden sind für die Abfrage zu gross), die Runde steht beim Spiel.
+const cupInfo = new Map(), cupsGewuenscht = new Set();
+for (const g of data.groups) if (istCup(g)) cupInfo.set(g.groupId, { name: g.category, org: g.name, season: g.season });
 try {
   const saison = liste(((await abfrage(null, Q_SEASON, {})) || {}).season);
   const aktuell = saison.find((s) => s.isActual) || saison[0];
@@ -83,6 +92,19 @@ try {
   };
   gehe(baum && baum.menuItem, null, proLiga);
   for (const id of gruppenInfo.keys()) aktuelleGruppen.add(id);
+  const saisonText = aktuell.objectId + '/' + String(aktuell.objectId + 1).slice(-2);
+  const cups = (knoten, org) => {
+    for (const m of liste(knoten)) {
+      if (m.objectType === 'cuporg') org = m.name;
+      if (m.objectType === 'cup') {
+        cupInfo.set(m.objectId, { name: m.name, org: org === 'Handball Schweiz' ? 'Schweiz' : org || '', season: saisonText });
+        aktuelleGruppen.add(m.objectId);
+        if (CUPS_TEIL.some((t) => normT(m.name).includes(t))) cupsGewuenscht.add(m.objectId);
+      }
+      cups(m.menuItem, org);
+    }
+  };
+  cups(baum && baum.menuItem, '');
   // Frühere Saisons: nur die Ligen aus config.json (die Saisons haben fortlaufende Nummern)
   for (let k = 1; k <= VORSAISONS; k++) {
     const alt = new Map(), b = await abfrage('getMenu', Q_MENU, { s: aktuell.objectId - k });
@@ -97,6 +119,7 @@ const alle = new Set(data.groups.map((g) => g.groupId));
 for (const l of LIGEN) for (const id of proLiga.get(l) || []) alle.add(id);
 for (const [liga, ids] of proLiga) if (LIGEN_TEIL.some((m) => normT(liga).includes(m))) for (const id of ids) alle.add(id);
 for (const id of vorsaisonGruppen) alle.add(id);
+for (const id of cupsGewuenscht) alle.add(id);
 // Abgeschlossene Gruppen (alle Spiele seit mindestens 14 Tagen vorbei und vollständig geholt) nicht mehr jede Woche abfragen
 const fertig = new Set(Array.isArray(data.fertig) ? data.fertig : []);
 for (const id of fertig) alle.delete(id);
@@ -127,10 +150,13 @@ const VORBEI_MS = 14 * 24 * 3600 * 1000;
 for (const groupId of alle) {
   nr++;
   const fehlerVorher = failed;
-  const nav = erstes(((await abfrage('getGroupNavigationDetail', Q_NAV, { groupId })) || {}).groupNavigationDetail) || {};
+  const cup = cupInfo.get(groupId);
+  const nav = cup ? { groupName: cup.org, categoryName: cup.name, seasonName: cup.season } : erstes(((await abfrage('getGroupNavigationDetail', Q_NAV, { groupId })) || {}).groupNavigationDetail) || {};
   const spiele = vorab.has(groupId) ? vorab.get(groupId) : liste(((await abfrage('getGames', Q_GAMES, { groupId })) || {}).games);
   if (!spiele.length) { console.warn('Gruppe ' + groupId + ': keine Spiele gefunden.'); continue; }
+  if (cup) for (const g of spiele) { g.homeTeamName = ohneZusatz(g.homeTeamName); g.awayTeamName = ohneZusatz(g.awayTeamName); g.runde = String(g.groupName || '').split(' - ').pop().trim(); }
   for (const g of spiele) {
+    if (platzhalter(g.homeTeamName) || platzhalter(g.awayTeamName)) continue;
     if (g.homeTeamId != null && g.homeTeamClubId != null) teams.set(g.homeTeamId, { teamId: g.homeTeamId, clubId: g.homeTeamClubId, name: g.homeTeamName });
     if (g.awayTeamId != null && g.awayTeamClubId != null) teams.set(g.awayTeamId, { teamId: g.awayTeamId, clubId: g.awayTeamClubId, name: g.awayTeamName });
   }
@@ -139,15 +165,19 @@ for (const groupId of alle) {
   // Spielplan: kommende Spiele für «Nächste Spiele» (pro Gruppe bei jedem Lauf komplett ersetzt)
   for (const g of spiele) {
     const t = new Date(g.gameDateTime).getTime();
-    if (Number.isFinite(t) && t > jetzt && zahl(g.homeTeamScore) + zahl(g.awayTeamScore) === 0) neu.fixtures.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, awayTeamId: g.awayTeamId, awayName: g.awayTeamName });
+    if (Number.isFinite(t) && t > jetzt && zahl(g.homeTeamScore) + zahl(g.awayTeamScore) === 0) neu.fixtures.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, awayTeamId: g.awayTeamId, awayName: g.awayTeamName, ...(g.runde ? { round: g.runde } : {}) });
   }
   const offen = spiele.filter((g) => zahl(g.homeTeamScore) + zahl(g.awayTeamScore) > 0 && new Date(g.gameDateTime).getTime() <= jetzt && !bekannt.has(g.objectId));
   console.log('Gruppe ' + nr + '/' + alle.size + ' (' + liga + ' ' + (nav.groupName || groupId) + '): ' + offen.length + ' neue Spiele');
   // Abgeschlossen, wenn alle Spiele seit 14 Tagen vorbei sind und in diesem Lauf nichts schiefging (wird am Ende geprüft)
-  const vorbei = spiele.every((g) => new Date(g.gameDateTime).getTime() < jetzt - VORBEI_MS);
+  // Ein laufender Cup gilt nie als abgeschlossen: Die nächste Runde wird oft erst später ausgelost
+  const cupLaeuft = cup && (!aktuelleGruppen.size || aktuelleGruppen.has(groupId));
+  const vorbei = !cupLaeuft && spiele.every((g) => new Date(g.gameDateTime).getTime() < jetzt - VORBEI_MS);
   if (!offen.length) { if (vorbei && failed === fehlerVorher) fertig.add(groupId); continue; }
   for (const p of liste(((await abfrage('getPlayerStats', Q_PSTATS, { groupId })) || {}).playerStats)) {
-    if (p.playerId != null && p.playerYear) spieler.set(p.playerId, { playerId: p.playerId, year: zahl(p.playerYear), position: p.position || '', hand: p.hand || '' });
+    if (p.playerId == null || !p.playerYear) continue;
+    const alt = spieler.get(p.playerId) || {}; // Im Cup fehlen Position und Hand: nichts überschreiben, was eine Liga schon geliefert hat
+    spieler.set(p.playerId, { playerId: p.playerId, year: zahl(p.playerYear), position: p.position || alt.position || '', hand: p.hand || alt.hand || '' });
   }
   if (/QHL|NLB/.test(liga)) {
     const ts = new Set(); spiele.forEach((g) => { ts.add(g.homeTeamId); ts.add(g.awayTeamId); });
@@ -167,7 +197,7 @@ for (const groupId of alle) {
         goals: zahl(z.totalScore), shots: zahl(z.totalShots), goals7: zahl(z.totalScore7m), shots7: zahl(z.totalShots7m), tf: zahl(z.technicalErrors), min2: zahl(z.total2Minutes), warn: zahl(z.totalWarnings), dq: zahl(z.totalSuspension),
         saves: zahl(z.totalSaves), shotsGK: zahl(z.totalShotsGK), saves7: zahl(z.totalSaves7m), shots7GK: zahl(z.totalShots7mGK) });
     }
-    neu.games.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, homeScore: zahl(g.homeTeamScore), awayTeamId: g.awayTeamId, awayName: g.awayTeamName, awayScore: zahl(g.awayTeamScore), hasStats: mit });
+    neu.games.push({ gameId: g.objectId, groupId, date: g.gameDateTime, homeTeamId: g.homeTeamId, homeName: g.homeTeamName, homeScore: zahl(g.homeTeamScore), awayTeamId: g.awayTeamId, awayName: g.awayTeamName, awayScore: zahl(g.awayTeamScore), hasStats: mit, ...(g.runde ? { round: g.runde } : {}) });
   }
   if (vorbei && failed === fehlerVorher) fertig.add(groupId);
 }

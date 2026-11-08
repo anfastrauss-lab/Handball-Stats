@@ -87,6 +87,9 @@ Klicke im Projekt auf `config.json`, dann auf das Stift-Symbol. Die Namen müsse
 **Frühere Saisons laden (für «Entwicklung über die Saisons» im Spielerprofil).**
 In `config.json` steht `"vorsaisons": 0`. Stell die Zahl auf `1`, um zusätzlich die letzte Saison zu laden (höchstens `3`). Geladen werden dieselben Ligen wie bei `ligen` und `ligenEnthalten`. Der erste Lauf danach dauert länger (etwa so lang wie der allererste, rund 1'000 Abfragen). Danach gelten die alten Gruppen als abgeschlossen und werden nicht mehr abgefragt. Spielerliste, Talent-Radar, Teams und Wochenreport zeigen weiterhin die aktuelle Saison. In der Spielerliste lässt sich die Saison wählen, sobald mehrere geladen sind.
 
+**Cupspiele.**
+In `config.json` steht bei `cupsEnthalten`, welche Cups geholt werden: alle, deren Name eines der Teilwörter enthält. Dazu kommt jeder Cup, in dem ein Team aus `vereineEnthalten` spielt. Cupspiele zählen bei Spielern und Teams, aber nicht in der Talent-Bewertung. Ein laufender Cup wird jede Woche neu abgefragt, weil die nächste Runde oft erst später ausgelost wird.
+
 **Abgeschlossene Gruppen.**
 Sind alle Spiele einer Gruppe seit mindestens 14 Tagen vorbei und vollständig geholt, fragt der Wochenlauf diese Gruppe nicht mehr ab (zum Beispiel beendete Qualifikationsrunden). Das spart Abfragen bei handball.ch.
 
