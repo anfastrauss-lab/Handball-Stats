@@ -295,6 +295,10 @@ td .lg { margin-left: 0; }
 .stbadge.s-live { background: var(--bar); } .stbadge.s-kontakt, .stbadge.s-probe { background: var(--court); color: #fff; border-color: var(--court); } .stbadge.s-nein { opacity: .6; }
 .modebar { display: flex; gap: 8px 14px; align-items: center; flex-wrap: wrap; margin: 0 0 14px; }
 .modeseg { min-width: min(340px, 100%); }
+.lvtable th, .lvtable td { white-space: nowrap; }
+.lvtable td.name { min-width: 170px; }
+.lvG { color: var(--good); font-weight: 700; } .lvB { color: var(--bad); font-weight: 600; }
+.lvtable tr.lvOwn td { background: color-mix(in srgb, var(--signal) 16%, transparent); }
 .modeseg button { padding: 10px 14px; font-size: 15px; }
 .talctl { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px 18px; align-items: end; padding: 14px 16px; margin-bottom: 12px; }
 tr.totrow td { font-weight: 700; border-top: 2px solid var(--ink-2); background: var(--surface-2); }
@@ -637,8 +641,12 @@ table.plain td { text-align: left; padding: 8px 10px; }
 
 
 <section id="viewTeams" role="tabpanel" aria-labelledby="tabTeams" hidden>
-  <div class="toolbar"><h2 style="margin:0">Gegner-Scouting</h2></div>
-  <div class="card teampick">
+  <div class="toolbar"><h2 style="margin:0">Gegner-Scouting</h2><div class="seg modeseg" role="group" aria-label="Ansicht"><button id="tmOne" aria-pressed="true">Einzelnes Team</button><button id="tmLiga" aria-pressed="false">Ligavergleich</button></div></div>
+  <div class="card teampick" id="lvPick" hidden>
+    <div class="field"><label for="lvLiga">Liga</label><select id="lvLiga"></select></div>
+    <div class="field"><label for="lvGroup">Gruppe</label><select id="lvGroup"></select></div>
+  </div>
+  <div class="card teampick" id="teamPick">
     <div class="field"><label for="teamQ">Team suchen</label><input type="search" id="teamQ" placeholder="z. B. Kadetten" autocomplete="off"></div>
     <div class="field"><label for="teamSel">Team</label><select id="teamSel"></select></div>
     <div class="field"><label for="teamQ2">Vergleichsteam suchen</label><input type="search" id="teamQ2" placeholder="z. B. GC Amicitia" autocomplete="off"></div>
@@ -2136,7 +2144,7 @@ async function loadFiles(files) {
 
 /* ---------- Steuerung ---------- */
 const VIEWS = ['spieler', 'teams', 'wurf', 'report', 'merk', 'daten', 'staefa'];
-function hashSave() { const h = '#' + state.view + (state.view === 'teams' && state.team ? '/' + encodeURIComponent(state.team) : ''); if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { /* egal */ } }
+function hashSave() { const h = '#' + state.view + (state.view === 'teams' && state.teamMode === 'liga' ? '/liga' : state.view === 'teams' && state.team ? '/' + encodeURIComponent(state.team) : ''); if (location.hash !== h) try { history.replaceState(null, '', h); } catch (e) { /* egal */ } }
 function hashRead() { const m = /^#([a-z]+)(?:\/(.+))?$/.exec(location.hash || ''); return m && VIEWS.includes(m[1]) ? { v: m[1], team: m[2] ? decodeURIComponent(m[2]) : null } : null; }
 function setView(v) {
   document.body.classList.remove('wslive');
@@ -2218,6 +2226,8 @@ const ligaKey = (g) => (leagueOf(g).main || 'Unbekannt').replace(/\s+S\d+$/, '')
 const isCup = (g) => /Cup\b/.test((g && g.category) || '');
 state.t = { wTF: 0.3, minGames: 1, minShots: 0, minGK: 0, wAge: 0.5, wLiga: 0.5, split: false, sort: [{ key: 'score', dir: -1 }], limit: 100 };
 state.team = null; state.team2 = null;
+state.teamMode = lsGet('scouting.teamModus', 'one') === 'liga' ? 'liga' : 'one'; // Reiter Teams: einzelnes Team oder Ligavergleich
+state.lv = { liga: lsGet('scouting.lvLiga', ''), group: '', sort: null };
 
 // Ligastufe für den ligaübergreifenden Vergleich: wie viel stärker eine Liga ungefähr ist (in Standardabweichungen)
 function levelOf(liga) {
@@ -2551,7 +2561,7 @@ function fillTeamSelect() {
   };
   fill('#teamSel', '#teamQ', state.team, 'Team wählen …'); fill('#teamSel2', '#teamQ2', state.team2, 'Kein Vergleich');
 }
-function selectTeam(id) { state.team = String(id); state.team2 = null; $('#teamQ').value = ''; $('#teamQ2').value = ''; setView('teams'); }
+function selectTeam(id) { state.team = String(id); state.team2 = null; state.teamMode = 'one'; $('#teamQ').value = ''; $('#teamQ2').value = ''; setView('teams'); }
 function ligaAverages(d) {
   if (d._ligaAvg && d._ligaAvg.ver === (d._ver || 0)) return d._ligaAvg.m;
   const sum = {}, cnt = {};
@@ -2571,20 +2581,21 @@ function teamStanding(d, groupId) {
   }
   return [...t.values()].sort((a, b) => b.pt - a.pt || (b.gf - b.ga) - (a.gf - a.ga) || b.gf - a.gf || a.name.localeCompare(b.name, 'de'));
 }
-function teamData(d, id) {
-  const gm = Object.values(d.games).filter((g) => inSeason(d, g, '') && (String(g.homeTeamId) === id || String(g.awayTeamId) === id)).sort((a, b) => String(a.date).localeCompare(String(b.date)));
+// sel (optional): nur Spiele dieser Liga («liga:Key») oder Gruppe (Nummer), z. B. für den Ligavergleich ohne Cupspiele
+function teamData(d, id, sel) {
+  const gm = Object.values(d.games).filter((g) => inSeason(d, g, '') && (String(g.homeTeamId) === id || String(g.awayTeamId) === id) && (!sel || groupMatch(d, g.groupId, sel))).sort((a, b) => String(a.date).localeCompare(String(b.date)));
   const res = gm.map((g) => { const home = String(g.homeTeamId) === id; return { g, home, gf: home ? g.homeScore : g.awayScore, ga: home ? g.awayScore : g.homeScore, opp: home ? g.awayName : g.homeName, oppId: home ? g.awayTeamId : g.homeTeamId }; });
   const w = res.filter((r) => r.gf > r.ga).length, u = res.filter((r) => r.gf === r.ga).length;
   const byGroup = {}; for (const r of res) byGroup[r.g.groupId] = (byGroup[r.g.groupId] || 0) + 1;
   const mainGroup = Object.keys(byGroup).sort((a, b) => isCup(d.groups[a]) - isCup(d.groups[b]) || byGroup[b] - byGroup[a])[0]; // Cup nur, wenn das Team keine Liga hat
   const liga = mainGroup != null ? ligaKey(d.groups[mainGroup] || { name: 'Gruppe ' + mainGroup }) : '';
-  const F = aggregate(d, { role: 'F', group: '', team: id }), G = aggregate(d, { role: 'G', group: '', team: id });
-  return { id, res, n: res.length, w, u, l: res.length - w - u, gf: res.reduce((s, r) => s + r.gf, 0), ga: res.reduce((s, r) => s + r.ga, 0), mainGroup, liga, F, G };
+  const F = aggregate(d, { role: 'F', group: sel ? [sel] : '', team: id }), G = aggregate(d, { role: 'G', group: sel ? [sel] : '', team: id });
+  return { id, sel, res, n: res.length, w, u, l: res.length - w - u, gf: res.reduce((s, r) => s + r.gf, 0), ga: res.reduce((s, r) => s + r.ga, 0), mainGroup, liga, F, G };
 }
 // Angriffseffizienz eines Teams und seiner Gegner (geschätzte Angriffe = Würfe + technische Fehler, ohne Liveticker lite)
-function teamEff(d, id) {
+function teamEff(d, id, sel) {
   const own = { g: 0, s: 0, tf: 0, s7: 0, g7: 0 }, opp = { g: 0, s: 0, tf: 0 }, games = new Set();
-  const mine = new Set(Object.values(d.games).filter((g) => inSeason(d, g, '') && (String(g.homeTeamId) === id || String(g.awayTeamId) === id)).map((g) => g.gameId));
+  const mine = new Set(Object.values(d.games).filter((g) => inSeason(d, g, '') && (String(g.homeTeamId) === id || String(g.awayTeamId) === id) && (!sel || groupMatch(d, g.groupId, sel))).map((g) => g.gameId));
   for (const r of rows(d)) {
     if (r.role !== 'F' || r.lite || !mine.has(r.gameId)) continue;
     const o = String(r.teamId) === id ? own : opp; o.g += r.qg || 0; o.s += r.qs || 0; o.tf += r.tf || 0;
@@ -2634,6 +2645,8 @@ function renderTeam() {
   fillTeamSelect();
   const d = data(), body = $('#teamBody'), idx = index(d);
   if (!rows(d).length && !Object.keys(d.games).length) { body.innerHTML = '<div class="card empty"><h2>Noch keine Daten</h2><p class="muted">Lade zuerst Daten im Reiter «Daten» oder schau dir die Demo an.</p></div>'; return; }
+  setTeamMode(state.teamMode);
+  if (state.teamMode === 'liga') return renderLiga(d, body);
   const cmpOn = state.team && state.team2 && state.team !== state.team2 && idx.teams[state.team] && idx.teams[state.team2];
   $('#teamCmpBtns').hidden = !cmpOn; $('#teamSel2').disabled = !state.team;
   if (cmpOn) return renderCompare(d, body, idx);
@@ -2678,7 +2691,7 @@ const teamPlace = (d, id) => { const t = d.teams[id], c = t ? d.clubs[t.clubId] 
 const formHtml = (td) => td.res.slice(-5).map((r) => { const c = r.gf > r.ga ? 's' : r.gf < r.ga ? 'n' : 'u'; return '<span class="' + c + '" title="' + esc(r.opp + ' ' + r.gf + ':' + r.ga) + '">' + c.toUpperCase() + '</span>'; }).join('');
 function teamMetrics(d, td) {
   const avg = ligaAverages(d)[td.liga], n = td.n, F = td.F, G = td.G;
-  const rowsT = rows(d).filter((r) => String(r.teamId) === td.id && d.games[r.gameId] && inSeason(d, d.games[r.gameId], '')), sg = new Set(rowsT.map((r) => r.gameId)).size;
+  const rowsT = rows(d).filter((r) => String(r.teamId) === td.id && d.games[r.gameId] && inSeason(d, d.games[r.gameId], '') && (!td.sel || groupMatch(d, d.games[r.gameId].groupId, td.sel))), sg = new Set(rowsT.map((r) => r.gameId)).size;
   const sum = (k) => F.reduce((s, p) => s + p[k], 0), qg = sum('qg'), shots = sum('qs'), goals = sum('goals'), g7 = sum('goals7'), s7 = sum('shots7');
   const top = F.slice().sort((a, b) => b.goals - a.goals).slice(0, 3).reduce((s, p) => s + p.goals, 0);
   const A = td.res.filter((r) => !r.home), gk = G.slice().sort((a, b) => b.sg - a.sg)[0];
@@ -2688,7 +2701,7 @@ function teamMetrics(d, td) {
     awayDiff: A.length >= 2 ? A.reduce((s, r) => s + r.gf - r.ga, 0) / A.length : null,
     vsGf: n && avg ? td.gf / n - avg : null, vsGa: n && avg ? td.ga / n - avg : null,
     shotPct: shots >= 20 ? qg / shots : null, sevenPct: s7 >= 5 ? g7 / s7 : null,
-    eff: teamEff(d, td.id).att, effOpp: teamEff(d, td.id).def,
+    ...(() => { const e = teamEff(d, td.id, td.sel); return { eff: e.att, effOpp: e.def }; })(),
     min2: sg && sum('min2') >= 1 ? sum('min2') / sg : null, tf: sg && sum('tf') >= 1 ? sum('tf') / sg : null,
     top3: goals >= 20 ? top / goals : null, gkPct: gk && gk.sg >= 20 ? gk.sv / gk.sg : null, gkName: gk ? fullName(gk.name) : '',
     avgYear: years.length >= 5 ? mean(years) : null, sg,
@@ -2713,6 +2726,63 @@ const CMP_ROWS = [
   { l: 'Tore der drei besten Werfer', k: 'top3', f: (v) => Math.round(v * 100) + '%', dec: 2, tip: 'Hoch heisst: Der Angriff hängt an wenigen Spielern' },
   { l: 'Ø Jahrgang des Kaders', k: 'avgYear', f: (v) => v.toFixed(1), dec: 1 },
 ];
+/* ---------- Ligavergleich: alle Teams einer Liga oder Gruppe nebeneinander ---------- */
+const LV_SHORT = { n: 'Spiele', ppg: 'Punkte pro Spiel', gf: 'Tore pro Spiel', ga: 'Gegentore pro Spiel', diff: 'Differenz pro Spiel', eff: 'Angriffs­effizienz', effOpp: 'Effizienz der Gegner', shotPct: 'Wurfquote', sevenPct: '7-Meter-Quote', gkPct: 'Stamm­torhüter', min2: 'Zeitstrafen pro Spiel', tf: 'Techn. Fehler pro Spiel', top3: 'Anteil Top 3', avgYear: 'Ø Jahrgang' };
+const LV_COLS = CMP_ROWS.filter((c) => LV_SHORT[c.k]);
+// Ligen der aktuellen Saison ohne Cups, mit ihren Gruppen
+function lvLeagues(d) {
+  const m = new Map();
+  for (const g of Object.values(d.games)) {
+    if (!inSeason(d, g, '')) continue; const grp = d.groups[g.groupId]; if (isCup(grp)) continue;
+    const k = ligaKey(grp || { name: 'Gruppe ' + g.groupId }); if (!m.has(k)) m.set(k, new Set()); m.get(k).add(String(g.groupId));
+  }
+  return m;
+}
+// Kennzahlen aller Teams, gezählt werden nur die Spiele dieser Liga oder Gruppe (einmal pro Datenstand)
+function lvData(d, sel) {
+  const c = d._lv && d._lv.ver === (d._ver || 0) ? d._lv : (d._lv = { ver: d._ver || 0, m: {} });
+  if (c.m[sel]) return c.m[sel];
+  const idx = index(d), ids = new Set();
+  for (const g of Object.values(d.games)) if (inSeason(d, g, '') && groupMatch(d, g.groupId, sel)) { ids.add(String(g.homeTeamId)); ids.add(String(g.awayTeamId)); }
+  return (c.m[sel] = [...ids].map((id) => { const td = teamData(d, id, sel); return { id, name: idx.teams[id] || 'Team ' + id, td, m: teamMetrics(d, td) }; }).filter((x) => x.td.n));
+}
+function setTeamMode(m) {
+  state.teamMode = m === 'liga' ? 'liga' : 'one'; lsSet('scouting.teamModus', state.teamMode);
+  $('#tmOne').setAttribute('aria-pressed', state.teamMode === 'one'); $('#tmLiga').setAttribute('aria-pressed', state.teamMode === 'liga');
+  $('#teamPick').hidden = state.teamMode === 'liga'; $('#lvPick').hidden = state.teamMode !== 'liga';
+}
+function renderLiga(d, body) {
+  const L = lvLeagues(d), keys = [...L.keys()].sort(ligaSort), lv = state.lv;
+  if (!keys.length) { body.innerHTML = '<div class="card empty"><p class="muted" style="margin:0">In der aktuellen Saison gibt es noch keine Ligaspiele.</p></div>'; return; }
+  if (!L.has(lv.liga)) { lv.liga = L.has('QHL') ? 'QHL' : keys[0]; lv.group = ''; }
+  const gids = [...L.get(lv.liga)]; if (lv.group && !gids.includes(lv.group)) lv.group = '';
+  $('#lvLiga').innerHTML = keys.map((k) => '<option value="' + esc(k) + '">' + esc(k) + '</option>').join(''); $('#lvLiga').value = lv.liga;
+  const gl = gids.map((id) => ({ id, l: groupLabel(d.groups[id] || { name: 'Gruppe ' + id }) })).sort((a, b) => a.l.localeCompare(b.l, 'de'));
+  $('#lvGroup').innerHTML = '<option value="">' + (gids.length > 1 ? 'Alle ' + gids.length + ' Gruppen zusammen' : 'Nur eine Gruppe') + '</option>' + (gids.length > 1 ? gl.map((x) => '<option value="' + esc(x.id) + '">' + esc(x.l) + '</option>').join('') : '');
+  $('#lvGroup').value = lv.group; $('#lvGroup').disabled = gids.length < 2;
+  const sel = lv.group || 'liga:' + lv.liga, list = lvData(d, sel).slice(), sort = lv.sort || { k: 'ppg', dir: -1 };
+  const val = (x) => (sort.k === 'name' ? x.name : x.m[sort.k]);
+  list.sort((a, b) => {
+    const va = val(a), vb = val(b);
+    if (va == null || vb == null) return va == null && vb == null ? a.name.localeCompare(b.name, 'de') : va == null ? 1 : -1; // ohne Wert immer unten
+    if (sort.k === 'name') return sort.dir * va.localeCompare(vb, 'de');
+    return sort.dir * (va - vb) || (b.m.diff || 0) - (a.m.diff || 0) || a.name.localeCompare(b.name, 'de');
+  });
+  // Die Besten und die Schwächsten pro Kennzahl einfärben: je 3 ab 12 Teams, je 2 ab 8, sonst je 1 (ab 4 Teams mit Wert)
+  const mark = {}, topN = (n) => (n >= 12 ? 3 : n >= 8 ? 2 : n >= 4 ? 1 : 0);
+  for (const c of LV_COLS) {
+    if (!c.better) continue; const v = list.filter((x) => x.m[c.k] != null).sort((a, b) => (c.better === 'high' ? b.m[c.k] - a.m[c.k] : a.m[c.k] - b.m[c.k])), t = topN(v.length);
+    if (!t) continue; v.slice(0, t).forEach((x) => (mark[x.id + '|' + c.k] = 'lvG')); v.slice(-t).forEach((x) => (mark[x.id + '|' + c.k] = 'lvB'));
+  }
+  const th = (k, label, tip) => { const on = sort.k === k; return '<th' + (k === 'name' ? ' class="left name"' : '') + (on ? ' aria-sort="' + (sort.dir > 0 ? 'ascending' : 'descending') + '"' : '') + '><button class="thbtn" data-lvsort="' + k + '"' + (tip ? ' title="' + esc(tip) + '"' : '') + '>' + label + (on ? (sort.dir > 0 ? ' ▲' : ' ▼') : '') + '</button></th>'; };
+  const head = '<tr><th>#</th>' + th('name', 'Team') + '<th><span class="thbtn" style="cursor:default" title="Siege, Unentschieden, Niederlagen">S-U-N</span></th>' + LV_COLS.map((c) => th(c.k, LV_SHORT[c.k], c.l + (c.tip ? ': ' + c.tip : '') + (c.better ? (c.better === 'low' ? ' (weniger ist besser)' : ' (mehr ist besser)') : ''))).join('') + '</tr>';
+  const body2 = list.map((x, i) => '<tr' + (/St(ä|ae)fa/i.test(x.name) ? ' class="lvOwn"' : '') + '><td>' + (i + 1) + '</td><td class="left name"><button class="linkbtn" data-teamdetail="' + esc(x.id) + '" title="Einzelansicht des Teams">' + esc(x.name) + '</button></td><td>' + x.td.w + '-' + x.td.u + '-' + x.td.l + '</td>' +
+    LV_COLS.map((c) => { const v = x.m[c.k], cl = mark[x.id + '|' + c.k]; return '<td' + (cl ? ' class="' + cl + '"' : '') + '>' + (v == null ? '–' : esc(c.f(v))) + '</td>'; }).join('') + '</tr>').join('');
+  const what = lv.group ? groupLabel(d.groups[lv.group] || { name: 'Gruppe ' + lv.group }) : lv.liga + (gids.length > 1 ? ' (alle ' + gids.length + ' Gruppen)' : '');
+  body.innerHTML = '<div class="card teamsec"><h3>Ligavergleich: ' + esc(what) + '</h3><p class="small muted" style="margin:0 0 8px">' + list.length + ' Teams, aktuelle Saison. Gezählt werden nur die Spiele dieser ' + (lv.group ? 'Gruppe' : 'Liga') + ', keine Cupspiele. Ein Klick auf eine Spalte sortiert, ein Klick auf ein Team öffnet die Einzelansicht.</p>' +
+    '<div class="tablewrap"><table class="lvtable"><thead>' + head + '</thead><tbody>' + body2 + '</tbody></table></div>' +
+    '<p class="small muted" style="margin:8px 0 0"><span class="lvG">Grün</span>: die Besten, <span class="lvB">rot</span>: die Schwächsten der Kennzahl (je 3 ab 12 Teams, je 2 ab 8 Teams, sonst je 1). Bei Gegentoren, Effizienz der Gegner, Zeitstrafen und Fehlern ist weniger besser. «–» heisst: zu wenige Spiele mit Statistik. Fahre mit der Maus über eine Spalte für die Erklärung.</p></div>';
+}
 function renderCompare(d, body, idx) {
   const A = state.team, B = state.team2, ta = teamData(d, A), tb = teamData(d, B), ma = teamMetrics(d, ta), mb = teamMetrics(d, tb);
   const nA = idx.teams[A], nB = idx.teams[B], bn = (s) => '<b>' + esc(s) + '</b>';
@@ -4484,10 +4554,15 @@ $('#teamQ2').oninput = fillTeamSelect;
 $('#teamSel2').onchange = (e) => { const v = e.target.value; state.team2 = v && v !== state.team ? v : null; renderTeam(); };
 $('#teamSwap').onclick = () => { if (state.team && state.team2) { [state.team, state.team2] = [state.team2, state.team]; renderTeam(); } };
 $('#teamCmpOff').onclick = () => { state.team2 = null; $('#teamQ2').value = ''; renderTeam(); };
+$('#tmOne').onclick = () => { setTeamMode('one'); renderTeam(); };
+$('#tmLiga').onclick = () => { setTeamMode('liga'); renderTeam(); };
+$('#lvLiga').onchange = (e) => { state.lv.liga = e.target.value; state.lv.group = ''; lsSet('scouting.lvLiga', state.lv.liga); renderTeam(); };
+$('#lvGroup').onchange = (e) => { state.lv.group = e.target.value; renderTeam(); };
 $('#teamBody').addEventListener('click', (e) => {
   const wl = e.target.closest('[data-wsteam]'); if (wl) return wsGotoTeam(state.team, wl.dataset.wsteam);
   const pl = e.target.closest('[data-player]'); if (pl) return openDetail(Number(pl.dataset.player), pl.dataset.role);
-  const dt = e.target.closest('[data-teamdetail]'); if (dt) { state.team = dt.dataset.teamdetail; state.team2 = null; $('#teamQ2').value = ''; return renderTeam(); }
+  const ls = e.target.closest('[data-lvsort]'); if (ls) { const k = ls.dataset.lvsort, c = LV_COLS.find((x) => x.k === k), cur = state.lv.sort || { k: 'ppg', dir: -1 }; state.lv.sort = cur.k === k ? { k, dir: -cur.dir } : { k, dir: k === 'name' || (c && c.better === 'low') ? 1 : -1 }; return renderTeam(); }
+  const dt = e.target.closest('[data-teamdetail]'); if (dt) { state.team = dt.dataset.teamdetail; state.team2 = null; $('#teamQ2').value = ''; setTeamMode('one'); renderTeam(); return window.scrollTo(0, 0); }
   if (e.target.closest('[data-cmpfocus]')) { $('#teamQ2').focus(); if ($('#teamQ2').scrollIntoView) $('#teamQ2').scrollIntoView({ block: 'center' }); return; }
   const tr = e.target.closest('tr[data-tgame]'); if (tr) openGameDirect(Number(tr.dataset.tgame));
 });
@@ -4792,7 +4867,7 @@ $('#wipe').onclick = async (e) => {
     state.storeOk = true;
     if (saved && saved.stats) { state.real = { groups: saved.groups || {}, games: saved.games || {}, stats: saved.stats || {}, players: saved.players || {}, clubs: saved.clubs || {}, teams: saved.teams || {}, fixtures: saved.fixtures || {} }; }
   } catch (e) { state.storeOk = false; }
-  const hv = hashRead(); if (hv && hv.v !== 'spieler' && (rows(data()).length || hv.v === 'daten' || hv.v === 'staefa')) { if (hv.team) state.team = hv.team; setView(hv.v); } // ohne Daten bleibt die Startseite mit dem Passwortfeld
+  const hv = hashRead(); if (hv && hv.v !== 'spieler' && (rows(data()).length || hv.v === 'daten' || hv.v === 'staefa')) { if (hv.team === 'liga') state.teamMode = 'liga'; else if (hv.team) { state.team = hv.team; state.teamMode = 'one'; } setView(hv.v); } // ohne Daten bleibt die Startseite mit dem Passwortfeld
   renderAll();
   window.__scout = state; // für Tests
   loadShared();
